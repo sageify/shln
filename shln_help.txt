@@ -1,0 +1,12 @@
+
+Usage:	shln COMMAND
+
+Shell link commands
+
+Commands:
+ install  install new git package
+ ln       new link
+ ls       list links
+ mv       rename a link 
+ rm       remove a link
+ help     show this page
