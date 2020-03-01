@@ -2,7 +2,7 @@
 
 if [ -L "$0" ]; then
   export SHLN_BIN=`dirname "$0"`
-  dest=`readlink -f "$0"`
+  dest=`readlink "$0"`
   export SCRIPT_DIR=`dirname "$dest"`
 else
   echo shln.sh must be called from a symbolic link

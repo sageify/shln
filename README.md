@@ -6,24 +6,21 @@ Why?  This keeps the PATH simple, provides all the links in one place, and allow
 
 # Install
 
-Clone this repository into ~/shln/sageify/shln:
+To install, a clone this repository to ~/shln/github.com/sageify/shln:
 
 ```bash
-mkdir -p ~/shln/github.com/sageify
-cd ~/shln/github.com/sageify
-git clone --branch v0.0.1 --depth 1 https://github.com/sageify/shln.git
-cd shln
+mkdir -p ~/shln/github.com/sageify/shln
+cd ~/shln/github.com/sageify/shln
+git clone --branch v0.0.2 --depth 1 https://github.com/sageify/shln.git .
 ```
 
-The following install script creates the /usr/local/shln, 
+The install script creates the /usr/local/shln, 
 
 ```bash
 ./install-shln.sh
 ```
 
-# Path
-
-Update linux PATH variable to add the /usr/local/shln folder.
+Update linux PATH variable to add the /usr/local/shln folder.  This varies depending on your platform.
 
 # Usage
 
