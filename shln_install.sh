@@ -1,6 +1,6 @@
 # sourced into shln.sh
 
-# shln install github.com/dockcmd/aws v0.0.1
+# for example: shln install github.com/dockcmd/aws v0.0.2
 
 SHLN_PATH=${SHLN_PATH-~/shln}
 
