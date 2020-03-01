@@ -1,11 +1,11 @@
 # sourced into shln.sh
 
-# for example: shln install github.com/dockcmd/aws v0.0.2
-
 if [ "$1" = "github.com/sageify/shln" ]; then
   echo Cannot uninstall $1
   exit 1
 fi
+
+# TODO Check if $1 has .. or . components in it and reject, only want children of SHLN_PATH
 
 SHLN_PATH=${SHLN_PATH-~/shln}
 

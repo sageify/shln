@@ -28,6 +28,10 @@ Update linux PATH variable to add the /usr/local/shln folder.  This varies depen
 shln
 ```
 
+# Todo
+
+- In shln_uninstall.sh and shln_install.sh, make sure name of module does not contain './', '/./', '/.', '/../', '..' or '/..'
+
 # References
 
 Shell documentation:
