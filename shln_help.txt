@@ -1,4 +1,3 @@
-
 Usage:	shln COMMAND
 
 Shell link commands

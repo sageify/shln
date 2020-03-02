@@ -1,3 +1,3 @@
 # sourced into shln.sh
 
-cat $SCRIPT_DIR/shln_help.txt
+cat $SCRIPT_PATH/shln_help.txt
