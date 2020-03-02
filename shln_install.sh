@@ -1,6 +1,8 @@
 # sourced into shln.sh
 
-# for example: shln install github.com/dockcmd/aws v0.0.2
+# Install a shln module:
+# shln install github.com/dockcmd/aws v0.0.1
+#
 
 if ! [ $1 ]
 then
@@ -8,56 +10,54 @@ then
   exit 1
 fi
 
-origin=https://$1.git
+repo=https://$1.git
+
+if ! git ls-remote -h $repo 1> /dev/null
+then
+  # problem with finding repo
+  exit 1
+fi
 
 if ! [ $2 ]
 then
-  echo Available tags: 1>&2
-  tags $origin 1>&2
-  exit 1
+  # no tag specified
+  echo tags: 1>&2
+  tags $repo 1>&2
+  exit 1  
 fi
 
-err=$(git ls-remote --exit-code $origin refs/tags/$2 2>&1)
-if [ $? -eq 2 ]
+if ! git ls-remote --exit-code $repo refs/tags/$2 > /dev/null 2> /dev/null
 then
-  echo $origin does not contain tag $2 1>&2
-  echo Available tags: 1>&2
-  tags $origin 1>&2
+  echo $repo does not contain tag $2 1>&2
+  tags $repo 1>&2
   exit 1
 fi
 
-if [ "$err" ]
-then
-  echo $err
-  exit 1
-fi
-
-SHLN_PATH=${SHLN_PATH-~/shln}
-dir=$SHLN_PATH/$1
+dir=${SHLN_PATH-~/shln}/$1
 
 if [ -f "$dir" ] || [ -d "$dir" ]
 then
-  echo Repository already exists: $repo 1>&2
+  echo Repository or file already exists: $dir 1>&2
   exit 1
 fi
 
 mkdir -p $dir
-git clone --branch $2 --depth 1 $repo $dir 2> /dev/null
-if [ $? -ne 0 ] 
+
+if ! git clone --branch $2 --depth 1 $repo $dir 2> /dev/null
 then
   rm -rf $dir
   echo Error cloning $1 with tag $2 1>&2
   exit 1
 fi
 
-if [ -f $repo/shln.conf ]
+if [ -f $dir/shln.conf ]
 then 
   while IFS= read link
   do
     shln ln $link
-  done < $repo/shln.conf
+  done < $dir/shln.conf
 else
-  ls $repo/*.sh | while read f
+  ls $dir/*.sh | while read f
   do
     shln ln `basename $f | cut -f 1 -d '.'`
   done

@@ -11,7 +11,8 @@ To install, a clone this repository to ~/shln/github.com/sageify/shln:
 ```bash
 mkdir -p ~/shln/github.com/sageify/shln
 cd ~/shln/github.com/sageify/shln
-git clone --branch v0.0.2 --depth 1 https://github.com/sageify/shln.git .
+git clone --branch v0.0.1 --depth 1 https://github.com/sageify/shln.git .
+#git clone https://github.com/sageify/shln.git .
 ```
 
 The install script creates the /usr/local/shln, 
@@ -22,10 +23,26 @@ The install script creates the /usr/local/shln,
 
 Update linux PATH variable to add the /usr/local/shln folder.  This varies depending on your platform.
 
+For example, on debian:
+```bash
+sudo nano /etc/profile
+```
+
 # Usage
 
 ```bash
+# Assuming /usr/local/shln has been added to the PATH 
 shln
+```
+
+# Example
+
+Assuming docker is installed, the following will install the aws cli:
+
+```bash
+# Install shell module support.
+shln install github.com/sageify/shmod v0.0.1
+
 ```
 
 # Todo
