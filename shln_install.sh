@@ -52,7 +52,7 @@ fi
 
 if [ -f $dir/shln.conf ]
 then 
-  while IFS= read link
+  while IFS= read link || [ "$link" ]
   do
     shln ln $link
   done < $dir/shln.conf
