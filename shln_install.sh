@@ -6,7 +6,7 @@
 
 if ! [ $1 ]
 then
-  echo Usasge: shln install REPOSITORY TAG 1>&2
+  echo Usage: shln install REPOSITORY TAG 1>&2
   exit 1
 fi
 
@@ -21,6 +21,7 @@ fi
 if ! [ $2 ]
 then
   # no tag specified
+  echo Usage: shln install $1 TAG
   echo tags: 1>&2
   tags $repo 1>&2
   exit 1  

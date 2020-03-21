@@ -2,7 +2,7 @@
 
 if ! [ $1 ]
 then
-  echo Usasge: shln tags REPOSITORY 1>&2
+  echo Usage: shln tag REPOSITORY 1>&2
   exit 1
 fi
 

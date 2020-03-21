@@ -5,7 +5,7 @@ Shell link commands
 Commands:
  
 Git Packages
- tags      show tags for a git repository
+ tag       list package tags
  install   install new package
  uninstall uninstall a package
 
