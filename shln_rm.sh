@@ -2,7 +2,7 @@
 
 # remove item from shln folder.
 if [ "$1" = "shln" ]; then
-  echo Cannot remove file: $1
+  echo Cannot remove link: $1
   exit 1
 fi
 

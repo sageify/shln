@@ -36,7 +36,35 @@ sudo nano /etc/profile
 shln
 ```
 
-# Example
+# Hello World
+
+To add manually add a hello world script for use under shln:
+
+```bash
+cd ~/shln
+
+# create simple hello world
+echo "echo hello, world" > hello.sh
+chmod +x hello.sh
+
+
+# show all current links
+shln ls -al
+
+# manually link "hello" to hello.sh
+shln ln hello
+
+# Run hello.sh
+hello
+
+# Cleanup
+shln rm hello
+rm hello.sh
+```
+
+# Package Example
+
+Any git repository may be used as a package of shell scripts.  A collection of shell scripts that wrap docker are available at [dockcmd](https://github.com/dockcmd).
 
 Assuming docker is installed, the following will install the aws cli:
 
