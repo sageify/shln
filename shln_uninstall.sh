@@ -6,14 +6,13 @@ then
   exit 1
 fi
 
-if [ "$1" = "github.com/sageify/shln" ]; then
+if [ "$1" = "github.com/sageify/shln" ]
+then
   echo Cannot uninstall $1
   exit 1
 fi
 
 # TODO Check if $1 has .. or . components in it and reject, only want children of SHLN_PATH
-
-SHLN_PATH=${SHLN_PATH-~/shln}
 
 repo=$SHLN_PATH/$1
 
