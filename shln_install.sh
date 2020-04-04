@@ -27,14 +27,15 @@ then
   exit 1  
 fi
 
-if ! git ls-remote --exit-code $repo refs/tags/$2 > /dev/null 2> /dev/null
+if [ "$2" != "--master" ] && ! git ls-remote --exit-code $repo refs/tags/$2 > /dev/null 2> /dev/null
 then
   echo $repo does not contain tag $2 1>&2
+  echo tags: 1>&2
   tags $repo 1>&2
   exit 1
 fi
 
-dir=${SHLN_PATH-~/shln}/$1
+dir=$SHLN_PATH/$1
 
 if [ -f "$dir" ] || [ -d "$dir" ]
 then
@@ -44,7 +45,12 @@ fi
 
 mkdir -p $dir
 
-if ! git clone --branch $2 --depth 1 $repo $dir 2> /dev/null
+if [ "$2" != "--master" ]
+then
+  gitopts="--branch $2 --depth 1" 
+fi
+
+if ! git clone $gitopts $repo $dir 2> /dev/null
 then
   rm -rf $dir
   echo Error cloning $1 with tag $2 1>&2
@@ -60,6 +66,6 @@ then
 else
   ls $dir/*.sh | while read f
   do
-    shln ln `basename $f | cut -f 1 -d '.'`
+    shln ln $(basename $f | cut -f 1 -d '.')
   done
 fi
