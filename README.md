@@ -4,41 +4,42 @@ shln is a simple set of shell scripts that allow symoblic linking from a folder 
 
 Why?  Only a single PATH entry needs to be made, all the shell script links are in one place, and links can be easily added or removed.
 
-# Install
+## Install
 
 To install, clone this repository to ~/shln/github.com/sageify/shln:
 
 ```bash
-# create directory
-mkdir -p ~/shln/github.com/sageify/shln
-cd ~/shln/github.com/sageify/shln
+# create directory and change to that directory
+mkdir -p ~/shln/github.com/sageify/shln && cd $_
 
 # clone desired version into current directory
 git clone --branch v0.0.2 --depth 1 https://github.com/sageify/shln.git .
 
-# install the /usr/local/shln folder and add shln itself
-./install-shln.sh
+# to install the $HOME/bin (ubnutu will pick up automatically for path)
+./install-home-bin.sh
+
+# to install to usr/local/shln
+./install-usr-local.sho
 ```
 
-Update linux PATH variable to add the /usr/local/shln folder.  This varies depending on your platform.
+If install the usr-local or not on ubuntu, update linux PATH variable to add the /usr/local/shln folder.
 
-For example, on debian:
 ```bash
 # edit profile script and adjust PATH
 # PATH=/usr/local/shln:$PATH
 sudo nano /etc/profile
 ```
 
-# Usage
+## Usage
 
 ```bash
-# Assuming /usr/local/shln has been added to the PATH 
+# Assuming PATH has been updated 
 shln
 ```
 
-# Hello World
+## Hello World
 
-To add manually add a hello world script for use under shln:
+To add a hello world script for use under shln:
 
 ```bash
 cd ~/shln
@@ -47,11 +48,10 @@ cd ~/shln
 echo "echo hello, world" > hello.sh
 chmod +x hello.sh
 
-
 # show all current links
 shln ls -al
 
-# manually link "hello" to hello.sh
+# link "hello" to hello.sh
 shln ln hello
 
 # Run hello.sh
@@ -62,7 +62,7 @@ shln rm hello
 rm hello.sh
 ```
 
-# Package Example
+## Packages
 
 Any git repository may be used as a package of shell scripts.  A collection of shell scripts that wrap docker are available at [dockcmd](https://github.com/dockcmd).
 
