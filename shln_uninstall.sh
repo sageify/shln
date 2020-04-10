@@ -18,8 +18,9 @@ repo=$SHLN_PATH/$1
 
 if ! [ -d "$repo/.git" ]
 then
-  echo Git repository does not exists: $repo
-  exit 1
+  echo Local repository does not exists: $repo
+  exit 
+  1
 fi
 
 if [ -f $repo/shln.conf ]

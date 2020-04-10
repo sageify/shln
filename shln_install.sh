@@ -2,12 +2,19 @@
 
 # Install a shln module:
 # shln install github.com/dockcmd/aws v0.0.1
-#
+# shln install --deep github.com/dockcmd/misc-sh 
 
 if ! [ $1 ]
 then
-  echo Usage: shln install REPOSITORY TAG 1>&2
+  echo Usage: shln install [--deep] REPOSITORY [BRANCH_TAG]  1>&2
   exit 1
+fi
+
+if [ $1 = "--deep" ] || [ $1 = "-d" ]
+then
+  shift
+else
+  shallow="--depth 1"
 fi
 
 repo=https://$1.git
@@ -15,23 +22,6 @@ repo=https://$1.git
 if ! git ls-remote -h $repo 1> /dev/null
 then
   # problem with finding repo
-  exit 1
-fi
-
-if ! [ $2 ]
-then
-  # no tag specified
-  echo Usage: shln install $1 TAG
-  echo tags: 1>&2
-  tags $repo 1>&2
-  exit 1  
-fi
-
-if [ "$2" != "--master" ] && ! git ls-remote --exit-code $repo refs/tags/$2 > /dev/null 2> /dev/null
-then
-  echo $repo does not contain tag $2 1>&2
-  echo tags: 1>&2
-  tags $repo 1>&2
   exit 1
 fi
 
@@ -43,17 +33,14 @@ then
   exit 1
 fi
 
+branch=${2:-master}
+
 mkdir -p $dir
 
-if [ "$2" != "--master" ]
+if ! git clone --branch $branch $shallow $repo $dir 2> /dev/null
 then
-  gitopts="--branch $2 --depth 1" 
-fi
-
-if ! git clone $gitopts $repo $dir 2> /dev/null
-then
-  rm -rf $dir
-  echo Error cloning $1 with tag $2 1>&2
+  rm -r $dir
+  echo Error cloning branch/tag $branch of repo $repo to $dir 1>&2
   exit 1
 fi
 
