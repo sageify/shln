@@ -17,15 +17,32 @@ else
   shallow="--depth 1"
 fi
 
-repo=https://$1.git
+case $1 in
+  *.git )
+    echo Repository name should not end with .git: $1 1>&2
+    exit 1;;
+  https://* )
+    repo=$1.git
+    dir=$SHLN_PATH/$(echo $1 | cut -c 9-);;
+  ssh://* )
+    repo=$1.git
+    dir=$SHLN_PATH/$(echo $1 | cut -c 7-);;
+  */*/* )
+    repo="https://$1.git"
+    dir=$SHLN_PATH/$1;;
+  */* )
+    repo="https://github.com/$1.git"
+    dir=$SHLN_PATH/github.com/$1;;
+  * )
+    echo Invalid repository name $1 1>&2
+    exit 1;;
+esac
 
 if ! git ls-remote -h $repo 1> /dev/null
 then
   # problem with finding repo
   exit 1
 fi
-
-dir=$SHLN_PATH/$1
 
 if [ -f "$dir" ] || [ -d "$dir" ]
 then
