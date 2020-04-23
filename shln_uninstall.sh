@@ -7,9 +7,12 @@ then
 fi
 
 case $1 in
-  *..*|*.git )
-    echo Invalid repository name: $1 1>&2
-    exit 1;;    
+  ..|*/..|*/../*|../* )
+    echo Can not use .. in repository name: $1 1>&2
+    exit 1;;
+  *.git )
+    echo Repository name can not end with .git: $1 1>&2
+    exit 1;;
   https://* )
     dir=$SHLN_PATH/$(echo $1 | cut -c 9-);;
   ssh://* )
