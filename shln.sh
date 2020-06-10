@@ -16,8 +16,11 @@ fi
 
 SHLN_BIN=$(dirname "$0")
 SCRIPT_PATH=$(dirname $(readlink "$0"))
+
 # assumes shln scripts are in something like github.com/sageify/shln dir
-SHLN_PATH=${SHLN_PATH-$(realpath $SCRIPT_PATH/../../..)}
+# if not, set SHLN_PATH globally
+# we don't use realpath as it isn't available on OSX
+SHLN_PATH=${SHLN_PATH-$(cd $SCRIPT_PATH/../../.. && pwd -P)}
 
 if ! [ $1 ]
 then

@@ -19,7 +19,7 @@ git clone --branch v0.0.2 --depth 1 https://github.com/sageify/shln.git .
 ./install-home-bin.sh
 
 # to install to usr/local/shln
-./install-usr-local.sho
+./install-usr-local.sh
 ```
 
 If install the usr-local or not on ubuntu, update linux PATH variable to add the /usr/local/shln folder.
@@ -28,6 +28,9 @@ If install the usr-local or not on ubuntu, update linux PATH variable to add the
 # edit profile script and adjust PATH
 # PATH=/usr/local/shln:$PATH
 sudo nano /etc/profile
+
+# OSX
+sudo nano /etc/paths
 ```
 
 ## Usage
@@ -62,7 +65,7 @@ shln rm hello
 rm hello.sh
 ```
 
-## Packages
+## Module Support
 
 Any git repository may be used as a package of shell scripts.  A collection of shell scripts that wrap docker are available at [dockcmd](https://github.com/dockcmd).
 
@@ -70,7 +73,7 @@ Assuming docker is installed, the following will install the aws cli:
 
 ```bash
 # Install shell module support required by aws-sh
-shln install github.com/sageify/shmod v0.0.1
+shln install github.com/sageify/shmod v0.0.3
 
 # Install aws cli
 shln install github.com/dockcmd/aws-sh v0.0.1
