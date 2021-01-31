@@ -1,12 +1,6 @@
 #!/bin/sh
 
-# list tags
-tags() {
-  git ls-remote --tags $1 | while read commit tag
-  do
-    echo $(basename $tag)
-  done
-}
+# shln control script, setup environment variables, defer to a shln_[cmd] script
 
 if ! [ -L "$0" ]
 then

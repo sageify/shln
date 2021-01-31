@@ -1,7 +1,8 @@
 # sourced into shln.sh
 
 # Install a shln module:
-# shln install github.com/dockcmd/aws v0.0.1
+# shln install dockcmd/aws-sh v0.0.1
+# shln install github.com/dockcmd/aws-sh v0.0.1
 # shln install --deep github.com/dockcmd/misc-sh 
 
 if ! [ $1 ]

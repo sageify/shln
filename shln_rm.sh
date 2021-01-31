@@ -1,4 +1,4 @@
-# sourced into shln.sh
+# sourced into shln.sh to get SHLN_BIN
 
 # remove item from shln folder.
 if [ "$1" = "shln" ]; then
