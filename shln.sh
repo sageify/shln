@@ -9,15 +9,16 @@ then
 fi
 
 # Directory holding the symbolic link names.
-LN_PATH=$(dirname "$0")
+SHLN_LN_PATH=$(dirname "$0")
+
 # Directory holding the shell script itself
 SCRIPT_PATH=$(dirname $(readlink "$0"))
 
 # Root path to shln source
 # assumes shln scripts are in something like github.com/sageify/shln dir
-# if not, set SHLN_PATH globally
+# if not, set SHLN_SOURCE_PATH globally
 # we don't use realpath as it isn't available on OSX
-SHLN_PATH=${SHLN_PATH-$(cd $SCRIPT_PATH/../../.. && pwd -P)}
+SHLN_SOURCE_PATH=${SHLN_SOURCE_PATH-$(cd $SCRIPT_PATH/../../.. && pwd -P)}
 
 if ! [ $1 ]
 then

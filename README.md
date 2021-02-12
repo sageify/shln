@@ -9,27 +9,17 @@ Why?
 
 ## Install
 
-To install in standard location:
+To install on Mac/Linux:
 
 ```bash
-# create directory and change to that directory
-mkdir -p ~/shln/github.com/sageify/shln && cd $_
-
-# clone desired version into current directory
-git clone --depth 1 https://github.com/sageify/shln.git .
-
-# to install the $HOME/bin (ubnutu will pick up automatically for path)
-# ./install-home-bin.sh
-
-# to install to usr/local/shln
-# ./install-usr-local.sh
+curl -fsSL https://raw.githubusercontent.com/sageify/shln/master/install.sh | sh
 ```
 
-If using ./install-usr-local.sh or not on ubuntu, update linux PATH variable to add the /usr/local/shln folder.
+If needed, add ~/bin to path:
 
 ```bash
 # edit profile script and adjust PATH
-# PATH=/usr/local/shln:$PATH
+# PATH=$HOME/bin:$PATH
 sudo nano /etc/profile
 
 # OSX

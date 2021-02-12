@@ -15,7 +15,7 @@ then
   exit 1
 fi
 
-dir=$SHLN_PATH/$dir
+dir=$SHLN_SOURCE_PATH/$dir
 
 if ! [ -d "$dir/.git" ]
 then

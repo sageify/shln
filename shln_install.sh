@@ -20,8 +20,8 @@ then
   exit 1
 fi
 
-# Add SHLN_PATH to dir.  SHLN_PATH is set in shln.sh from which this should be sourced
-dir=$SHLN_PATH/$dir
+# Add SHLN_SOURCE_PATH to dir.  SHLN_SOURCE_PATH is set in shln.sh from which this should be sourced
+dir=$SHLN_SOURCE_PATH/$dir
 
 if [ -f "$dir" ] || [ -d "$dir" ]
 then

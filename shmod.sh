@@ -33,27 +33,27 @@ shmod_repo_tag_dir() {
 
   # redefine repo
   case $repo in
-    ..|*/..|*/../*|../* )
-      echo Can not use .. in repository name: $1 1>&2
-      exit 1;;
-    *.git )
-      echo Repository name should not end with .git: $1 1>&2
-      exit 1;;
-    https://* )
-      dir=$(echo $repo | cut -c 9-)
-      repo=$repo.git;;
-    ssh://* )
-      dir=$(echo $repo | cut -c 7-)
-      repo=$repo.git;;
-    */*/* )
-      dir=$repo
-      repo="https://$repo.git";;
-    */* )
-      dir=github.com/$repo
-      repo="${SHMOD_GIT_HOST-https://github.com}/$repo.git";;
-    * )
-      echo Invalid repository name: $1 1>&2
-      exit 1;;
+  ..|*/..|*/../*|../* )
+    echo Can not use .. in repository name: $1 1>&2
+    exit 1;;
+  *.git )
+    echo Repository name should not end with .git: $1 1>&2
+    exit 1;;
+  https://* )
+    dir=$(echo $repo | cut -c 9-)
+    repo=$repo.git;;
+  ssh://* )
+    dir=$(echo $repo | cut -c 7-)
+    repo=$repo.git;;
+  */*/* )
+    dir=$repo
+    repo="https://$repo.git";;
+  */* )
+    dir=github.com/$repo
+    repo="${SHMOD_GIT_HOST-https://github.com}/$repo.git";;
+  * )
+    echo Invalid repository name: $1 1>&2
+    exit 1;;
   esac
 }
 
@@ -68,7 +68,7 @@ shmod_source() {
     exit 1
   fi
 
-  dir=${SHMOD_PATH-~/shmod}/$dir@$tag
+  dir=${SHMOD_PATH-$HOME/.shmod}/$dir@$tag
   shmod_clone $repo $tag $dir "--depth 1"
   echo $dir
 }

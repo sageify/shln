@@ -6,5 +6,5 @@ if [ "$1" = "shln" ]; then
   exit 1
 fi
 
-cd $LN_PATH
+cd $SHLN_LN_PATH
 rm $1
