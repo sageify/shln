@@ -16,7 +16,7 @@ To install in standard location:
 mkdir -p ~/shln/github.com/sageify/shln && cd $_
 
 # clone desired version into current directory
-git clone --branch v0.0.4 --depth 1 https://github.com/sageify/shln.git .
+git clone --depth 1 https://github.com/sageify/shln.git .
 
 # to install the $HOME/bin (ubnutu will pick up automatically for path)
 # ./install-home-bin.sh

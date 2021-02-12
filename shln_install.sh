@@ -20,13 +20,6 @@ then
   exit 1
 fi
 
-if ! [ $tag ]
-then
-  echo Repository tag missing: $1 1>&2
-  echo Usage: repo@tag
-  exit 1
-fi
-
 # Add SHLN_PATH to dir.  SHLN_PATH is set in shln.sh from which this should be sourced
 dir=$SHLN_PATH/$dir
 
@@ -36,7 +29,7 @@ then
   exit 1
 fi
 
-shmod_clone $repo $tag $dir
+shmod_clone $repo "$tag" $dir "--depth 1"
 
 if [ -f $dir/shln.conf ]
 then 

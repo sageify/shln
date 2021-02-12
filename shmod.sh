@@ -50,7 +50,7 @@ shmod_repo_tag_dir() {
       repo="https://$repo.git";;
     */* )
       dir=github.com/$repo
-      repo="https://github.com/$repo.git";;
+      repo="${SHMOD_GIT_HOST-https://github.com}/$repo.git";;
     * )
       echo Invalid repository name: $1 1>&2
       exit 1;;
@@ -69,23 +69,23 @@ shmod_source() {
   fi
 
   dir=${SHMOD_PATH-~/shmod}/$dir@$tag
-  shmod_clone $repo $tag $dir
+  shmod_clone $repo $tag $dir "--depth 1"
   echo $dir
 }
 
-# clone  <repo> <tag> <dir>
+# clone  <repo> <tag> <dir> [args]
 shmod_clone() {
   [ -f "$3" ] || [ -d "$3" ] && return
 
   ! mkdir -p $3 && exit 1
 
   # Git writes Cloning into.. into error stream, need to eat
-  if ! git clone --depth 1 --branch $2 $1 $3 2> /dev/null
+  if ! git clone $4 ${2:+--branch $2} $1 $3 2> /dev/null
   then
     # only remove if empty
     rm -r $3
     echo fail: 1>&2
-    echo git clone --branch $2 $1 $3 1>&2
+    echo git clone ${2:+--branch $2} $1 $3 1>&2
     exit 1
   fi  
 }

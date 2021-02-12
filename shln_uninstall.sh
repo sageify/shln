@@ -9,15 +9,17 @@ fi
 . shmod
 shmod_repo_tag_dir $1
 
-if [ "$dir" = "$SHLN_PATH/github.com/sageify/shln" ]
+if [ "$dir" = "github.com/sageify/shln" ]
 then
   echo Must manually uninstall $1
   exit 1
 fi
 
+dir=$SHLN_PATH/$dir
+
 if ! [ -d "$dir/.git" ]
 then
-  echo Local repository does not exists: $dir
+  echo Local git repository does not exists: $dir
   exit 
   1
 fi
