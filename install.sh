@@ -2,7 +2,6 @@
 
 SHLN_SOURCE_PATH=${SHLN_SOURCE_PATH:-$HOME/.shln}
 SHLN_LN_PATH=${SHLN_LN_PATH:-$HOME/bin}
-exe=$SHLN_LN_PATH/shln
 
 ! mkdir -p $SHLN_SOURCE_PATH/github.com/sageify/shln && exit 1
 cd $_
@@ -18,7 +17,7 @@ fi
 ln -s $(pwd)/shln.sh $SHLN_LN_PATH/shln
 ln -s $(pwd)/shmod.sh $SHLN_LN_PATH/shmod
 
-echo "shln was installed successfully to $exe"
+echo "Links successfully installed to $SHLN_LN_PATH, source to $SHLN_SOURCE_PATH"
 if command -v deno >/dev/null
 then
 	echo "Run 'shln' to get started"
@@ -31,5 +30,5 @@ else
 	esac
 	echo "Manually add the link directory to your \$HOME/$shell_profile (or similar)"
 	echo "  export PATH=\"\$SHLN_LN_PATH:\$PATH\""
-	echo "Run '$exe' to get started"
+	echo "Run 'shln' to get started"
 fi
