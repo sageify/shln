@@ -6,25 +6,8 @@ then
   exit 1
 fi
 
-case $1 in
-  ..|*/..|*/../*|../* )
-    echo Can not use .. in repository name: $1 1>&2
-    exit 1;;
-  *.git )
-    echo Repository name can not end with .git: $1 1>&2
-    exit 1;;
-  https://* )
-    dir=$SHLN_PATH/$(echo $1 | cut -c 9-);;
-  ssh://* )
-    dir=$SHLN_PATH/$(echo $1 | cut -c 7-);;
-  */*/* )
-    dir=$SHLN_PATH/$1;;
-  */* )
-    dir=$SHLN_PATH/github.com/$1;;
-  * )
-    echo Invalid repository name: $1 1>&2
-    exit 1;;
-esac
+. shmod
+shmod_repo_tag_dir $1
 
 if [ "$dir" = "$SHLN_PATH/github.com/sageify/shln" ]
 then

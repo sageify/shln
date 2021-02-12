@@ -1,4 +1,4 @@
-# sourced into shln.sh to get SHLN_BIN
+# sourced into shln.sh to get LN_PATH
 
 # remove item from shln folder.
 if [ "$1" = "shln" ]; then
@@ -6,5 +6,5 @@ if [ "$1" = "shln" ]; then
   exit 1
 fi
 
-cd $SHLN_BIN
+cd $LN_PATH
 rm $1

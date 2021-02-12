@@ -8,9 +8,12 @@ then
   exit 1
 fi
 
-SHLN_BIN=$(dirname "$0")
+# Directory holding the symbolic link names.
+LN_PATH=$(dirname "$0")
+# Directory holding the shell script itself
 SCRIPT_PATH=$(dirname $(readlink "$0"))
 
+# Root path to shln source
 # assumes shln scripts are in something like github.com/sageify/shln dir
 # if not, set SHLN_PATH globally
 # we don't use realpath as it isn't available on OSX

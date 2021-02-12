@@ -1,6 +1,6 @@
 # Shell Links (shln)
 
-shln is a simple set of shell scripts that allow symoblic linking from a folder in the PATH (usually /usr/local/shln) to shell scripts under a user folder (usually ~/shln).
+shln is a git package manager for shell scripts that allow symoblic linking from a folder in the PATH (usually /usr/local/shln) to shell scripts under a user folder (usually ~/shln).
 
 Why?  
 - The shell script links are in one place.
@@ -16,7 +16,7 @@ To install in standard location:
 mkdir -p ~/shln/github.com/sageify/shln && cd $_
 
 # clone desired version into current directory
-git clone --branch v0.0.2 --depth 1 https://github.com/sageify/shln.git .
+git clone --branch v0.0.4 --depth 1 https://github.com/sageify/shln.git .
 
 # to install the $HOME/bin (ubnutu will pick up automatically for path)
 # ./install-home-bin.sh
@@ -68,18 +68,30 @@ shln rm hello
 rm hello.sh
 ```
 
-## Module Support
+## Shell Script Package Support
 
 Any git repository may be used as a package of shell scripts.  A collection of shell scripts that wrap docker are available at [dockcmd](https://github.com/dockcmd).
 
 Assuming docker is installed, the following will install the aws cli:
 
 ```bash
-# Install shell module support required by aws-sh
-shln install github.com/sageify/shmod v0.0.3
-
 # Install aws cli
-shln install github.com/dockcmd/aws-sh v0.0.1
+shln tag dockcmd/aws-sh
+shln install dockcmd/aws-sh@v0.0.3
 
 aws --version
 ```
+
+## Shell Script Modules
+
+### Usage
+
+```bash
+#!/bin/bash
+
+. shmod
+import dockcmd/sh@v0.0.2 docker.sh
+
+```
+
+By default, the files are imported to ~/shmod directory.  To specific a folder, set the SHMOD_PATH environment variable.

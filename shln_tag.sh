@@ -7,8 +7,10 @@ then
   exit 1
 fi
 
+. shmod
+shmod_repo_tag_dir $1
 
-git ls-remote --tags https://$1.git | while read commit tag
+git ls-remote --tags $repo | while read commit tag
 do
   echo $(basename $tag)
 done

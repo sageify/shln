@@ -6,8 +6,8 @@ then
   exit 1
 fi
 
-# SHLN_BIN provided by shln.sh
-link_name=$SHLN_BIN/$1
+# LN_PATH provided by shln.sh
+link_name=$LN_PATH/$1
 
 if [ -f "$link_name" ]
 then
@@ -21,7 +21,8 @@ target=$(find $SHLN_PATH -name $1.sh 2>/dev/null)
 count=$(echo $target | wc -w)
 if [ $count -ge 2 ]
 then
-  echo "Multiple targets: $target" 1>&2
+  echo "Multiple targets:"  1>&2
+  echo $target 1>&2
   exit 1
 fi
 

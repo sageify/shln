@@ -8,3 +8,4 @@ fi
 
 mkdir -p ~/bin
 ln -s $(pwd)/shln.sh ~/bin/shln
+ln -s $(pwd)/shmod.sh ~/bin/shmod

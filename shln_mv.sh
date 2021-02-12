@@ -1,4 +1,4 @@
 # sourced into shln.sh
 
-cd $SHLN_BIN
+cd $LN_PATH
 mv "$@"
