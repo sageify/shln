@@ -1,10 +1,17 @@
 # sourced into shln.sh to get LN_PATH
 
+set -x
+
 # remove item from shln folder.
 if [ "$1" = "shln" ]; then
-  echo Cannot remove link: $1
+  echo fatal: cannot remove link: $1
   exit 1
 fi
 
-cd $SHLN_LN_PATH
-rm $1
+if ! cd $SHLN_LN_PATH
+then
+  echo fatal: no such directory: $SHLN_LN_PATH
+  exit 1
+fi
+
+rm "$@" 

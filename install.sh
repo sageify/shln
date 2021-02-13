@@ -1,5 +1,13 @@
 #!/bin/sh
 
+set -e
+
+if ! command -v git >/dev/null 
+then
+	echo "Error: git is required to install shln." 1>&2
+	exit 1
+fi
+
 SHLN_SOURCE_PATH=${SHLN_SOURCE_PATH:-$HOME/.shln}
 SHLN_LN_PATH=${SHLN_LN_PATH:-$HOME/bin}
 
@@ -8,8 +16,7 @@ cd $_
 
 if ! git clone --depth 1 https://github.com/sageify/shln.git . 2> /dev/null
 then
-  echo fail: 1>&2
-  echo git clone ${2:+--branch $2} $1 $3 1>&2
+  echo Error: git clone ${2:+--branch $2} $1 $3 1>&2
   exit 1  
 fi
 

@@ -18,8 +18,7 @@ fi
 
 target=$(find $SHLN_SOURCE_PATH -name $1.sh 2>/dev/null)
 
-count=$(echo $target | wc -w)
-if [ $count -ge 2 ]
+if [ $(echo $target | wc -w) -ge 2 ]
 then
   echo "Multiple targets:"  1>&2
   echo $target 1>&2

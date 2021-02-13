@@ -23,13 +23,31 @@ import() {
   unset _script
 }
 
+# <repo>
+shmod_source() {
+  shmod_repo_tag_dir $1
+  
+  if ! [ $tag ]
+  then
+    echo Repository tag missing: $1 1>&2
+    echo Usage: repo@tag
+    exit 1
+  fi
+
+  dir=$SHMOD_PATH/$dir@$tag
+  shmod_clone $repo $tag $dir "--depth 1"
+  echo $dir
+}
+
 # sets the repo, tag, amd dir
 # sageify/shmod@v0.0.1
 # repo=https://github.com/sageify/shmod.git
 # tag=v0.0.1
 # dir=github.com/sageify/shmod
 shmod_repo_tag_dir() {
-  IFS='@' read repo tag <<< "$1"
+  IFS='@' read repo tag << EOF
+$1
+EOF
 
   # redefine repo
   case $repo in
@@ -57,22 +75,6 @@ shmod_repo_tag_dir() {
   esac
 }
 
-# <repo>
-shmod_source() {
-  shmod_repo_tag_dir $1
-  
-  if ! [ $tag ]
-  then
-    echo Repository tag missing: $1 1>&2
-    echo Usage: repo@tag
-    exit 1
-  fi
-
-  dir=${SHMOD_PATH-$HOME/.shmod}/$dir@$tag
-  shmod_clone $repo $tag $dir "--depth 1"
-  echo $dir
-}
-
 # clone  <repo> <tag> <dir> [args]
 shmod_clone() {
   [ -f "$3" ] || [ -d "$3" ] && return
@@ -97,7 +99,7 @@ run() {
   then
     exit 0
   fi
-  
+
   # if dr not set, just exec.  exec terminates script
   [ -z ${dr+x} ] && exec "$@"
 
@@ -111,9 +113,16 @@ run() {
     exit 0
   fi
 
-  # dryrun set, print command escaped so it can be copied to run
-  printf "%q " $@
-  echo
-
+  echo "$@"
   exit 0
 }
+
+# shmod requires git
+if ! command -v git >/dev/null 
+then
+	echo "Error: git is required for shmod." 1>&2
+	exit 1
+fi
+
+# set path
+SHMOD_PATH=${SHMOD_PATH-$HOME/.shmod}

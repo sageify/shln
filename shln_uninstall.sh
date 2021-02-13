@@ -1,39 +1,70 @@
 # sourced into shln.sh
 
+set -e
+
+shpack_uninstall() {
+  shmod_repo_tag_dir $1
+
+  if [ "$dir" = "github.com/sageify/shln" ]
+  then
+    # silently ignoring to suport
+    # shln pkgs | shln uninstall
+    return
+  fi
+
+  dir=$SHLN_SOURCE_PATH/$dir
+
+  if ! [ -d "$dir" ]
+  then
+    echo fatal: not a package: $dir 1>&2
+    exit 1
+  fi
+
+  if ! [ -d "$dir/.git" ]
+  then
+    echo fatal: package is missing git repository: $dir 1>&2
+    exit 1
+  fi
+
+  cd $dir
+  diff=$(git diff --name-only)
+  if [ "$diff" ]
+  then
+    echo "fatal: modified files exist in $dir" 1>&2
+    echo $diff 1>&2
+    exit 1
+  fi
+
+  cd $dir
+  diff=$(git log --branches --not --remotes)
+  if [ "$diff" ]
+  then
+    echo "fatal: commits haven't been pushed in $dir" 1>&2
+    echo $diff 1>&2
+    exit 1
+  fi
+
+  ls $SHLN_LN_PATH  | while read f
+  do
+    if [ "$dir" = "$( dirname $(readlink $SHLN_LN_PATH/$f) )" ]
+    then
+      # any link that references the package directory is removed
+      rm $SHLN_LN_PATH/$f
+    fi
+  done
+
+  rm -rf $dir
+}
+
 if ! [ $1 ]
 then
-  echo Usasge: shln uninstall REPOSITORY 1>&2
+  echo Usasge: shln uninstall REPOSITORY [REPOSITORY] 1>&2
   exit 1
 fi
 
 . shmod
-shmod_repo_tag_dir $1
 
-if [ "$dir" = "github.com/sageify/shln" ]
-then
-  echo Must manually uninstall $1
-  exit 1
-fi
-
-dir=$SHLN_SOURCE_PATH/$dir
-
-if ! [ -d "$dir/.git" ]
-then
-  echo Local git repository does not exists: $dir
-  exit 
-  1
-fi
-
-if [ -f $dir/shln.conf ]
-then 
-  while IFS= read link; do
-    shln rm $link
-  done < $dir/shln.conf
-else
-  ls $dir/*.sh | while read f
-  do
-    shln rm `basename $f | cut -f 1 -d '.'`
-  done
-fi
-
-rm -rf $dir
+for pack in "$@"
+do
+  shpack_uninstall $pack
+done

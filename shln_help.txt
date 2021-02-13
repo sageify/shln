@@ -4,11 +4,6 @@ Shell link commands
 
 Commands:
  
-Git Packages
- tag       list package tags
- install   install new package
- uninstall uninstall a package
-
 Links
  ln       new link
  ls       list links
@@ -16,6 +11,15 @@ Links
  rm       remove a link
  exec     execute link directly
  version  show the git tag, if any, of the source for a link
+
+Script Packages
+ tags      list tags for pacakge
+ install   install new package
+ uninstall uninstall a package
+ packs     list packages
+
+Script Modules
+ mods      list installed modules
 
 General
  help     show this page
