@@ -89,3 +89,26 @@ shmod_clone() {
     exit 1
   fi  
 }
+
+# if dryrun (dr) is not assigned, exec cmd, otherwise print cmd
+# whill not return from this function
+shmod_exec() {
+  # if dr not set, just exec.  exec terminates script
+  [ -z ${dr+x} ] && exec "$@"
+
+  if [ "$dr" = l ]
+  then
+    # dr list in long format unescaped
+    for word in "$@"
+    do
+      echo $word \\
+    done
+    exit 0
+  fi
+
+  # dryrun set, print command escaped so it can be copied to run
+  printf "%q " $@
+  echo
+
+  exit 0
+}
