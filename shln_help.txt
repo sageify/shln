@@ -14,7 +14,8 @@ Links
  ls       list links
  mv       rename a link 
  rm       remove a link
- version  show the version of a link
+ exec     execute link directly
+ version  show the git tag, if any, of the source for a link
 
 General
  help     show this page

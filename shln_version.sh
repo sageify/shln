@@ -8,4 +8,5 @@ if ! [ -f "$link_name" ]; then
 fi
 
 cd $(dirname $(readlink "$link_name"))
-git tag -l --points-at HEAD
+tag=`git tag -l --points-at HEAD`
+echo ${tag:=HEAD}
