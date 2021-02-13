@@ -92,7 +92,7 @@ shmod_clone() {
 
 # if dryrun (dr) is not assigned, exec cmd, otherwise print cmd
 # whill not return from this function
-shmod_exec() {
+run() {
   # if dr not set, just exec.  exec terminates script
   [ -z ${dr+x} ] && exec "$@"
 
