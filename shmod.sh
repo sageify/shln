@@ -67,8 +67,8 @@ EOF
     dir=$repo
     repo="https://$repo.git";;
   */* )
-    dir=github.com/$repo
-    repo="${SHMOD_GIT_HOST-https://github.com}/$repo.git";;
+    dir=$SHMOD_GIT_HOST/$repo
+    repo=$SHMOD_GIT_SCHEME://$SHMOD_GIT_HOST/$repo.git;;
   * )
     echo Invalid repository name: $1 1>&2
     exit 1;;
@@ -124,5 +124,7 @@ then
 	exit 1
 fi
 
-# set path
+# set shmod environment variables
 SHMOD_PATH=${SHMOD_PATH-$HOME/.shmod}
+SHMOD_GIT_SCHEME=${SHMOD_GIT_SCHEME-https}
+SHMOD_GIT_HOST=${SHMOD_GIT_HOST-github.com}

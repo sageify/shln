@@ -5,13 +5,6 @@ set -e
 shpack_uninstall() {
   shmod_repo_tag_dir $1
 
-  if [ "$dir" = "github.com/sageify/shln" ]
-  then
-    # silently ignoring to suport
-    # shln pkgs | shln uninstall
-    return
-  fi
-
   dir=$SHLN_SOURCE_PATH/$dir
 
   if ! [ -d "$dir" ]
