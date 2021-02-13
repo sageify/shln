@@ -7,7 +7,7 @@ then
 fi
 
 # LN_PATH provided by shln.sh
-link_name=$SHLN_LN_PATH/$1
+link_name=$SHLN_PATH/$1
 
 if [ -f "$link_name" ]
 then
@@ -16,7 +16,7 @@ then
   exit 0
 fi
 
-target=$(find $SHLN_SOURCE_PATH -name $1.sh 2>/dev/null)
+target=$(find $SHPACK_PATH -name $1.sh 2>/dev/null)
 
 if [ $(echo $target | wc -w) -ge 2 ]
 then
@@ -27,7 +27,7 @@ fi
 
 if [ ! "$target" ]
 then
-  echo "Target not found in $SHLN_SOURCE_PATH or a sub folder: $1.sh" 1>&2
+  echo "Target not found in $SHPACK_PATH or a sub folder: $1.sh" 1>&2
   exit 1
 fi
 

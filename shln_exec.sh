@@ -8,4 +8,4 @@ fi
 
 cmd=$1
 shift
-exec $SHLN_LN_PATH/$cmd "$@"
+exec $SHLN_PATH/$cmd "$@"

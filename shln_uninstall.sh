@@ -5,7 +5,7 @@ set -e
 shpack_uninstall() {
   shmod_repo_tag_dir $1
 
-  dir=$SHLN_SOURCE_PATH/$dir
+  dir=$SHPACK_PATH/$dir
 
   if ! [ -d "$dir" ]
   then
@@ -37,12 +37,12 @@ shpack_uninstall() {
     exit 1
   fi
 
-  ls $SHLN_LN_PATH  | while read f
+  ls $SHLN_PATH  | while read f
   do
-    if [ "$dir" = "$( dirname $(readlink $SHLN_LN_PATH/$f) )" ]
+    if [ "$dir" = "$( dirname $(readlink $SHLN_PATH/$f) )" ]
     then
       # any link that references the package directory is removed
-      rm $SHLN_LN_PATH/$f
+      rm $SHLN_PATH/$f
     fi
   done
 

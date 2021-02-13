@@ -8,9 +8,9 @@ if [ "$1" = "shln" ]; then
   exit 1
 fi
 
-if ! cd $SHLN_LN_PATH
+if ! cd $SHLN_PATH
 then
-  echo fatal: no such directory: $SHLN_LN_PATH
+  echo fatal: no such directory: $SHLN_PATH
   exit 1
 fi
 

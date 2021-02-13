@@ -8,10 +8,10 @@ then
 	exit 1
 fi
 
-SHLN_SOURCE_PATH=${SHLN_SOURCE_PATH:-$HOME/.shln}
-SHLN_LN_PATH=${SHLN_LN_PATH:-$HOME/bin}
+SHPACK_PATH=${SHPACK_PATH:-$HOME/.shpack}
+SHLN_PATH=${SHLN_PATH:-$HOME/bin}
 
-! mkdir -p $SHLN_SOURCE_PATH/github.com/sageify/shln && exit 1
+! mkdir -p $SHPACK_PATH/github.com/sageify/shln && exit 1
 cd $_
 
 if ! git clone --depth 1 https://github.com/sageify/shln.git . 2> /dev/null
@@ -20,11 +20,11 @@ then
   exit 1  
 fi
 
-! mkdir -p $SHLN_LN_PATH && exit 1
-ln -s $(pwd)/shln.sh $SHLN_LN_PATH/shln
-ln -s $(pwd)/shmod.sh $SHLN_LN_PATH/shmod
+! mkdir -p $SHLN_PATH && exit 1
+ln -s $(pwd)/shln.sh $SHLN_PATH/shln
+ln -s $(pwd)/shmod.sh $SHLN_PATH/shmod
 
-echo "Links successfully installed to $SHLN_LN_PATH, source to $SHLN_SOURCE_PATH"
+echo "Links successfully installed to $SHLN_PATH, shln package to $SHPACK_PATH"
 if command -v deno >/dev/null
 then
 	echo "Run 'shln' to get started"
@@ -36,6 +36,6 @@ else
     shell_profile=".bash_profile" ;;
 	esac
 	echo "Manually add the link directory to your \$HOME/$shell_profile (or similar)"
-	echo "  export PATH=$SHLN_LN_PATH\":\$PATH\""
+	echo "  export PATH=$SHLN_PATH\":\$PATH\""
 	echo "Run 'shln' to get started"
 fi

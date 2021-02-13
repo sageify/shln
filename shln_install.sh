@@ -15,8 +15,8 @@ shpack_install() {
     exit 1
   fi
 
-  # Add SHLN_SOURCE_PATH to dir.  SHLN_SOURCE_PATH is set in shln.sh from which this should be sourced
-  dir=$SHLN_SOURCE_PATH/$dir
+  # Add SHPACK_PATH to dir.  SHPACK_PATH is set in shln.sh from which this should be sourced
+  dir=$SHPACK_PATH/$dir
 
   if [ -f "$dir" ] || [ -d "$dir" ]
   then
@@ -32,7 +32,7 @@ shpack_install() {
     return
   fi
 
-  link_name=$SHLN_LN_PATH/$(basename $script | rev | cut -c 4- | rev)
+  link_name=$SHLN_PATH/$(basename $script | rev | cut -c 4- | rev)
 
   ln -s "$script" "$link_name"
 
