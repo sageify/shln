@@ -29,6 +29,6 @@ else
     shell_profile=".bash_profile" ;;
 	esac
 	echo "Manually add the link directory to your \$HOME/$shell_profile (or similar)"
-	echo "  export PATH=\"\$SHLN_LN_PATH:\$PATH\""
+	echo "  export PATH=$SHLN_LN_PATH\":\$PATH\""
 	echo "Run 'shln' to get started"
 fi
