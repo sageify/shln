@@ -45,6 +45,16 @@ fi
 # get repo, dir and tag
 . shmod
 
+if [ "$1" == "-" ]
+then
+  read args
+  for arg in $args shln
+  do
+    shpack_install $arg
+  done
+  exit 0
+fi
+
 for pack in "$@"
 do
   shpack_install $pack

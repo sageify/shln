@@ -57,6 +57,16 @@ fi
 
 . shmod
 
+if [ "$1" == "-" ]
+then
+  read args
+  for arg in $args shln
+  do
+    shpack_uninstall $arg
+  done
+  exit 0
+fi
+
 for pack in "$@"
 do
   shpack_uninstall $pack
