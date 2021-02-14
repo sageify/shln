@@ -2,7 +2,7 @@
 
 set -e
 
-if ! command -v git 1>/dev/null
+if ! command -v git >/dev/null
 then
 	echo "Error: git is required to install shln." 1>&2
 	exit 1
@@ -16,14 +16,17 @@ shln=${SHLN_PATH:-$HOME/bin}
 
 if ! git clone -q --depth 1 https://github.com/sageify/shln.git $shpack
 then
-  rm -r $shpack 2>/dev/null
+  ! [ "$(ls -A $shpack)" ] && rm -r $shpack
   exit 1
 fi
 
 ! mkdir -p $shln && \
   exit 1
 
+[ -f $shln/shln ] && rm $shln/shln]
 ln -s $shpack/shln.sh $shln/shln
+
+[ -f $shln/shln ] && rm $shln/shmod]
 ln -s $shpack/shmod.sh $shln/shmod
 
 echo "Links successfully created in $shln to $shpack"
