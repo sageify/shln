@@ -3,9 +3,10 @@
 set -e
 
 # Install a shln module:
-# shln install dockcmd/aws-sh@v0.0.1
+#
+# shln install dockcmd/aws-sh
 # shln install github.com/dockcmd/aws-sh@v0.0.1
-
+#
 shpack_install() {
   shmod_repo_tag_dir $1
 
@@ -14,8 +15,7 @@ shpack_install() {
   # Add SHPACK_PATH to dir.  SHPACK_PATH is set in shln.sh from which this should be sourced
   dir=$SHPACK_PATH/$dir
 
-  if [ -f "$dir" ] || [ -d "$dir" ]
-  then
+  if [ -f "$dir" ] || [ -d "$dir" ]; then
     echo fatal: repository or file already exists: $dir 1>&2
     exit 1
   fi
@@ -36,28 +36,23 @@ shpack_install() {
   ls -l "$link_name" | cut -c 10-
 }
 
-if ! [ $1 ]
-then
-  echo Usage: shln install REPOSITORY[@BRANCH_TAG]  1>&2
+if ! [ $1 ]; then
+  echo Usage: shln install REPOSITORY[@BRANCH_TAG] 1>&2
   exit 1
 fi
 
 # get repo, dir and tag
 . shmod
 
-if [ "$1" = "-" ]
-then
-  while read -r line || [ $line ]
-  do
-    for arg in $line
-    do
+if [ "$1" = "-" ]; then
+  while read -r line || [ $line ]; do
+    for arg in $line; do
       shpack_install $arg
     done
   done
   exit 0
 fi
 
-for pack in "$@"
-do
+for pack in "$@"; do
   shpack_install $pack
 done
