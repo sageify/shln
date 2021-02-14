@@ -7,15 +7,9 @@ shpack_uninstall() {
 
   dir=$SHPACK_PATH/$dir
 
-  if ! [ -d "$dir" ]
-  then
-    echo fatal: not a package: $dir 1>&2
-    exit 1
-  fi
-
   if ! [ -d "$dir/.git" ]
   then
-    echo fatal: package is missing git repository: $dir 1>&2
+    echo fatal: no git repository at $dir 1>&2
     exit 1
   fi
 
@@ -57,7 +51,7 @@ fi
 
 . shmod
 
-if [ "$1" == "-" ]
+if [ "$1" = "-" ]
 then
   while read -r line || [ $line ]
   do
