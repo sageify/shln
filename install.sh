@@ -23,10 +23,10 @@ fi
 ! mkdir -p $shln && \
   exit 1
 
-[ -f $shln/shln ] && rm $shln/shln]
+[ -f $shln/shln ] && rm $shln/shln
 ln -s $shpack/shln.sh $shln/shln
 
-[ -f $shln/shmod ] && rm $shln/shmod]
+[ -f $shln/shmod ] && rm $shln/shmod
 ln -s $shpack/shmod.sh $shln/shmod
 
 echo "Links successfully created in $shln to $shpack"
