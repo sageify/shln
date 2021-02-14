@@ -1,6 +1,6 @@
 # sourced into shln.sh
 
-set -e
+set -ex
 
 # Install a shln module:
 # shln install dockcmd/aws-sh@v0.0.1
@@ -9,7 +9,7 @@ set -e
 shpack_install() {
   shmod_repo_tag_dir $1
 
-  ! git ls-remote -h $repo && exit 1
+  ! git ls-remote -h $repo 1>/dev/null && exit 1
 
   # Add SHPACK_PATH to dir.  SHPACK_PATH is set in shln.sh from which this should be sourced
   dir=$SHPACK_PATH/$dir
