@@ -2,7 +2,7 @@
 
 set -e
 
-if ! command -v git
+if ! command -v git 1>/dev/null
 then
 	echo "Error: git is required to install shln." 1>&2
 	exit 1
