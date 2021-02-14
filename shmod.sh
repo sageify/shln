@@ -11,9 +11,11 @@ import() {
     exit 1
   fi
 
-  ! _source=$(shmod_source $1) && exit $?
+  ! _source=$(shmod_source $1) && \
+    exit 1
 
-  for _script in $2; do
+  for _script in $2
+  do
     . $_source/$_script
   done
 
@@ -75,33 +77,31 @@ EOF
   esac
 }
 
-# clone  <repo> <tag> <dir> [args]
+# clone  <repo> <tag> <dir>
 shmod_clone() {
-  [ -f "$3" ] || [ -d "$3" ] && return
+  [ -f "$3" ] || [ -d "$3" ] && \
+    return
 
-  ! mkdir -p $3 && exit 1
+  ! mkdir -p $3 && \
+    exit 1
 
-  # Git writes Cloning into.. into error stream, need to eat
-  if ! git clone $4 ${2:+--branch $2} $1 $3 2> /dev/null
+  if ! git clone -q $4 ${2:+--branch $2} $1 $3
   then
-    # only remove if empty
-    rm -r $3
-    echo fail: 1>&2
-    echo git clone ${2:+--branch $2} $1 $3 1>&2
+    # only remove if empty, might be existing directory
+    rm -r $3 2>/dev/null
     exit 1
   fi  
 }
 
 # if dryrun (dr) is not assigned, exec cmd, otherwise print cmd
-# whill not return from this function
+# will not return from this function
 run() {
-  if ! [ $1 ]
-  then
+  ! [ $1 ] && \
     exit 0
-  fi
 
   # if dr not set, just exec.  exec terminates script
-  [ -z ${dr+x} ] && exec "$@"
+  [ -z ${dr+x} ] && \
+    exec "$@"
 
   if [ "$dr" = l ]
   then

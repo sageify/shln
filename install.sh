@@ -2,7 +2,7 @@
 
 set -e
 
-if ! command -v git >/dev/null 
+if ! command -v git
 then
 	echo "Error: git is required to install shln." 1>&2
 	exit 1
@@ -14,10 +14,10 @@ shln=${SHLN_PATH:-$HOME/bin}
 ! mkdir -p $shpack && \
   exit 1
 
-if ! git clone --depth 1 https://github.com/sageify/shln.git $shpack 2>/dev/null
+if ! git clone -q --depth 1 https://github.com/sageify/shln.git $shpack
 then
-  echo Error: git clone ${2:+--branch $2} $1 $3 1>&2
-  exit 1  
+  rm -r $shpack 2>/dev/null
+  exit 1
 fi
 
 ! mkdir -p $shln && \
@@ -43,4 +43,3 @@ esac
 echo "Manually add the link directory to your \$HOME/$shell_profile (or similar):"
 echo "  export PATH=\"$shln:\$PATH\""
 echo "Then run 'shln' to get started"
-exit 1
