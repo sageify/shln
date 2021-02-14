@@ -9,11 +9,7 @@ set -e
 shpack_install() {
   shmod_repo_tag_dir $1
 
-  if ! git ls-remote -h $repo 1> /dev/null
-  then
-    echo fatal: remote repo not found: $repo 1>&2
-    exit 1
-  fi
+  ! git ls-remote -h $repo && exit 1
 
   # Add SHPACK_PATH to dir.  SHPACK_PATH is set in shln.sh from which this should be sourced
   dir=$SHPACK_PATH/$dir
@@ -26,12 +22,10 @@ shpack_install() {
 
   shmod_clone $repo "$tag" $dir "--depth 1"
 
-  script=$(ls $dir/*.sh)  
-  if [ $(echo $script | wc -l) -ne 1 ]
-  then
-    return
-  fi
+  # if more than one script, don't link
+  [ $(ls $dir/*.sh | wc -l) -ne 1 ] && return
 
+  script=$(ls $dir/*.sh)
   link_name=$SHLN_PATH/$(basename $script | rev | cut -c 4- | rev)
 
   ln -s "$script" "$link_name"
