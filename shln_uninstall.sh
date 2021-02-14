@@ -45,7 +45,8 @@ shpack_uninstall() {
 
 if ! [ $1 ]
 then
-  echo Usasge: shln uninstall REPOSITORY [REPOSITORY] 1>&2
+  echo Usage: shln uninstall REPOSITORY [REPOSITORY] 1>&2
+  echo        shln uninstall -
   exit 1
 fi
 
