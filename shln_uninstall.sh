@@ -1,6 +1,6 @@
 # sourced into shln.sh
 
-set -ex
+set -e
 
 shpack_uninstall() {
   shmod_repo_tag_dir $1
