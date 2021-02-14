@@ -87,8 +87,7 @@ shmod_clone() {
 
   if ! git clone -q $4 ${2:+--branch $2} $1 $3
   then
-    # only remove if empty, might be existing directory
-    rm -r $3 2>/dev/null
+    ! [ "$(ls -A $3)" ] && rm -r $3
     exit 1
   fi  
 }
