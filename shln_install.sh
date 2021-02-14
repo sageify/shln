@@ -47,10 +47,12 @@ fi
 
 if [ "$1" == "-" ]
 then
-  read args
-  for arg in $args shln
+  while read -r line || [ $line ]
   do
-    shpack_install $arg
+    for arg in $line
+    do
+      shpack_install $arg
+    done
   done
   exit 0
 fi

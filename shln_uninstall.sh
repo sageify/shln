@@ -1,6 +1,6 @@
 # sourced into shln.sh
 
-set -e
+set -ex
 
 shpack_uninstall() {
   shmod_repo_tag_dir $1
@@ -59,10 +59,12 @@ fi
 
 if [ "$1" == "-" ]
 then
-  read args
-  for arg in $args shln
+  while read -r line || [ $line ]
   do
-    shpack_uninstall $arg
+    for arg in $line
+    do
+      shpack_uninstall $arg
+    done
   done
   exit 0
 fi
