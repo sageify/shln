@@ -1,4 +1,4 @@
-# sourced into shln.sh
+set -e
 
-! cd $SHLN_PATH && exit 1
+cd $SHLN_PATH
 ls "$@" 

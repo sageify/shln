@@ -1,4 +1,4 @@
-# sourced into shln.sh
+set -e
 
 if [ ! "$1" ]
 then

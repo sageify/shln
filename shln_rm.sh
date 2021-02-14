@@ -1,17 +1,13 @@
-# sourced into shln.sh to get LN_PATH
+set -e
 
-set -x
+for arg in "$@"
+do
+  if [ "$arg" = "shln" ] || [ "$arg" = "shmod" ]
+  then
+    echo fatal: cannot rename link: $arg
+    exit 1
+  fi
+done
 
-# remove item from shln folder.
-if [ "$1" = "shln" ]; then
-  echo fatal: cannot remove link: $1
-  exit 1
-fi
-
-if ! cd $SHLN_PATH
-then
-  echo fatal: no such directory: $SHLN_PATH
-  exit 1
-fi
-
+cd $SHLN_PATH
 rm "$@" 

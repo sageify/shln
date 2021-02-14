@@ -1,5 +1,9 @@
 . shmod
 
-! cd $SHMOD_PATH 2>/dev/null && exit 1
+set -e
+
+# it's ok if SHMOD_PATH doesn't exist, might not be any installed yet
+! cd $SHMOD_PATH 2>/dev/null && \
+  exit 0
 
 find . -mindepth 3 -maxdepth 3 -type d | cut -c 3-
