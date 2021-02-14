@@ -1,6 +1,6 @@
 # sourced into shln.sh
 
-set -ex
+set -e
 
 # Install a shln module:
 # shln install dockcmd/aws-sh@v0.0.1
