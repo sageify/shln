@@ -39,7 +39,8 @@ case $SHELL in
 *) 
   shell_profile=".bash_profile" ;;
 esac
+
 echo "Manually add the link directory to your \$HOME/$shell_profile (or similar):"
-echo "  export PATH=$shln\":\$PATH\""
+echo "  export PATH=\"$shln\":\$PATH"
 echo "Then run 'shln' to get started"
 exit 1
