@@ -7,8 +7,8 @@ if ! command -v git >/dev/null; then
   exit 1
 fi
 
-shpack=${SHPACK_PATH:-$HOME/.shpack}/github.com/sageify/shln
-shln=${SHLN_PATH:-$HOME/bin}
+shpack=${GRM_HOME:-$HOME/.shpack}/github.com/sageify/shln
+shln=${SHLN_HOME:-$HOME/bin}
 
 ! mkdir -p $shpack &&
   exit 1

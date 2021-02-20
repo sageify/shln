@@ -1,1 +1,0 @@
-cat $SCRIPT_PATH/shln_help.txt

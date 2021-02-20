@@ -1,29 +1,18 @@
 # Shell Links (shln)
 
-shln is a git package manager for shell scripts that allow symoblic linking from a folder in the PATH (usually /usr/local/shln) to shell scripts under a user folder (usually ~/shln).
+shln manages git packages, shell modules, and links that allow symoblic linking from a folder in the PATH (usually /usr/local/shln) to shell scripts under a user folder (usually ~/shln).
 
 Why?  
-- The shell script links are in one place.
+- Manage links to shell scripts and programs in one place.
 - Links can be easily added or removed.
-- New scripts can be installed from git repositories.
+- Manage git repositories containing scripts and programs.
 
 ## Install
 
-To install on Mac/Linux:
+To install on Mac/Linux/WSL2:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/sageify/shln/master/install.sh | sh
-```
-
-If needed, add ~/bin to path:
-
-```bash
-# edit profile script and adjust PATH
-# PATH=$HOME/bin:$PATH
-sudo nano /etc/profile
-
-# OSX
-sudo nano /etc/paths
 ```
 
 ## Usage
@@ -84,4 +73,4 @@ import dockcmd/sh@v0.0.3 docker.sh
 
 ```
 
-By default, the files are imported to ~/.shmod directory.  To specific a folder, set the SHMOD_PATH environment variable.
+By default, the files are imported to ~/.shmod directory.  To specific a folder, set the SHMOD_HOME environment variable.

@@ -1,0 +1,19 @@
+
+Usage:	grm COMMAND | CUSTOM
+
+Any linux command is executed in the git repository home folder.
+
+Common Linux Commands
+ ls       list repository
+ ..       any other linux command
+
+Custom Commands
+ -clone   clone a 
+ -find    find a file in the repository
+ -rm      remoe repository if unchanged
+ -tag     show tags for a repo
+ -help    show this page
+
+For help with a command or option, just executie the command, 
+for example:  grm -clone
+
