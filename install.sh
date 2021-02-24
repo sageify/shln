@@ -29,6 +29,9 @@ ln -s $src/shmod.sh $shln/shmod
 [ -f $shln/grm ] && rm $shln/grm
 ln -s $src/grm.sh $shln/grm
 
+[ -f $shln/grm ] && rm $shln/grm
+ln -s $src/shrm.sh $shln/shrm
+
 
 echo "Links successfully created in $shln to $shpack"
 if command -v shln >/dev/null; then
