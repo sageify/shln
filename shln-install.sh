@@ -1,6 +1,6 @@
 # sourced into shln.sh
 
-set -ex
+set -e
 
 # Install a shln module:
 #
@@ -8,15 +8,15 @@ set -ex
 # shln install github.com/dockcmd/aws-sh@v0.0.1
 #
 shpack_install() {
-  dir=$(GRM_HOME=$GRM_HOME grm -clone $1)
-  [ $? -ne 0 ] && exit 1
-  
-  script=$(ls $dir/*.sh)
-  [ $? -ne 0 ] && exit 1
+  ! dir=$(grm clone $1) &&
+    return 1
+
+  ! script=$(ls $dir/*.sh) &&
+    return 1
 
   # if more than one script, don't link
-  [ $(echo $script | wc -w) -ne 1 ] && 
-    exit 0
+  [ $(echo $script | wc -w) -ne 1 ] &&
+    return
 
   link_name=$SHLN_HOME/$(basename $script | rev | cut -c 4- | rev)
 
@@ -29,17 +29,8 @@ shpack_install() {
 }
 
 if ! [ $1 ]; then
-  echo Usage: shln install REPOSITORY[@BRANCH_TAG] 1>&2
+  echo Usage: shln install REPOSITORY[@BRANCH_TAG] ... 1>&2
   exit 1
-fi
-
-if [ "$1" = "-" ]; then
-  while read -r line || [ $line ]; do
-    for arg in $line; do
-      shpack_install $arg
-    done
-  done
-  exit 0
 fi
 
 for pack in "$@"; do

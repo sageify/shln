@@ -1,5 +1,4 @@
 #!/bin/sh
-
 set -e
 
 if ! command -v git >/dev/null; then
@@ -7,14 +6,14 @@ if ! command -v git >/dev/null; then
   exit 1
 fi
 
-shpack=${GRM_HOME:-$HOME/.shpack}/github.com/sageify/shln
+src=${GRM_HOME:-$HOME/src}/github.com/sageify/shln
 shln=${SHLN_HOME:-$HOME/bin}
 
-! mkdir -p $shpack &&
+! mkdir -p $src &&
   exit 1
 
-if ! git clone -q --depth 1 https://github.com/sageify/shln.git $shpack; then
-  ! [ "$(ls -A $shpack)" ] && rm -r $shpack
+if ! git clone -q --depth 1 https://github.com/sageify/shln.git $src; then
+  ! [ "$(ls -A $src)" ] && rm -r $src
   exit 1
 fi
 
@@ -22,10 +21,14 @@ fi
   exit 1
 
 [ -f $shln/shln ] && rm $shln/shln
-ln -s $shpack/shln.sh $shln/shln
+ln -s $src/shln.sh $shln/shln
 
 [ -f $shln/shmod ] && rm $shln/shmod
-ln -s $shpack/shmod.sh $shln/shmod
+ln -s $src/shmod.sh $shln/shmod
+
+[ -f $shln/grm ] && rm $shln/grm
+ln -s $src/grm.sh $shln/grm
+
 
 echo "Links successfully created in $shln to $shpack"
 if command -v shln >/dev/null; then

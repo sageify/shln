@@ -1,50 +1,25 @@
 #!/bin/sh
-set -e
 
 if ! [ -L "$0" ]; then
   echo shln: $(basename $0): Must be a symbolic link
   exit 1
 fi
 
-# Directory holding this script file
-SCRIPT_HOME=$(dirname $(readlink "$0"))
-
-if ! [ $1 ]; then
-  cat $SCRIPT_HOME/shln-help.txt
-  exit 1
-fi
-
-# Root path to git repositories
-# assumes shln scripts are in something like github.com/sageify/shln dir
-# if not, set GRM_HOME globally
-# we don't use realpath as it isn't available on OSX
-GRM_HOME=${GRM_HOME-$(cd $SCRIPT_HOME/../../.. && pwd -P)}
-
-# Directory holding the symbolic link names.
+SHLN_SCRIPT_HOME=$(dirname $(readlink "$0"))
 SHLN_HOME=$(dirname "$0")
 
-cd $SHLN_HOME
-
-case $1 in
--*)
-  # maps to an OPTION
-  SCRIPT=$SCRIPT_HOME/shln$1.sh
-
-  if ! [ -f "$SCRIPT" ]; then
-    cat $SCRIPT_HOME/shln-help.txt
-    exit 1
-  fi
-
-  shift
-  . $SCRIPT "$@"
-
-  exit 0
-  ;;
-esac
-
-if ! command -v $1 >/dev/null; then
-  cat $SCRIPT_HOME/shln-help.txt
-  exit 1
+if [ $1 ]; then
+  case $1 in
+  rm | ls | mv)
+    SHLN_SCRIPT=$SHLN_SCRIPT_HOME/shln-exec.sh
+    ;;
+  *)
+    SHLN_SCRIPT=$SHLN_SCRIPT_HOME/shln-$1.sh
+    shift
+    ;;
+  esac
+else
+  SHLN_SCRIPT=$SHLN_SCRIPT_HOME/shln-help.sh
 fi
 
-exec "$@"
+. $SHLN_SCRIPT "$@"

@@ -1,36 +1,32 @@
-if [ ! "$1" ]
-then
-  echo "usage:  shln -ln" 1>&2
+if ! [ "$1" ]; then
+  echo "usage: shln ln SOURCE " 1>&2
   exit 1
 fi
 
-# LN_PATH provided by shln.sh
-link_name=$SHLN_HOME/$1
+base=$(basename $1)
+link_name=$SHLN_HOME/${base%.*}
 
-if [ -f "$link_name" ]
-then
-  # link already exists, show
+if [ -f "$link_name" ]; then
   ls -l $link_name
   exit 0
 fi
 
-target=$(find $GRM_HOME -name $1.sh 2>/dev/null)
+source=$(grm find $1 2>/dev/null)
+grm_home=$(grm exec pwd)
 
-if [ $(echo $source | wc -w) -ge 2 ]
-then
-  echo "multiple source:"  1>&2
+if ! [ "$source" ]; then
+  echo "shln_ln: $1: File not found in $grm_home or a sub folder" 1>&2
+  exit 1
+fi
+
+if [ $(echo $source | wc -w) -ge 2 ]; then
+  echo "shln_ln: multiple sources:" 1>&2
   echo $source 1>&2
   exit 1
 fi
 
-if [ ! "$source" ]
-then
-  echo "source not found in $GRM_HOME or a sub folder: $1.sh" 1>&2
-  exit 1
-fi
-
 # link to script
-ln -s "$source" "$link_name"
+ln -s "$grm_home/$source" "$link_name"
 
 # reset cache for where executable found in case link covers an existing executable
 hash -r
