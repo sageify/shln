@@ -6,9 +6,9 @@ if ! [ $1 ]; then
 fi
 
 grm_clone() {
-  grm_repo_tag_dir $2
+  grm_repo_tag_dir $1
 
-  dir=$1/$dir${tag:+@$tag}
+  dir=$GRM_HOME/$dir${tag:+@$tag}
 
   if [ -d "$dir" ]; then
     echo $dir
@@ -28,5 +28,5 @@ grm_clone() {
 }
 
 for repo in "$@"; do
-  [ $repo ] && grm_clone $GRM_HOME $repo
+  [ $repo ] && grm_clone $repo
 done

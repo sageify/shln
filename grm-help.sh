@@ -8,6 +8,7 @@ Git Commands
  diff    show any differences in local repository vs remote
  rm      safely remove repository if no differences with remote
  tags    show remote tags
+ pull    pull from remote repository
 
 General Commands
  env     show the groom envinroment variables
