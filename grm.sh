@@ -1,31 +1,5 @@
 #!/bin/sh
 
-grm_clone() {
-  if ! [ $2 ]; then
-    echo grm_clone: Requires two parameters: home repo 1>&2
-    exit 1
-  fi
-
-  grm_repo_tag_dir $2
-
-  dir=$1/$dir${tag:+@$tag}
-
-  if [ -d "$dir" ]; then
-    echo $dir
-    return
-  fi
-
-  ! mkdir -p $dir &&
-    return 1
-
-  if ! git clone -q ${tag:+--branch $tag} $repo $dir 2>/dev/null; then
-    ! [ "$(ls -A $dir)" ] && rm -r $dir
-    return 1
-  fi
-
-  echo $dir
-}
-
 # sets the repo, tag, amd dir
 # sageify/shmod@v0.0.1
 # repo=https://github.com/sageify/shmod.git
@@ -41,7 +15,7 @@ EOF
   # redefine repo
   case $repo in
   .. | */.. | */../* | ../*)
-    echo grm_repo_tag_dir: $repo: Can not use .. in repository name 1>&2
+    echo repo: $repo: Can not use .. in repository name 1>&2
     exit 1
     ;;
   https://*)
@@ -54,14 +28,14 @@ EOF
     ;;
   */*/*)
     dir=$repo
-    repo=$GRM_DEFAULT_SCHEME//$repo.git
+    repo=$GRM_DEFAULT_SCHEME://$repo.git
     ;;
   */*)
     dir=$GRM_DEFAULT_HOST/$repo
     repo=$GRM_DEFAULT_SCHEME://$GRM_DEFAULT_HOST/$repo.git
     ;;
   *)
-    echo grm_repo_tag_dir: $1: Invalid repository name 1>&2
+    echo repo: $repo: Invalid repository name 1>&2
     exit 1
     ;;
   esac
@@ -69,23 +43,28 @@ EOF
 
 grm_diff() {
   if ! [ $2 ]; then
-    echo grm_diff: Requires two parameters: HOME REPO 1>&2
+    echo diff: Requires two parameters: HOME REPO 1>&2
     exit 1
   fi
 
-  grm_repo_tag_dir $2  
+  grm_repo_tag_dir $2
   dir=$dir${tag:+@$tag}
-  grm_diff_path_dir $1/$dir $dir 
+  grm_diff_path_dir $1/$dir $dir
 }
 
 grm_diff_path_dir() {
   if [ "$HOME" = "$1" ] || [ "/" = "$1" ]; then
-    echo grm_diff: $1: Invalid directory 1>&2
+    echo diff: $1: Invalid directory 1>&2
+    return 1
+  fi
+
+  if ! [ -d "$1" ]; then
+    echo diff: $1: directory not found 1>&2
     return 1
   fi
 
   if ! [ -d "$1/.git" ]; then
-    echo grm_diff: $1 not found 1>&2
+    echo diff: $1: directory not a git repository 1>&2
     return 1
   fi
 
@@ -113,7 +92,7 @@ grm_diff_path_dir() {
 
 grm_cd() {
   if ! cd $GRM_HOME 2>/dev/null; then
-    echo grm_exec: $GRM_HOME: Directory does not exist 1>&2
+    echo $GRM_HOME directory does not exist 1>&2
     exit 1
   fi
 }
