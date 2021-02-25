@@ -15,12 +15,12 @@ source=$(grm find $1 2>/dev/null)
 grm_home=$(grm exec pwd)
 
 if ! [ "$source" ]; then
-  echo "shln_gln: $1: File not found in $grm_home or a sub folder" 1>&2
+  echo "gln: $1: File not found in $grm_home" 1>&2
   exit 1
 fi
 
 if [ $(echo $source | wc -w) -ge 2 ]; then
-  echo "shln_gln: multiple sources:" 1>&2
+  echo "gln: multiple sources:" 1>&2
   echo $source 1>&2
   exit 1
 fi
