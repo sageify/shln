@@ -2,14 +2,14 @@ shln_uninstall() {
   ! dir=$(grm which $1) &&
     return 1
 
+  grm rm $1
+
   ls $SHLN_HOME | while read link; do
     if [ "$dir" = "$(dirname $(readlink $SHLN_HOME/$link))" ]; then
       # any link that references the git directory is removed
       rm $SHLN_HOME/$link
     fi
   done
-
-  grm rm $1
 }
 
 if ! [ $1 ]; then
