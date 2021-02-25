@@ -22,6 +22,17 @@ curl -fsSL https://raw.githubusercontent.com/sageify/shln/master/install.sh | sh
 lnkn
 ```
 
+## Cheat Sheet
+
+```bash
+
+# install dockcmd/misc-sh and link to alpine.sh
+lnkn install dockcmd/misc-sh
+lnkn grm alpine.sh
+alpine
+.s
+```
+
 ## Hello World
 
 To add a hello world script for use under lnkn:
@@ -47,7 +58,7 @@ shln rm hello
 rm hello.sh
 ```
 
-## Shell Script Package Support
+## Shell Module Support
 
 Any git repository may be used as a package of shell scripts.  A collection of shell scripts that wrap docker are available at [dockcmd](https://github.com/dockcmd).
 
@@ -69,7 +80,7 @@ aws --version
 #!/bin/bash
 
 . shmod
-import dockcmd/sh@v0.0.3 docker.sh
+import dockcmd/sh@v0.0.4 docker.sh
 
 ```
 
