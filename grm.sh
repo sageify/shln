@@ -111,6 +111,13 @@ grm_diff_path_dir() {
   return 0
 }
 
+grm_cd() {
+  if ! cd $GRM_HOME 2>/dev/null; then
+    echo grm_exec: $GRM_HOME: Directory does not exist 1>&2
+    exit 1
+  fi
+}
+
 if [ -L "$0" ]; then
   GRM_SCRIPT_HOME=$(dirname $(readlink "$0"))
 else

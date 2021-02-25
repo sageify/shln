@@ -1,2 +1,2 @@
-cd $GRM_HOME
+grm_cd
 exec "$@"
