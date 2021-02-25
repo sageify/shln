@@ -1,5 +1,5 @@
 if ! [ "$1" ]; then
-  echo "usage: lnkn gln SOURCE " 1>&2
+  echo "usage: lnkn grm SOURCE " 1>&2
   exit 1
 fi
 
@@ -15,12 +15,12 @@ source=$(grm find $1 2>/dev/null)
 grm_home=$(grm exec pwd)
 
 if ! [ "$source" ]; then
-  echo "gln: $1: File not found in $grm_home" 1>&2
+  echo "grm: $1: File not found in $grm_home" 1>&2
   exit 1
 fi
 
 if [ $(echo $source | wc -w) -ge 2 ]; then
-  echo "gln: multiple sources:" 1>&2
+  echo "grm: multiple sources:" 1>&2
   echo $source 1>&2
   exit 1
 fi

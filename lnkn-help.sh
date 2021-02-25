@@ -9,8 +9,8 @@ Commands
  mv        move a link 
  rm        remove a link
  env       show Linkin and Groom environments
- gln       add link to a Groom repository file
- cln       add shortcut link to an existing command
+ grm       add link to a Groom repository file
+ cmd       add shortcut link to an existing command
  install   clone a new git repository and add default links
  uninstall remove git repository and any associated links
  version   show the git tag, if any, of the source for a link

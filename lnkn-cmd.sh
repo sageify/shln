@@ -1,5 +1,6 @@
 if ! [ "$2" ]; then
-  echo "usage: lnkn cln SOURCE LINK " 1>&2
+  echo "usage: lnkn cmd SOURCE LINK " 1>&2
+  echo "       lnkn cmd kubectrl kc" 1>&2
   exit 1
 fi
 
