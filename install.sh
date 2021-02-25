@@ -7,7 +7,7 @@ if ! command -v git >/dev/null; then
 fi
 
 src=${GRM_HOME:-$HOME/src}/github.com/sageify/shln
-shln=${SHLN_HOME:-$HOME/bin}
+lnkn=${LNKN_HOME:-$HOME/bin}
 
 ! mkdir -p $src &&
   exit 1
@@ -17,25 +17,23 @@ if ! git clone -q --depth 1 https://github.com/sageify/shln.git $src; then
   exit 1
 fi
 
-! mkdir -p $shln &&
+! mkdir -p $lnkn &&
   exit 1
 
-[ -f $shln/shln ] && rm $shln/shln
-ln -s $src/shln.sh $shln/shln
+[ -f $lnkn/lnkn ] && rm $lnkn/lnkn
+ln -s $src/lnkn.sh $lnkn/lnkn
 
-[ -f $shln/shmod ] && rm $shln/shmod
-ln -s $src/shmod.sh $shln/shmod
+[ -f $lnkn/shmod ] && rm $lnkn/shmod
+ln -s $src/shmod.sh $lnkn/shmod
 
-[ -f $shln/grm ] && rm $shln/grm
-ln -s $src/grm.sh $shln/grm
+[ -f $lnkn/grm ] && rm $lnkn/grm
+ln -s $src/grm.sh $lnkn/grm
 
-[ -f $shln/shrm ] && rm $shln/shrm
-ln -s $src/shrm.sh $shln/shrm
+[ -f $lnkn/shrm ] && rm $lnkn/shrm
+ln -s $src/shrm.sh $lnkn/shrm
 
-
-echo "Links successfully created in $shln to $src"
-if command -v shln >/dev/null; then
-  echo "Run 'shln' to get started"
+echo "Linkin (lnkn), Groom (grm), Shmod (shmod), and Shroom (shrm) installed"
+if command -v lnkn >/dev/null; then
   exit 0
 fi
 
@@ -49,5 +47,4 @@ case $SHELL in
 esac
 
 echo "Manually add the link directory to your \$HOME/$shell_profile (or similar):"
-echo "  export PATH=\"$shln:\$PATH\""
-echo "Then run 'shln' to get started"
+echo "  export PATH=\"$lnkn:\$PATH\""

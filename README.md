@@ -1,11 +1,11 @@
-# Shell Links (shln)
+# Linkin (lnkn)
 
-shln manages git packages, shell modules, and links that allow symoblic linking from a folder in the PATH (usually /usr/local/shln) to shell scripts under a user folder (usually ~/shln).
+Linkin is a link manager primarily used with Groom to install git repositories and link to scripts within those repositories.
 
 Why?  
 - Manage links to shell scripts and programs in one place.
 - Links can be easily added or removed.
-- Manage git repositories containing scripts and programs.
+- Install git repositories containing scripts and programs.
 
 ## Install
 
@@ -19,15 +19,15 @@ curl -fsSL https://raw.githubusercontent.com/sageify/shln/master/install.sh | sh
 
 ```bash
 # Assuming PATH has been updated 
-shln
+lnkn
 ```
 
 ## Hello World
 
-To add a hello world script for use under shln:
+To add a hello world script for use under lnkn:
 
 ```bash
-cd ~/shln
+cd $LNKN_HOME
 
 # create simple hello world
 echo "echo hello, world" > hello.sh
@@ -55,8 +55,8 @@ Assuming docker is installed, the following will install the aws cli:
 
 ```bash
 # Install aws cli
-shln tag dockcmd/aws-sh
-shln install dockcmd/aws-sh@v0.0.3
+grm tags dockcmd/aws-sh
+lnkn install dockcmd/aws-sh@v0.0.3
 
 aws --version
 ```

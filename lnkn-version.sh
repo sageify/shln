@@ -1,7 +1,7 @@
-link_name=$SHLN_HOME/${1-shln}
+link_name=$LNKN_HOME/${1-lnkn}
 
 if ! [ -f "$link_name" ]; then
-  echo shln_version: $link_name: Link not found 1>&2
+  echo version: $link_name: Link not found 1>&2
   exit 1
 fi
 

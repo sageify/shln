@@ -1,9 +1,6 @@
-# Install a shln module:
-#
-# shln install dockcmd/aws-sh
-# shln install github.com/dockcmd/aws-sh@v0.0.1
-#
-shln_install() {
+# lnkn install dockcmd/aws-sh
+# lnkn install github.com/dockcmd/aws-sh@v0.0.1
+lnkn_install() {
   ! dir=$(grm clone $1) &&
     return
 
@@ -15,7 +12,7 @@ shln_install() {
     return
 
   base=$(basename $script)
-  link_name=$SHLN_HOME/${base%.*}
+  link_name=$LNKN_HOME/${base%.*}
 
   ln -s "$script" "$link_name"
 
@@ -26,10 +23,10 @@ shln_install() {
 }
 
 if ! [ $1 ]; then
-  echo usage: shln install REPOSITORY[@BRANCH_TAG] ... 1>&2
+  echo usage: lnkn install REPOSITORY[@BRANCH_TAG] ... 1>&2
   exit 1
 fi
 
 for repo in "$@"; do
-  shln_install $repo
+  lnkn_install $repo
 done

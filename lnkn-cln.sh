@@ -1,9 +1,9 @@
 if ! [ "$2" ]; then
-  echo "usage: shln cln SOURCE LINK " 1>&2
+  echo "usage: lnkn cln SOURCE LINK " 1>&2
   exit 1
 fi
 
-link=$SHLN_HOME/$2
+link=$LNKN_HOME/$2
 
 if [ -f "$link" ]; then
   ls -l $link

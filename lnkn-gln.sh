@@ -1,10 +1,10 @@
 if ! [ "$1" ]; then
-  echo "usage: shln gln SOURCE " 1>&2
+  echo "usage: lnkn gln SOURCE " 1>&2
   exit 1
 fi
 
 base=$(basename $1)
-link_name=$SHLN_HOME/${base%.*}
+link_name=$LNKN_HOME/${base%.*}
 
 if [ -f "$link_name" ]; then
   ls -l $link_name
