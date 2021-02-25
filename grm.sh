@@ -18,7 +18,7 @@ grm_clone() {
   ! mkdir -p $dir &&
     return 1
 
-  if ! git clone -q ${tag:+--branch $tag} $repo $dir >/dev/null; then
+  if ! git clone -q ${tag:+--branch $tag} $repo $dir 2>/dev/null; then
     ! [ "$(ls -A $dir)" ] && rm -r $dir
     return 1
   fi
@@ -91,19 +91,21 @@ grm_diff_path_dir() {
 
   cd $1
 
+  dir=${2:+$2/}
+
   # deleted, modified, other (unstaged)
   for file in $(git ls-files -dmo --exclude-standard); do
-    echo $2/$file
+    echo $dir$file
   done
 
   # staged changes
   for file in $(git diff --cached --name-only); do
-    echo $2/$file
+    echo $dir$file
   done
 
   # committed but not pushed
   for file in $(git log --branches --not --remotes --name-only --format="$d"); do
-    echo $2/$file
+    echo $dir$file
   done
 
   return 0

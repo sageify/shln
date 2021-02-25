@@ -10,7 +10,7 @@ for repo in "$@"; do
   dir=$dir${tag:+@$tag}
   path=$GRM_HOME/$dir
 
-  ! diff=$(grm_diff_path_dir $path $dir) &&
+  ! diff=$(grm_diff_path_dir $path) &&
     exit 1
 
   if [ "$diff" ]; then
