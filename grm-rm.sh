@@ -1,8 +1,7 @@
 if ! [ $1 ]; then
-  echo Usage: $(basename $0) rm org/repo[@tag] ... 1>&2
-  echo examples:
-  echo grm rm sageify/sh
-  echo grm rm sageify/sh@v0.0.1
+  echo   usage: $(basename $0) rm org/repo[@tag] ... 1>&2
+  echo "       "$(basename $0) rm sageify/sh
+  echo "       "$(basename $0) rm sageify/sh@v0.0.1
   exit 1
 fi
 
@@ -15,13 +14,13 @@ for repo in "$@"; do
     exit 1
 
   if [ "$diff" ]; then
-    echo grm_rm: $repo: Deleted, modified, unstaged, staged, or unpushed files exist 1>&2
+    echo grm_rm: $dir: Deleted, modified, unstaged, staged, or unpushed files exist 1>&2
     echo $diff 1>&2
     exit 1
   fi
 
   read -p "Remove $path (y/n): " yn
   if [ "y" = "$yn" ]; then
-    echo rm -rf \""$path"\"
+    rm -rf "$path"
   fi
 done

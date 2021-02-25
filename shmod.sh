@@ -1,10 +1,10 @@
 # <repo>@<tag/branch> <file1> <file2>
-# import dockcmd/sh@v0.0.2 docker.sh
+# import dockcmd/sh@v0.0.2 docker.sh other.sh ...
 #
 # sources other scripts, must not be called in subprocess
 import() {
   if ! [ $2 ]; then
-    echo import: $1: Must specify file 1>&2
+    echo import: $1: Must specify at least one file in repository 1>&2
     exit 1
   fi
 

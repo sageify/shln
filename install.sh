@@ -29,11 +29,11 @@ ln -s $src/shmod.sh $shln/shmod
 [ -f $shln/grm ] && rm $shln/grm
 ln -s $src/grm.sh $shln/grm
 
-[ -f $shln/grm ] && rm $shln/grm
+[ -f $shln/shrm ] && rm $shln/shrm
 ln -s $src/shrm.sh $shln/shrm
 
 
-echo "Links successfully created in $shln to $shpack"
+echo "Links successfully created in $shln to $src"
 if command -v shln >/dev/null; then
   echo "Run 'shln' to get started"
   exit 0

@@ -10,12 +10,15 @@ SHLN_HOME=$(dirname "$0")
 
 if [ $1 ]; then
   case $1 in
-  rm | ls | mv)
+  rm | ls | mv | ln)
     SHLN_SCRIPT=$SHLN_SCRIPT_HOME/shln-exec.sh
     ;;
   *)
     SHLN_SCRIPT=$SHLN_SCRIPT_HOME/shln-$1.sh
     shift
+    if ! [ -f "$SHLN_SCRIPT" ]; then
+      SHLN_SCRIPT=$SHLN_SCRIPT_HOME/shln-help.sh
+    fi
     ;;
   esac
 else

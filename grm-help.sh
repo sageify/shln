@@ -11,8 +11,9 @@ Git Commands
 
 General Commands
  env     show the groom envinroment variables
- exec    execute any linux command in $GRM_HOME
- find    find local repositories
+ exec    execute any linux command in groom home ($GRM_HOME)
+ find    find files in local repositories
+ which   locate a repository in groom home ($GRM_HOME)
  help    show this page
  
 EOF

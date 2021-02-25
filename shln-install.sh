@@ -1,24 +1,21 @@
-# sourced into shln.sh
-
-set -e
-
 # Install a shln module:
 #
 # shln install dockcmd/aws-sh
 # shln install github.com/dockcmd/aws-sh@v0.0.1
 #
-shpack_install() {
+shln_install() {
   ! dir=$(grm clone $1) &&
-    return 1
+    return
 
   ! script=$(ls $dir/*.sh) &&
-    return 1
+    return
 
   # if more than one script, don't link
   [ $(echo $script | wc -w) -ne 1 ] &&
     return
 
-  link_name=$SHLN_HOME/$(basename $script | rev | cut -c 4- | rev)
+  base=$(basename $script)
+  link_name=$SHLN_HOME/${base%.*}
 
   ln -s "$script" "$link_name"
 
@@ -29,10 +26,10 @@ shpack_install() {
 }
 
 if ! [ $1 ]; then
-  echo Usage: shln install REPOSITORY[@BRANCH_TAG] ... 1>&2
+  echo usage: shln install REPOSITORY[@BRANCH_TAG] ... 1>&2
   exit 1
 fi
 
-for pack in "$@"; do
-  shpack_install $pack
+for repo in "$@"; do
+  shln_install $repo
 done

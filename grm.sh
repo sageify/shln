@@ -18,7 +18,7 @@ grm_clone() {
   ! mkdir -p $dir &&
     return 1
 
-  if ! git clone -q ${tag:+--branch $tag} $repo $dir; then
+  if ! git clone -q ${tag:+--branch $tag} $repo $dir >/dev/null; then
     ! [ "$(ls -A $dir)" ] && rm -r $dir
     return 1
   fi
@@ -85,14 +85,14 @@ grm_diff_path_dir() {
   fi
 
   if ! [ -d "$1/.git" ]; then
-    echo grm_diff: $1: No .git directory 1>&2
+    echo grm_diff: $1 not found 1>&2
     return 1
   fi
 
   cd $1
 
   # deleted, modified, other (unstaged)
-  for file in $(git ls-files -dmo); do
+  for file in $(git ls-files -dmo --exclude-standard); do
     echo $2/$file
   done
 
