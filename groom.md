@@ -34,3 +34,15 @@ grm
 grm pull sageify/shln
 
 ```
+
+
+## Advanced Usage
+
+```bash
+# change to the directory of a repository
+cd $(grm which sageify/shln)
+
+# rename a link
+lnkn mv terraform tf
+
+```
