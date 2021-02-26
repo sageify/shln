@@ -1,5 +1,4 @@
 cat <<EOF
-
 Usage:	$(basename $0) COMMAND
 
 Git Commands
@@ -16,5 +15,4 @@ General Commands
  find    find files in local repositories
  which   locate a repository in groom home ($GRM_HOME)
  help    show this page
- 
 EOF
