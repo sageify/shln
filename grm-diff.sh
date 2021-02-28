@@ -1,4 +1,4 @@
-if ! [ $1 ]; then
+if ! [ "$1" ]; then
   repos=$(grm find)
   if [ "$repos" ]; then
     grm diff $repos
@@ -7,5 +7,8 @@ if ! [ $1 ]; then
 fi
 
 for repo in "$@"; do
-  grm_diff $GRM_HOME $repo
+  [ "$repo" ] &&
+    dir=$(GRM_HOME= grm_dir "$repo") &&
+    path="$(grm_which "$repo")" &&
+    grm_diff "$path" "$dir/"
 done

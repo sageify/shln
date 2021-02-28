@@ -1,6 +1,6 @@
 grm_cd
 
-if [ $1 ]; then
+if [ "$1" ]; then
   find . -path "*$1" | cut -c 3-
   exit
 fi

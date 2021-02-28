@@ -7,11 +7,11 @@ fi
 link=$LNKN_HOME/$2
 
 if [ -f "$link" ]; then
-  ls -l $link
+  ls -l "$link"
   exit 0
 fi
 
-! source=$(which $1) &&
+! source=$(which "$1") &&
   exit 1
 
 ln -s "$source" "$link"

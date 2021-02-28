@@ -1,93 +1,76 @@
 #!/bin/sh
 
-# sets the repo, tag, amd dir
-# sageify/shmod@v0.0.1
-# repo=https://github.com/sageify/shmod.git
-# tag=v0.0.1
-# dir=github.com/sageify/shmod
-grm_repo_tag_dir() {
+# return local directory for repo
+grm_dir() {
+  repo=${1%.git}
+  
+  if ! [ "$repo" ]; then
+    echo "dir: repository may not be empty" 1>&2
+    return 1
+  fi 
+
+  case $repo in
+  .. | */.. | */../* | ../*)
+    echo "dir: $repo: Can not use .. in repository name" 1>&2
+    return 1
+    ;;
+  https://*) echo ${GRM_HOME:+$GRM_HOME/}$repo | cut -c 9- ;;
+  ssh://*) echo ${GRM_HOME:+$GRM_HOME/}$repo | cut -c 7- ;;
+  */*/*) echo ${GRM_HOME:+$GRM_HOME/}$repo ;;
+  */*) echo ${GRM_HOME:+$GRM_HOME/}$GRM_DEFAULT_HOST/$repo ;;
+  *) echo ${GRM_HOME:+$GRM_HOME/}$GRM_DEFAULT_HOST/$GRM_DEFAULT_ORG/$repo ;;
+  esac
+
+  return 0
+}
+
+grm_which() {
+  dir=$(grm_dir "$1") && git -C "$dir" rev-parse && echo $dir
+}
+
+# set repo and tag
+grm_set_repo_tag() {
   IFS='@' read repo tag <<EOF
 $1
 EOF
 
   repo=${repo%.git}
 
-  # redefine repo
+  if ! [ "$repo" ]; then
+    echo "repo: repository may not be empty" 1>&2
+    return 1
+  fi
+
   case $repo in
   .. | */.. | */../* | ../*)
-    echo repo: $repo: Can not use .. in repository name 1>&2
-    exit 1
+    echo "repo: $repo: Can not use .. in repository name" 1>&2
+    return 1
     ;;
-  https://*)
-    dir=$(echo $repo | cut -c 9-)
-    repo=$repo.git
-    ;;
-  ssh://*)
-    dir=$(echo $repo | cut -c 7-)
-    repo=$repo.git
-    ;;
-  */*/*)
-    dir=$repo
-    repo=$GRM_DEFAULT_SCHEME://$repo.git
-    ;;
-  */*)
-    dir=$GRM_DEFAULT_HOST/$repo
-    repo=$GRM_DEFAULT_SCHEME://$GRM_DEFAULT_HOST/$repo.git
-    ;;
-  *)
-    echo repo: $repo: Invalid repository name 1>&2
-    exit 1
-    ;;
+  https://*) repo=$repo.git ;;
+  ssh://*) repo=$repo.git ;;
+  */*/*) repo=$GRM_DEFAULT_SCHEME://$repo.git ;;
+  */*) repo=$GRM_DEFAULT_SCHEME://$GRM_DEFAULT_HOST/$repo.git ;;
+  *) repo=$GRM_DEFAULT_SCHEME://$GRM_DEFAULT_HOST/$GRM_DEFAULT_ORG/$repo.git ;;
   esac
+
+  return 0
 }
 
 grm_diff() {
-  if ! [ $2 ]; then
-    echo diff: Requires two parameters: HOME REPO 1>&2
-    exit 1
-  fi
-
-  grm_repo_tag_dir $2
-  dir=$dir${tag:+@$tag}
-  grm_diff_path_dir $1/$dir $dir
-}
-
-grm_diff_path_dir() {
-  if [ "$HOME" = "$1" ] || [ "/" = "$1" ]; then
-    echo diff: $1: Invalid directory 1>&2
-    return 1
-  fi
-
-  if ! [ -d "$1" ]; then
-    echo diff: $1: directory not found 1>&2
-    return 1
-  fi
-
-  if ! [ -d "$1/.git" ]; then
-    echo diff: $1: directory not a git repository 1>&2
-    return 1
-  fi
-
-  cd $1
-
-  dir=${2:+$2/}
-
   # deleted, modified, other (unstaged)
-  for file in $(git ls-files -dmo --exclude-standard); do
-    echo $dir$file
+  for file in $(git -C "$1" ls-files -dmo --exclude-standard); do
+    echo $2$file
   done
 
   # staged changes
-  for file in $(git diff --cached --name-only); do
-    echo $dir$file
+  for file in $(git -C "$1" diff --cached --name-only); do
+    echo $2$file
   done
 
   # committed but not pushed
-  for file in $(git log --branches --not --remotes --name-only --format="$d"); do
-    echo $dir$file
+  for file in $(git -C "$1" log --branches --not --remotes --name-only --format="$d"); do
+    echo $2$file
   done
-
-  return 0
 }
 
 grm_cd() {

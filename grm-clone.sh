@@ -1,26 +1,24 @@
-if ! [ $1 ]; then
-  echo usage: $(basename $0) clone org/repo[@tag] ... 1>&2
-  echo "       "$(basename $0) clone sageify/sh
-  echo "       "$(basename $0) clone sageify/sh@v0.0.1
+if ! [ "$1" ]; then
+  echo "usage: $(basename "$0") clone org/repo[@tag] ..." 1>&2
+  echo "       $(basename "$0") clone sageify/sh" 1>&2
+  echo "       $(basename "$0") clone sageify/sh@v0.0.1" 1>&2
   exit 1
 fi
 
 grm_clone() {
-  grm_repo_tag_dir $1
-
-  dir=$GRM_HOME/$dir${tag:+@$tag}
+  # not doing grm_which. directoy does not need to exist
+  ! dir=$(grm_dir "$1") &&
+    return 1
 
   if [ -d "$dir" ]; then
+    # not currently validating directory as a git repo for shmod speed.
     echo $dir
     return
   fi
 
-  ! mkdir -p "$dir" &&
-    return 1
-
-  if ! git clone -q ${tag:+--branch $tag} $repo $dir 2>/dev/null; then
-    ! [ "$(ls -A $dir)" ] && rm -r $dir
-    echo clone: $repo: Invalid repository 1>&2
+  grm_set_repo_tag "$1"
+  if ! git -c advice.detachedHead=false clone $clone_opts -q ${tag:+--branch "$tag"} "$repo" "$dir"; then
+    echo "clone: $clone_opts -q ${tag:+--branch "$tag"} "$repo" "$dir 1>&2
     return 1
   fi
 
@@ -28,5 +26,5 @@ grm_clone() {
 }
 
 for repo in "$@"; do
-  [ $repo ] && grm_clone $repo
+  [ "$repo" ] && grm_clone "$repo"
 done
