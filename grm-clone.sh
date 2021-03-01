@@ -11,7 +11,7 @@ grm_clone() {
     return 1
 
   if [ -d "$dir" ]; then
-    # not currently validating directory as a git repo for shmod speed.
+    # not currently validating as a real directory, allows shmod to run faster
     echo $dir
     return
   fi

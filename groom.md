@@ -14,6 +14,7 @@ grm find README.md
 # show diffs for all cloned repositories (both are equivalent)
 grm diff
 grm diff $(grm find)
+grm diff -a
 
 # show diffs for a single repository
 grm diff sageify/shln
