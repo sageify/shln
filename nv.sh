@@ -37,6 +37,7 @@ nv() {
     unset ENVY_PATTERN
     unset -f nv
     ;;
+  version) echo "nv version 0.1.0" ;;
   help)
     cat <<EOF
 usage:  nv COMMAND
@@ -49,6 +50,7 @@ Environment Commands
  pattern    show the pattern for the context
  unload     unset environment variables, context and pattern
  unset      unset environment variables
+ version    show nv version
 
 Context File Management
  cat   show saved context
