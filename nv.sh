@@ -126,7 +126,7 @@ EOF
       ;;
     *)
       echo "env: $1: Invalid command" 1>&2
-      nv help
+      nv help 1>&2
       return 1
       ;;
     esac
