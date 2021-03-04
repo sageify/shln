@@ -228,6 +228,7 @@ Directory Management
  mkdir   make directory  
  mv      move saved context
  rm      remove saved context
+ which   show file path to context
 
 General Commands
  help        show this help
