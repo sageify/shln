@@ -10,7 +10,9 @@ usage() {
 while getopts ":ah" opt; do
   case $opt in
   a)
-    grm diff $(grm find)
+    grm find | while read repo; do
+      grm diff "$repo"
+    done
     exit 0
     ;;
   h) usage ;;
@@ -24,6 +26,6 @@ done
 for repo in "$@"; do
   [ "$repo" ] &&
     path="$(grm_which "$repo")" &&
-    dir=$(GRM_HOME= grm_dir "$repo") &&
+    dir="$(GRM_HOME= grm_dir "$repo")" &&
     grm_diff "$path" "$dir/"
 done

@@ -3,23 +3,23 @@ if ! [ "$1" ]; then
   exit 1
 fi
 
-base=$(basename $1)
-link_name=$LNKN_HOME/${base%.*}
+base="$(basename $1)"
+link_name="$LNKN_HOME/${base%.*}"
 
 if [ -f "$link_name" ]; then
-  ls -l $link_name
+  ls -l "$link_name"
   exit 0
 fi
 
-source=$(grm find $1 2>/dev/null)
-grm_home=$(grm exec pwd)
+source="$(grm find $1 2>/dev/null)"
+grm_home="$(grm home)"
 
 if ! [ "$source" ]; then
   echo "grm: $1: File not found in $grm_home" 1>&2
   exit 1
 fi
 
-if [ $(echo $source | wc -w) -ge 2 ]; then
+if [ $(printf %s "$source" | wc -w) -ge 2 ]; then
   echo "grm: multiple sources:" 1>&2
   echo $source 1>&2
   exit 1

@@ -22,5 +22,5 @@ while getopts ":ah" opt; do
 done
 
 for repo in "$@"; do
-  [ "$repo" ] && dir=$(grm_dir "$repo") && git -C "$dir" pull
+  [ "$repo" ] && dir="$(grm_dir "$repo")" && git -C "$dir" pull
 done

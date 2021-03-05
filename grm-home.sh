@@ -1,1 +1,1 @@
-echo $GRM_HOME
+printf %s\\n "$GRM_HOME"
