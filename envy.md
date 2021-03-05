@@ -5,11 +5,9 @@ Envy manages enviornment variable contexts.  A context consists of a context nam
 ```sh
 # unload any previous context
 nv new '^SAY'
-get SAY='Hello World!'
-nv put hello
-
-# show variables under management
+export SAY='Hello World!'
 nv
+nv save hello
 
 # show saved file
 nv cat
@@ -18,47 +16,51 @@ nv cat
 nv context
 
 # unset pattern '^SAY'
-nv unset
+nv context unset
 
 # nothing to see
 nv
 
-# get current context again
-nv get
+# open hello
+nv open hello
+nv
 ```
 
-## Directories
+## Domains
 
-Directories provide a way to store mutual exclusive environment contexts.  In other words, only one context may be loaded from a directory at the same time.
+Domains provide a way to store mutually exclusive environment contexts.  In other words, only one context may be loaded in the domain at the one same time.
+
+Domains are established by creating a context directory.
 
 For example, only one git configuration should be available at one time.
 
 ``sh
 nv new '^SAY='
-get SAY='Hello World!'
+export SAY='Hello World!'
 nv put hello
 
 nv new '^GIT_'
-get GIT_COMMITTER_NAME='John Doe'
-get GIT_COMMITTER_EMAIL='john@example.com'
-get GIT_AUTHOR_NAME='John Doe'
-get GIT_AUTHOR_EMAIL='john@example.com'
-nv put git/john
+export GIT_COMMITTER_NAME='John Doe'
+export GIT_COMMITTER_EMAIL='john@example.com'
+export GIT_AUTHOR_NAME='John Doe'
+export GIT_AUTHOR_EMAIL='john@example.com'
+nv mkdir git
+nv save git/john
 
 nv new '^GIT_'
-get GIT_COMMITTER_NAME='Jane Doe'
-get GIT_COMMITTER_EMAIL='jane@example.com'
-get GIT_AUTHOR_NAME='Jane Doe'
-get GIT_AUTHOR_EMAIL='jane@example.com'
-nv put git/jane
+export GIT_COMMITTER_NAME='Jane Doe'
+export GIT_COMMITTER_EMAIL='jane@example.com'
+export GIT_AUTHOR_NAME='Jane Doe'
+export GIT_AUTHOR_EMAIL='jane@example.com'
+nv save git/jane
 
 nv new '^SAY='
-get SAY='Goodbye!'
-nv put goodbye
-
-nv get hello
+export SAY='Goodbye!'
+nv save goodbye
 nv
 
+nv open hello
+nv
 
 ``
 
@@ -75,28 +77,8 @@ typeset -f
 
 
 
-## Comman Usage
-
-```sh
-# show current pattern
-nv context
-
-# load current context
-nv load 
-
-# initialize new
-
-
-# load default
-nve load
-
-# nvy get
-nve load c
-
-typeset -f
-
-# save current by nvy_PATTERN
-nve save <file>
-```
-
 ## Notes
+
+
+## References
+http://www.etalabs.net/sh_tricks.html
