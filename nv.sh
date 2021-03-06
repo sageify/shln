@@ -3,18 +3,16 @@ nv() {
   '') nv grep "$ENVY_PATTERN" ;;
   all)
     case "$2" in
-    '') (
-      nv domain all | while read domain; do
-        nv grep "$(nv domain pattern "$domain")"
+    '')
+      for __ in $(nv domain all); do
+        nv grep "$(nv domain pattern "$__")"
       done
-    ) ;;
+      ;;
     unset)
       nv context unset
-      while read _nv_domain; do
-        nv domain unset "$_nv_domain"
-      done <<EOF
-$(nv domain all)
-EOF
+      for __ in $(nv domain all); do
+        nv domain unset $__
+      done
       ;;
     help) echo "usage: nv all [ unset | help ]" ;;
     *)
@@ -24,31 +22,47 @@ EOF
       ;;
     esac
     ;;
+  check)
+    case "$2" in
+    /* | */)
+      echo "name: $2: May not have leading or trailing slash" 1>&2
+      return 1
+      ;;
+    *[![:alnum:]/]*)
+      echo "name: $2: Can only be alphanumeric" 1>&2
+      return 1
+      ;;
+    */*/*)
+      echo "name: $2: May only have one path separator" 1>&2
+      return 1
+      ;;
+    *) return 0 ;;
+    esac
+    ;;
   context)
     case "$2" in
-    '') [ "$envy_context" ] && nv context check "$envy_context" && printf %s\\n "$envy_context" ;;
-    set) nv context check $3 && envy_context="$3" ;;
-    check)
-      case "$3" in
-      '')
-        echo "context: May not be empty" 1>&2 && return 1
-        ;;
-      /* | */)
-        echo "context: $3: Cannot have leading or trailing slash" 1>&2 && return 1
-        ;;
-      *[![:alnum:]/]*)
-        echo "context: $3t: Invalid path character, can only be alphanumeric" 1>&2 && return 1
-        ;;
+    all)
+      for __ in $(nv domain all); do
+        nv domain context $__
+      done
+      ;;
+    resolve)
+      nv check "$3" && case "$3" in
+      */*) echo $3 ;;
+      '') echo nv/default ;;
+      *) echo $(nv domain)/$3 ;;
       esac
       ;;
+    '')
+      # should only fail if envy_context adjusted outside script
+      ! nv context resolve "$envy_context" && exit 1
+      ;;
+    set) __=$(nv context resolve "$3") && envy_context=$__ ;;
     unset)
       nv pattern unset
-      _nv_domain=$(nv domain) &&
-        [ "$(nv context)" = "$(nv domain context "$_nv_domain")" ] &&
-        nv domain unset "$_nv_domain"
       unset envy_context
       ;;
-    help) echo "usage: nv context [ set | check [CONTEXT] ]" ;;
+    help) echo "usage: nv context [ all | resolve CONTEXT | push | set | unset | help ]" ;;
     *)
       echo "context: $2: Invalid command" 1>&2
       nv context help 1>&2
@@ -57,90 +71,65 @@ EOF
     esac
     ;;
   domain)
-    if [ -n "${3+x}" ]; then
-      # $3 is set, could be blank
-      case "$2" in
-      check)
-        case "$3" in
-        /* | */ | */*)
-          echo "domain: $2: Cannot have leading or trailing slash" 1>&2
-          return 1
-          ;;
-        *[![:alnum:]]*)
-          echo "domain: $2: Invalid character, can only be alphanumeric" 1>&2
-          return 1
-          ;;
-        esac
-        ;;
-      context) (dv="$(nv domain value "$3")" && [ "$dv" ] && printf %s\\n "${dv%:*}") ;;
-      pattern) (dv="$(nv domain value "$3")" && [ "$dv" ] && printf %s\\n "${dv#*:}") ;;
-      unset)
-        _nv_dv="$(nv domain value "$3")" &&
-          unset ENVY_DOMAIN_$3 &&
-          nv unset "${_nv_dv#*:}" &&
-          [ "$(nv context)" = "${_nv_dv%:*}" ] && nv pattern unset && unset envy_context
-        # unset always succeeds!
-        return 0
-        ;;
-      value)
-        nv domain check "$3" && _nv_value=$(printenv ENVY_DOMAIN_$3) &&
-          [ "$_nv_value" ] && printf %s\\n "$_nv_value"
-        ;;
-      esac
-    else
-      case "$2" in
-      '') (
-        context=$(nv context) &&
-          case "$context" in
-          */*)
-            # domain is the first part of a path in a context
-            printf %s\\n "${context%/${context#*/}}"
-            ;;
-          esac
-      ) ;;
-      all)
-        IFS='='
-        nv grep '^ENVY_DOMAIN_' | while read key _; do
-          printf %s\\n "${key#ENVY_DOMAIN_}"
-        done
-        ;;
-      set) _nv_domain=$(nv domain) && export ENVY_DOMAIN_$_nv_domain="$envy_context:$ENVY_PATTERN" ;;
-      help)
-        cat <<EOF
+    case "$2" in
+    resolve) nv check "$3" && echo ${3%/*} ;;
+    value) __="$(eval 'echo $envy_domain_'$(nv domain resolve "$3"))" && echo "$__" ;;
+    context) __="$(nv domain value "$3")" && echo "${__%=*}" ;;
+    pattern) __="$(nv domain value "$3")" && echo "${__#*=}" ;;
+    '') nv domain resolve $(nv context) ;;
+    all)
+      set | grep -E '^envy_domain_' | while IFS='=' read key _; do
+        echo ${key#envy_domain_}
+      done
+      ;;
+    find)
+      find "$ENVY_HOME" -mindepth 1 -maxdepth 1 -type d -path "*$3" | while read file; do
+        printf %s\\n "${file#$ENVY_HOME/}"
+      done
+      ;;
+    unset)
+      if __="$(nv domain pattern "$3")"; then
+        nv unset "$__"
+        unset envy_domain_$3
+      fi
+      return 0
+      ;;
+    help)
+      cat <<EOF
 usage: domain COMMAND
 
 General Commands
-all   show all active domains
-set   set current context and pattern as domain
-help  show this help
+all    show all active domains
+find   show all domains
+set    set current context and pattern to domain
+help   show this help
 
-Domain Commands
+Domain Specific Commands
 check     check if valid name
 context   show the context
 pattern   show the pattern
 unset     unset all environment variables
 value     show value of the domain environment variable
 EOF
-        ;;
-      check | context | pattern | unset | value)
-        echo "usage: nv domain $2 DOMAIN" 1>&2
-        return 1
-        ;;
-      *)
-        echo "domain: $2: Invalid command" 1>&2
-        nv domain help 1>&2
-        return 1
-        ;;
-      esac
-    fi
+      ;;
+    *)
+      echo "domain: $2: Invalid command" 1>&2
+      nv domain help 1>&2
+      return 1
+      ;;
+    esac
     ;;
-  home) printf %s\\n "$ENVY_HOME" ;;
   pattern)
     case "$2" in
     '') [ "$ENVY_PATTERN" ] && printf %s\\n "$ENVY_PATTERN" ;;
-    set) [ "$3" ] && export ENVY_PATTERN="$3" ;;
+    set) [ "$3" ] && export ENVY_PATTERN="$3" || unset ENVY_PATTERN ;;
+    all)
+      for __ in $(nv domain all); do
+        nv domain value $__
+      done
+      ;;
     unset)
-      nv unset $ENVY_PATTERN
+      nv unset "$ENVY_PATTERN"
       unset ENVY_PATTERN
       ;;
     help) echo "usage: pattern [ set [PATTERN] | unset ]" ;;
@@ -163,17 +152,16 @@ EOF
     unset envy_context
     ;;
   switch)
-    if ! _nv_dv=$(nv domain value "$2"); then
-      echo "switch: "${2:-<root>}": Domain not active" 1>&2
+    if ! [ "$2" ] || ! _nv_dv="$(nv domain value "$2")"; then
       return 1
     fi
-    nv context set "${_nv_dv%:*}"
-    nv pattern set "${_nv_dv#*:}"
+    nv context set "${_nv_dv%=*}"
+    nv pattern set "${_nv_dv#*=}"
+    nv context
     ;;
   unset)
-    IFS='='
-    while read _nv_key _nv_value; do
-      [ "$_nv_key" ] && unset "$_nv_key"
+    while IFS='=' read __ _; do
+      [ "$__" ] && unset "$__"
     done <<EOF
 $(nv grep "$2")
 EOF
@@ -184,7 +172,7 @@ EOF
     unset envy_context
     unset ENVY_HOME
     # dangling local environment variables
-    unset _nv_domain _nv_dv _nv_file _nv_key _nv_open _nv_pattern _nv_value
+    unset _ __ _nv_context nv_domain _nv_dv _nv_key _nv_file _nv_pattern _nv_value
     unset -f nv
     ;;
   version) echo "envy version 0.1.1" ;;
@@ -207,7 +195,6 @@ Resources
  all       show environments for all domains
  context   show the current context
  domain    show the current domain, all domains, or context
- home      show saved contexts home directory
  pattern   show the pattern for the context
  
 Directory Management
@@ -222,6 +209,7 @@ Directory Management
  which   show full file path to saved context
 
 General Commands
+ check       check if a valid context or domain name
  help        show this help
  uninstall   unset everything and uninstall nv
  version     show nv version
@@ -244,23 +232,29 @@ EOF
         return 1
       fi
 
-      for _nv_open in "$@"; do
-        ! [ "$_nv_open" ] && continue
+      for _nv_context in "$@"; do
+        if ! [ "$_nv_context" ] || ! _nv_context="$(nv context resolve "$_nv_context")"; then
+          return 1
+        fi
 
-        _nv_file="$ENVY_HOME/$_nv_open"
+        _nv_file="$ENVY_HOME/$_nv_context"
         if ! [ -f "$_nv_file" ]; then
           echo "open: $_nv_file: File not found" 1>&2
           return 1
         fi
 
-        ! nv context set "$_nv_open" && return 1
+        ! nv context set "$_nv_context" && return 1
 
-        # if there is an existing domain for the new context, unset it
-        _nv_domain=$(nv domain) && nv domain unset "$_nv_domain"
+        nv domain unset $(nv domain)
 
-        . $_nv_file
+        while IFS='=' read _nv_key _nv_value; do
+          case "$_nv_key" in
+          ^envy_domain* | ENVY_HOME | envy_context | '') ;;
+          *) export $_nv_key="$_nv_value" ;;
+          esac
+        done <"$_nv_file"
 
-        nv domain set
+        eval 'envy_domain_'$(nv domain)'="$_nv_context=$(nv pattern)"'
       done
       ;;
     save)
@@ -269,38 +263,28 @@ EOF
         return 1
       fi
 
-      if [ "$2" ]; then
-        ! nv context set "$2" && return 1
-        _nv_file="$ENVY_HOME/$2"
-      elif ! _nv_file="$ENVY_HOME/$(nv context)"; then
-        echo 'usage: save CONTEXT' 1>&2
-        return 1
-      fi
+      [ "$2" ] && ! nv context set "$2" && return 1
 
-      # set domain to this context
-      nv domain set
+      _nv_domain=$(nv domain)
+      _nv_context=$(nv context)
 
-      printf "export ENVY_PATTERN=%s\n" $(printf %s "$_nv_pattern" | sed "s/'/'\\\\''/g;1s/^/'/;\$s/\$/'/") >$_nv_file
-      IFS='='
-      nv grep "$_nv_pattern" | while read name val; do
-        printf "export %s=%s\n" "$name" $(printf %s "$val" | sed "s/'/'\\\\''/g;1s/^/'/;\$s/\$/'/") >>$_nv_file
-      done
+      eval 'envy_domain_'$_nv_domain'="$_nv_context=$_nv_pattern"'
+
+      mkdir -p "$ENVY_HOME/$_nv_domain"
+
+      nv grep "^ENVY_PATTERN=" >"$ENVY_HOME/$_nv_context"
+      nv grep "$_nv_pattern" >>"$ENVY_HOME/$_nv_context"
       ;;
     reset)
       nv all unset
-      while read _nv_open; do
-        [ "$_nv_open" ] && nv open "$_nv_open"
+      while read __; do
+        [ "$__" ] && nv open "$__"
       done <<EOF
 $(nv find default)
 EOF
-      return 0
       ;;
-    cat)
-      [ "${2-$envy_context}" ] && cat "$ENVY_HOME/${2-$envy_context}"
-      ;;
-    cd)
-      cd "$ENVY_HOME"
-      ;;
+    cat) cat "$ENVY_HOME/${2-$(nv context)}" ;;
+    cd) cd "$ENVY_HOME" ;;
     cp)
       if ! [ "$2" ] || ! [ "$3" ]; then
         echo "usage: cp SOURCE DEST"
@@ -309,7 +293,7 @@ EOF
       cp "$ENVY_HOME/$2" "$ENVY_HOME/$3"
       ;;
     find)
-      find "$ENVY_HOME" -maxdepth 2 -type f -path "*$2" | while read file; do
+      find "$ENVY_HOME" -mindepth 2 -maxdepth 2 -type f -path "*$2" | while read file; do
         printf %s\\n "${file#$ENVY_HOME/}"
       done
       ;;
@@ -336,12 +320,16 @@ EOF
       rm "$ENVY_HOME/$2"
       ;;
     which)
-      _nv_which="$ENVY_HOME/$2"
-      if ! [ -f "$_nv_which" ] && ! [ -d "$_nv_which" ]; then
-        echo "which: $_nv_which not found" 1>&2
+      if ! [ "$2" ]; then
+        printf %s\\n "$ENVY_HOME"
+        return 0
+      fi
+      __="$ENVY_HOME/$2"
+      if ! [ -f "$__" ] && ! [ -d "$__" ]; then
+        echo "$2 not found" 1>&2
         return 1
       fi
-      printf %s\\n "$_nv_which"
+      printf %s\\n "$__"
       ;;
     *)
       echo "nv: $1: Invalid command" 1>&2
@@ -355,7 +343,16 @@ EOF
 
 if [ "$1" = init ]; then
   ! [ "$ENVY_HOME" ] && export ENVY_HOME="${2-$HOME/.config/envy}"
+  mkdir -p "$ENVY_HOME"
   nv reset
 else
   ! [ "$ENVY_HOME" ] && export ENVY_HOME="$HOME/.config/envy"
+  mkdir -p "$ENVY_HOME"
 fi
+
+# Notes
+#
+# nv domain and nv context are guaranteed to be alphanumeric with no spaces
+# nv domain and nv context always succeed
+# nv context can be anything, but must not be empty.
+#

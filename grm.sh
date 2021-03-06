@@ -22,7 +22,8 @@ grm_dir() {
 }
 
 grm_which() {
-  dir="$(grm_dir "$1")" && git -C "$dir" rev-parse && printf %s\\n "$dir"
+  dir="$(grm_dir "$1")" && git -C "$dir" rev-parse &&
+    printf %s\\n "$dir"
 }
 
 # set repo and tag
@@ -30,7 +31,6 @@ grm_set_repo_tag() {
   IFS='@' read repo tag <<EOF
 $1
 EOF
-
   repo="${repo%.git}"
 
   if ! [ "$repo" ]; then
@@ -89,10 +89,12 @@ GRM_DEFAULT_HOST="${GRM_DEFAULT_HOST-github.com}"
 
 if [ "$1" ]; then
   GRM_SCRIPT="$GRM_SCRIPT_HOME/grm-$1.sh"
-  shift
   if ! [ -f "$GRM_SCRIPT" ]; then
-    GRM_SCRIPT="$GRM_SCRIPT_HOME/grm-help.sh"
+    echo "grm: $1: Command not found" 1>&2
+    . "$GRM_SCRIPT_HOME/grm-help.sh" 1>&2
+    exit 1
   fi
+  shift
 else
   GRM_SCRIPT="$GRM_SCRIPT_HOME/grm-help.sh"
 fi

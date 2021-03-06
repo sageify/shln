@@ -8,16 +8,21 @@ import() {
     exit 1
   fi
 
-  ! _source=$(clone_opts="--depth 1" shrm clone "$1") &&
-    exit 1
+  ! _repo=$(clone_opts="--depth 1" shrm clone "$1") && exit 1
 
   shift
-  for _script in "$@"; do
-    . "$_source/$_script"
+  for _file in "$@"; do
+    if ! [ -f "$_repo/$_file" ]; then
+      echo "import: "$_repo/$_file": File not found" 1>&2
+      unset _repo
+      unset _file
+      exit 1
+    fi
+    . "$_repo/$_file"
   done
 
   # since shmod.sh is sourced, and import() can't be called in a subprocess,
   # need to get rid of local variables.
-  unset _source
-  unset _script
+  unset _repo
+  unset _file
 }

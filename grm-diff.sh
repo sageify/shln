@@ -1,24 +1,28 @@
 usage() {
-  echo "usage: $(basename "$0") diff [-a] org/repo[@tag] ..." 1>&2
-  echo "       $(basename "$0") diff sageify/sh dockcmd/misc-sh" 1>&2
-  echo "       $(basename "$0") diff sageify/sh@v0.0.1" 1>&2
-  exit 1
+  echo "usage: $(basename "$0") diff [-ah] org/repo[@tag] ..."
+  echo "       $(basename "$0") diff sageify/sh dockcmd/misc-sh"
+  echo "       $(basename "$0") diff sageify/sh@v0.0.1"
 }
 
-! [ "$1" ] && usage
+if ! [ "$1" ]; then
+  usage
+  exit 0
+fi
 
 while getopts ":ah" opt; do
   case $opt in
   a)
-    grm find | while read repo; do
-      grm diff "$repo"
-    done
+    grm find | while read repo; do grm diff "$repo"; done
     exit 0
     ;;
-  h) usage ;;
+  h)
+    usage
+    exit 0
+    ;;
   [?])
     echo "diff: invalid option: -$OPTARG" 1>&2
-    usage
+    usage 1>&2
+    exit 1
     ;;
   esac
 done

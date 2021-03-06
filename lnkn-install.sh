@@ -1,18 +1,14 @@
 # lnkn install dockcmd/aws-sh
 # lnkn install github.com/dockcmd/aws-sh@v0.0.1
 lnkn_install() {
-  ! dir=$(grm clone $1) &&
-    return
-
-  ! script=$(ls $dir/*.sh) &&
-    return
-
   # if more than one script, don't link
-  [ $(echo $script | wc -w) -ne 1 ] &&
-    return
+  if ! dir=$(grm clone $1) || ! script=$(ls $dir/*.sh) ||
+      [ $(printf %s "$script" | wc -w) -ne 1 ]; then
+    return 1
+  fi
 
-  base=$(basename $script)
-  link_name=$LNKN_HOME/${base%.*}
+  base="$(basename $script)"
+  link_name="$LNKN_HOME/${base%.*}"
 
   ln -s "$script" "$link_name"
 

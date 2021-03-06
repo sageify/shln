@@ -11,22 +11,21 @@ if [ -f "$link_name" ]; then
   exit 0
 fi
 
-source="$(grm find $1 2>/dev/null)"
-grm_home="$(grm home)"
-
-if ! [ "$source" ]; then
-  echo "grm: $1: File not found in $grm_home" 1>&2
+if ! count="$(grm find "$1" | head -n 2 | wc -l 2>/dev/null)" || [ "$count" -eq 0 ]; then
+  echo "grm: $1: File not found" 1>&2
   exit 1
 fi
 
-if [ $(printf %s "$source" | wc -w) -ge 2 ]; then
-  echo "grm: multiple sources:" 1>&2
-  echo $source 1>&2
+if [ "$count" -gt 1 ]; then
+  echo "grm: multiple sources (limit 10), try 'lnkn grm /$1':" 1>&2
+  grm find "$1" | head -n 10 | while read file; do
+    printf %s\\n "$file"
+  done 1>&2
   exit 1
 fi
 
 # link to script
-ln -s "$grm_home/$source" "$link_name"
+ln -s "$GRM_HOME/$(grm find "$1" | head -n 1)" "$link_name"
 
 # reset cache for where executable found in case link covers an existing executable
 hash -r

@@ -11,8 +11,7 @@ if [ -f "$link" ]; then
   exit 0
 fi
 
-! source=$(which "$1") &&
-  exit 1
+! source=$(which "$1") && exit 1
 
 ln -s "$source" "$link"
 

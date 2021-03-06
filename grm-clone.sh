@@ -7,13 +7,12 @@ fi
 
 grm_clone() {
   # not doing grm_which. directoy does not need to exist
-  ! dir="$(grm_dir "$1")" &&
-    return 1
+  ! dir="$(grm_dir "$1")" && return 1
 
   if [ -d "$dir" ]; then
     # not currently validating as a real directory, allows shmod to run faster
     printf %s\\n "$dir"
-    return
+    return 0
   fi
 
   grm_set_repo_tag "$1"

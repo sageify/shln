@@ -1,22 +1,28 @@
 usage() {
-  echo "usage: $(basename "$0") pull [-ah] org/repo[@tag] ..." 1>&2
-  echo "       $(basename "$0") pull sageify/sh dockcmd/misc-sh" 1>&2
-  echo "       $(basename "$0") pull sageify/sh@v0.0.1" 1>&2
-  exit 1
+  echo "usage: $(basename "$0") pull [-ah] org/repo[@tag] ..."
+  echo "       $(basename "$0") pull sageify/sh dockcmd/misc-sh"
+  echo "       $(basename "$0") pull sageify/sh@v0.0.1"
 }
 
-! [ "$1" ] && usage
+if ! [ "$1" ]; then
+  usage
+  exit 0
+fi
 
 while getopts ":ah" opt; do
   case $opt in
   a)
-    grm pull $(grm find)
+    grm find | while read repo; do grm pull "$repo"; done
     exit 0
     ;;
-  h) usage ;;
+  h)
+    usage
+    exit 0
+    ;;
   [?])
     echo "pull: invalid option: -$OPTARG" 1>&2
-    usage
+    usage 1>&2
+    exit 1
     ;;
   esac
 done

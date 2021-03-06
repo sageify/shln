@@ -11,6 +11,7 @@ Link Commands
  grm    add link to a Groom repository file
  exec   execute any linux command in $LNKN_HOME  
  env    show Linkin and Groom environments
+ which  show source file location for a link
 
 Git Repsoitory and Link Commands
  install     clone a new git repository and add default links

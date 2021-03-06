@@ -7,7 +7,7 @@ Envy manages enviornment variable contexts.  A context consists of a context nam
 nv new '^SAY'
 export SAY='Hello World!'
 nv
-nv save hello
+nv save
 
 # show saved file
 nv cat
@@ -22,7 +22,7 @@ nv context unset
 nv
 
 # open hello
-nv open hello
+nv open
 nv
 ```
 
@@ -37,14 +37,13 @@ For example, only one git configuration should be available at one time.
 ``sh
 nv new '^SAY='
 export SAY='Hello World!'
-nv put hello
+nv save hello
 
 nv new '^GIT_'
 export GIT_COMMITTER_NAME='John Doe'
 export GIT_COMMITTER_EMAIL='john@example.com'
 export GIT_AUTHOR_NAME='John Doe'
 export GIT_AUTHOR_EMAIL='john@example.com'
-nv mkdir git
 nv save git/john
 
 nv new '^GIT_'
