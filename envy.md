@@ -4,7 +4,7 @@ Envy manages enviornment variable contexts.  A context consists of a context nam
 
 ```sh
 # unload any previous context
-nv new '^SAY'
+nv new '^SAY='
 export SAY='Hello World!'
 nv
 nv save
@@ -12,16 +12,16 @@ nv save
 # show saved file
 nv cat
 
-# context set to default
+# context set to nv/default
 nv context
 
-# unset pattern '^SAY'
-nv context unset
+# 
+nv close
 
 # nothing to see
 nv
 
-# open hello
+# open context 
 nv open
 nv
 ```
@@ -74,9 +74,21 @@ typeset -f
 
 
 
+## Resolve
 
+nv resolve [-c] [-d] name
+
+Resolve a name.  Returns -1 if invalid name. -c resolve to a context, -d resolve to a domain.
 
 ## Notes
+
+Revert to behavior in busy box.
+
+
+## env, export, set and unset
+
+### set
+
 
 
 ## References
