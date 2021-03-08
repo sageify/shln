@@ -12,10 +12,7 @@ nv save
 # show saved file
 nv cat
 
-# context set to nv/default
-nv context
-
-# 
+# close
 nv close
 
 # nothing to see
@@ -51,7 +48,7 @@ export GIT_COMMITTER_NAME='Jane Doe'
 export GIT_COMMITTER_EMAIL='jane@example.com'
 export GIT_AUTHOR_NAME='Jane Doe'
 export GIT_AUTHOR_EMAIL='jane@example.com'
-nv save git/jane
+nv save jane
 
 nv new '^SAY='
 export SAY='Goodbye!'
