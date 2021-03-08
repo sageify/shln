@@ -58,7 +58,7 @@ nv() {
     ;;
   -dc | -cd) nv -du "$2" && unset envy_domain_$2 ;;
 
-  env | -ev | -ve) [ "$2" ] && __="$(eval 'echo $envy_domain_'$(nv -rd "$2"))" &&
+  env | -e | -ev | -ve) [ "$2" ] && __="$(eval 'echo $envy_domain_'$(nv -rd "$2"))" &&
     [ "$__" ] && echo "$__" ;;
   -en | -ne) __="$(nv -ev "$2")" && echo "${__%=${__#*=}}" ;;
   -ep | -pe) __="$(nv -ev "$2")" && echo "${__#*=}" ;;
