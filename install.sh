@@ -33,7 +33,7 @@ ln -s $src/grm.sh $lnkn/grm
 ln -s $src/shrm.sh $lnkn/shrm
 
 [ -f $lnkn/nv ] && rm $lnkn/nv
-ln -s $src/nv.sh $lnkn/nv
+ln -s $src/nv.sh $lnkn/nvrc
 
 echo "Linkin (lnkn), Groom (grm), Shmod (shmod), and Shroom (shrm) installed"
 if command -v lnkn >/dev/null; then

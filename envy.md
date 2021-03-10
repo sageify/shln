@@ -5,9 +5,12 @@ Envy manages enviornment variable contexts.  A context consists of a context nam
 ```sh
 # unload any previous context
 nv new '^SAY='
-export SAY='Hello World!'
+nv set SAY='Hello World!'
 nv
 nv save
+
+# in full environemnt
+env
 
 # show saved file
 nv cat

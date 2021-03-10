@@ -8,7 +8,7 @@ import() {
     exit 1
   fi
 
-  ! _repo=$(clone_opts="--depth 1" shrm clone "$1") && exit 1
+  ! _repo=$(clone_opts="--depth 1" shrm -c "$1") && exit 1
 
   shift
   for _file in "$@"; do

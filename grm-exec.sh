@@ -1,2 +1,0 @@
-grm_cd
-exec "$@"
