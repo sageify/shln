@@ -1,10 +1,11 @@
 assertEquals() {
-  ! [ "$1" = "$2" ] && printf "expecting: '%s': found: '%s': %s\n" "$1" "$2" "${3-Not equal}" && return 1
+  ! [ "$1" = "$2" ] && 
+    printf "expecting: '%s': found: '%s': %s\n" "$1" "$2" "${3-Not equal}" && 
+    return 1
 }
 
 fatal() {
-  echo $1
-  return 1
+  printf %s\\n "$1" && return 1
 }
 
 assertEquals "nv/default" "$(nv -en nv)" "First check"

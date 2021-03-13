@@ -1,23 +1,23 @@
 nv() {
   ENVY_HOME="${ENVY_HOME-$HOME/.config/envy}"
-  ENVY_EXCLUDE="${ENVY_EXCLUDE-^HOSTNAME=|^HOME=|^LC_|^PATH=|^PWD=|^SHELL=|^SHLVL=|^TERM=|^TERM_|^USER|^_=|^__}"
+  ENVY_EXCLUDE="${ENVY_EXCLUDE-^HOSTNAME=|^HOME=|^LC_|^OLDPWD=|^PATH=|^PWD=|^SHELL=|^SHLVL=|^TERM=|^TERM_|^USER|^_=|^__}"
 
   case "$1" in
-  
+
   '') nv -g- "$(nv -p-)" ;;
 
-  all | -a | .)
+  all | a | -a | .)
     shift && case "$1" in
     -*) __="${1#-}" && shift && nv "-a$__" "$@" ;;
     *) nv -a- "$@" ;;
     esac
     ;;
-  -a-)
-    nv _e "$2" "all" && for __ in $(nv -pa); do
-      nv -g- "$__"
-    done
-    ;;
-  -ah | ha) echo "usage: all -dehnp" && return 0 ;;
+  -a-) nv -g- "." ;;
+    # nv _e "$2" "all" && for __ in $(nv -pa); do
+    #   nv -g- "$__"
+    # done
+    # ;;
+  -ah | ha) echo "usage: all -dehnp" ;;
 
   cat) cat "$ENVY_HOME/$(nv -nr "${2-$(nv -n-)}")" ;;
 
@@ -27,7 +27,7 @@ nv() {
     nv -p- "$(nv -ep "$2")"
     ;;
 
-  close | -c)
+  close | c | -c)
     shift && case "$1" in
     '') nv -c- $(nv -d-) ;;
     -*) __="${1#-}" && shift && nv "-c$__" "$@" ;;
@@ -42,9 +42,9 @@ nv() {
     done
     unset -v envy_name
     ;;
-  -ch | -hc) echo "usage: close -aehp" && return 0 ;;
+  -ch | -hc) echo "usage: close -aehp" ;;
 
-  domain | -d)
+  domain | d | -d)
     shift && case "$1" in
     -*) __="${1#-}" && shift && nv "-d$__" "$@" ;;
     --) shift && nv -d- "$@" ;;
@@ -63,17 +63,10 @@ nv() {
         printf %s\\n "${file#$ENVY_HOME/}"
       done
     ;;
-  -dr | -rd)
-    nv -nt "$2" && case "$2" in
-    */*) echo ${2%/*} ;;
-    '') if [ $(nv -n-) ]; then nv -rd $(nv -n-); else 'nv'; fi ;;
-    *) echo $2 ;;
-    esac
-    ;;
   -du | -ud) nv _e "$2" "domain -u" && nv -eu $(nv -d-) ;;
-  -dh | hd) echo "usage: domain -acdhu" && return 0 ;;
+  -dh | hd) echo "usage: domain -acdhu" ;;
 
-  env | -e)
+  env | e | -e)
     shift && case "$1" in
     '') nv -e- $(nv -d-) ;;
     -*) __="${1#-}" && shift && nv "-e$__" "$@" ;;
@@ -85,17 +78,17 @@ nv() {
     [ "$__" ] && echo "$__" ;;
   -ea | -ae)
     nv _e "$2" "env -a" && for __ in $(nv -da); do
-      echo $(nv -e- $__)
+      printf %s\\n "$(nv -e- $__)"
     done
     ;;
   -ec | -ce) nv -eu "$2" && unset envy_env_$2 ;;
-  -en | -ne) __="$(nv -e- "$2")" && echo "${__%=${__#*=}}" ;;
-  -ep | -pe) __="$(nv -e- "$2")" && echo "${__#*=}" ;;
+  -en | -ne) __="$(nv -e- "$2")" && printf %s\\n "${__%%=*}" ;;
+  -ep | -pe) __="$(nv -e- "$2")" && printf %s\\n "${__#*=}" ;;
   -et | -te) nv -e- "$2" 1>/dev/null ;;
   -eu | -ue) __="$(nv -ep "$2")" && nv -gu "$__" ;;
-  -eh | he) echo "usage: env -acnptu" && return 0 ;;
+  -eh | he) echo "usage: env -acnptu" ;;
 
-  grep | -g)
+  grep | g | -g)
     shift && case "$1" in
     *) nv -g- "$@" ;;
     -u) nv -gu "$@" ;;
@@ -103,8 +96,9 @@ nv() {
     ;;
   -g-)
     if [ "$3" = '-' ]; then
+      # '-' for stdin. last grep is to get return 1 on empty
       grep -vE -e "$ENVY_EXCLUDE" | grep -v -e "^ENVY_HOME|^ENVY_EXCLUDE|^envy_name|^envy_env*" |
-        grep -E -e "$2" | sort
+        grep -E -e "$2" | sort | grep -e '.'
     else
       [ "$2" ] && env | nv -g- "$2" -
     fi
@@ -118,12 +112,9 @@ EOF
     return 0
     ;;
 
-  isnew)
-    case "$(nv -n-)" in */) return 0 ;; esac
-    return 1
-    ;;
+  isnew) case "$(nv -n-)" in */) ;; *) return 1 ;; esac ;;
 
-  name | -n | pwd)
+  name | n | -n | pwd)
     shift && case "$1" in
     -*) __="${1#-}" && shift && nv "-n$__" "$@" ;;
     --) shift && nv -n- "$@" ;;
@@ -142,7 +133,7 @@ EOF
       nv -en $__
     done
     ;;
-  find | -fn | -nf)
+  find | f | -fn | -nf)
     find "$ENVY_HOME" -mindepth 2 -maxdepth 2 -type f -path "$ENVY_HOME/${2-*}" | while read file; do
       printf %s\\n "${file#$ENVY_HOME/}"
     done
@@ -152,37 +143,14 @@ EOF
       printf %s\\n "${file#$ENVY_HOME/$(nv -d-)/}"
     done
     ;;
-  -nr | -rn)
-    nv -nt "$2" && case "$2" in
-    */*) echo $2 ;;
-    *) echo $(nv -rd)/$2 ;;
-    esac
-    ;;
-  -nt | -tn)
-    case "$2" in
-    /*)
-      echo "name: $2: May not have a leading slash" 1>&2
-      return 1
-      ;;
-    *[![:alnum:]/_]*)
-      echo "name: $2: May only be alphanumeric or underscore" 1>&2
-      return 1
-      ;;
-    */*/*)
-      echo "name: $2: May only have one path separator" 1>&2
-      return 1
-      ;;
-    *) return 0 ;;
-    esac
-    ;;
-  -nh) echo "usage: name -afhrt" && return 0 ;;
+  -nh) echo "usage: name -afhrt" ;;
 
   new)
     nv -p- "${2-$(nv -p-)}"
     nv -n- ""
     ;;
 
-  open | -o)
+  open | o | -o)
     shift
     ! [ "$1" ] && set -- $(nv -n-)
 
@@ -209,13 +177,13 @@ EOF
     done
     ;;
 
-  pattern | -p | --)
+  pattern | p | -p)
     shift && case "$1" in
     -*) __="${1#-}" && shift && nv "-p$__" "$@" ;;
     *) nv -p- "$@" && [ "$1" ] && ! nv && echo "nv: $1: No environment variables found" 1>&2 ;;
     esac
     ;;
-  -p-)
+  -p- | --)
     if [ -n "${2+x}" ]; then
       envy_pattern="$2"
     else
@@ -230,7 +198,7 @@ EOF
     ;;
   -pu | -up) nv _e "$2" "pattern -u" && nv -gu "$(nv -p-)" ;;
   -pc | -cp) nv _e "$2" "pattern -c" && nv -pu && unset envy_pattern ;;
-  -ph | -hp) echo "usage: name -achu" && exit 0 ;;
+  -ph | -hp) echo "usage: name -achu" ;;
 
   reload)
     nv -ca
@@ -248,16 +216,46 @@ EOF
     *) nv -rn "$@" ;;
     esac
     ;;
-  -rh | -hr) echo "usage: resolve -ndh" && exit 0 ;;
+  -nt | -tn)
+    case "$2" in
+    /*)
+      echo "name: $2: May not have a leading slash" 1>&2
+      return 1
+      ;;
+    *[![:alnum:]/_]*)
+      echo "name: $2: May only be alphanumeric or underscore" 1>&2
+      return 1
+      ;;
+    */*/*)
+      echo "name: $2: May only have one path separator" 1>&2
+      return 1
+      ;;
+    *) return 0 ;;
+    esac
+    ;;
+  -dr | -rd)
+    nv -nt "$2" && case "$2" in
+    */*) echo ${2%/*} ;;
+    '') if [ "$envy_name" ]; then nv -rd "$envy_name"; else echo 'nv'; fi ;;
+    *) echo $2 ;;
+    esac
+    ;;
+  -nr | -rn)
+    nv -nt "$2" && case "$2" in
+    */*) echo $2 ;;
+    *) echo $(nv -rd)/$2 ;;
+    esac
+    ;;
+  -rh | -hr) echo "usage: resolve -ndh" ;;
 
-  save | -s)
+  save | s | -s)
     if [ "$2" ]; then
       ! nv -n- "$2" && return 1
     else
       nv -n-
     fi
 
-    nv isnew && echo "save: Must specify a name for a new environment" 1>&2 && return 1
+    nv isnew && echo "save: Must provide a new environment name" 1>&2 && return 1
 
     eval 'envy_env_'$(nv -d-)'="$(nv -n-)=$(nv -p-)"'
 
@@ -270,15 +268,17 @@ EOF
     shift
     for __ in "$@"; do
       if ! printf %s "$__" | nv -g- "$(nv -p-)" - >/dev/null; then
-        echo "unset: '$__': Not applicable to current environment" 1>&2
+        echo "set: '$__': Not applicable to current environment" 1>&2
       else
         export "$__"
       fi
     done
     ;;
 
-  unset)
+
+  unset | u | -u)
     shift && case "$1" in
+    -*) __="${1#-}" && shift && nv "-u$__" "$@" ;;
     *) nv -u- "$@" ;;
     esac
     ;;
@@ -292,6 +292,7 @@ EOF
       fi
     done
     ;;
+  -uh | -hu) echo "usage: unset -dpgh" ;;
 
   uninstall)
     nv -ca
@@ -316,6 +317,8 @@ EOF
     printf %s\\n "$__"
     ;;
 
+  exclude) printf %s\\n "$ENVY_EXCLUDE";;
+
   help | -h | --help)
     cat <<EOF
 usage:  nv [OPTIONS] [ [ RESOUCE ] | [ COMMAND ] ]
@@ -323,15 +326,11 @@ usage:  nv [OPTIONS] [ [ RESOUCE ] | [ COMMAND ] ]
 Shows and manages the domain environment variables.
 
 Options
--a  show all
--c  close
--d  domain
--e  environment
--f  find
+-a  show for all active environments
+-c  close environment
+-f  find saved environment
 -h  help
--n  name
--p  pattern
--r  resolve
+-r  resolve a name
 -u  unset
 
 Resource
@@ -358,6 +357,7 @@ Environment File
 -w, which   show full file path to saved environment
 
 General Commands
+     exclude     print global environment exclude pattern
  -g, grep        grep all system environment variables
  -h, help        show this help
      isnew       check if new environment
@@ -379,6 +379,8 @@ EOF
   *) echo "nv: $1: Unknown resource or command" 1>&2 && nv -h 1>&2 && return 1 ;;
   esac
 }
+
+export -f nv 1>/dev/null
 
 mkdir -p "${ENVY_HOME-$HOME/.config/envy}"
 

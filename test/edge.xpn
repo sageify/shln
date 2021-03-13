@@ -1,0 +1,11 @@
+p printf
+printf>
+printf>-b         `[%s]
+printf>-dang      edge case
+printf>-dang=     edge case=
+printf>-dangword= `edge case=
+printf>-lines     -split -word
+printf>-spaces    `   
+printf>-split     Hello World
+printf>-warning   "Hello World"
+printf>-word      `Hello World

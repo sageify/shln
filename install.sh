@@ -6,34 +6,34 @@ if ! command -v git >/dev/null; then
   exit 1
 fi
 
-src=${GRM_HOME:-$HOME/src}/github.com/sageify/shln
-lnkn=${LNKN_HOME:-$HOME/bin}
+src="${GRM_HOME:-$HOME/src}/github.com/sageify/shln"
+lnkn="${LNKN_HOME:-$HOME/bin}"
 
-! mkdir -p $src &&
+! mkdir -p -- "$src" &&
   exit 1
 
-if ! git clone -q --depth 1 https://github.com/sageify/shln.git $src; then
-  ! [ "$(ls -A $src)" ] && rm -r $src
+if ! git clone -q --depth 1 https://github.com/sageify/shln.git "$src"; then
+  rm -r -- "$src" 2>/dev/null
   exit 1
 fi
 
-! mkdir -p $lnkn &&
+! mkdir -p -- "$lnkn" &&
   exit 1
 
-[ -f $lnkn/lnkn ] && rm $lnkn/lnkn
-ln -s $src/lnkn.sh $lnkn/lnkn
+[ -f "$lnkn/lnkn" ] && rm -- "$lnkn/lnkn"
+ln -s -- "$src/lnkn.sh" "$lnkn/lnkn"
 
-[ -f $lnkn/shmod ] && rm $lnkn/shmod
-ln -s $src/shmod.sh $lnkn/shmod
+[ -f "$lnkn/shmod" ] && rm -- "$lnkn/shmod"
+ln -s -- "$src/shmod.sh" "$lnkn/shmod"
 
-[ -f $lnkn/grm ] && rm $lnkn/grm
-ln -s $src/grm.sh $lnkn/grm
+[ -f "$lnkn/grm" ] && rm -- "$lnkn/grm"
+ln -s -- "$src/grm.sh" "$lnkn/grm"
 
-[ -f $lnkn/shrm ] && rm $lnkn/shrm
-ln -s $src/shrm.sh $lnkn/shrm
+[ -f "$lnkn/shrm" ] && rm -- "$lnkn/shrm"
+ln -s -- "$src/shrm.sh" "$lnkn/shrm"
 
-[ -f $lnkn/nv ] && rm $lnkn/nv
-ln -s $src/nv.sh $lnkn/nvrc
+[ -f "$lnkn/nv" ] && rm -- "$lnkn/nv"
+ln -s -- "$src/nv.sh" "$lnkn/nvrc"
 
 echo "Linkin (lnkn), Groom (grm), Shmod (shmod), and Shroom (shrm) installed"
 if command -v lnkn >/dev/null; then

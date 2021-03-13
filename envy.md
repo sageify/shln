@@ -4,6 +4,7 @@ Envy manages enviornment variable contexts.  A context consists of a context nam
 
 ```sh
 # unload any previous context
+nv close -a
 nv new '^SAY='
 nv set SAY='Hello World!'
 nv
