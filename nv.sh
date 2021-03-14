@@ -13,10 +13,6 @@ nv() {
     esac
     ;;
   -a-) nv -g- "." ;;
-    # nv _e "$2" "all" && for __ in $(nv -pa); do
-    #   nv -g- "$__"
-    # done
-    # ;;
   -ah | ha) echo "usage: all -dehnp" ;;
 
   cat) cat "$ENVY_HOME/$(nv -nr "${2-$(nv -n-)}")" ;;
@@ -380,10 +376,12 @@ EOF
   esac
 }
 
-export -f nv 1>/dev/null
+mkdir -p -- "${ENVY_HOME-$HOME/.config/envy}"
 
-mkdir -p "${ENVY_HOME-$HOME/.config/envy}"
+#
+# must install nv: . nv
+#
+# installer can specify a single command, typically open env..
+#
 
-if [ "$1" ]; then
-  nv "$@"
-fi
+[ "$1" ] && nv "$@"
