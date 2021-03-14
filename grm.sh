@@ -46,9 +46,9 @@ g() {
     ;;
   -da | -ad) shift && g -l "$@" | while read repo; do g -d- "$repo"; done ;;
   -dh | -hd)
-    echo "usage: $(basename "$0") --diff [-ah] org/repo[@tag] ..."
-    echo "       $(basename "$0") --diff sageify/sh dockcmd/misc-sh"
-    echo "       $(basename "$0") --diff sageify/sh@v0.0.1"
+    echo "usage: $(basename -- "$0") --diff [-ah] org/repo[@tag] ..."
+    echo "       $(basename -- "$0") --diff sageify/sh dockcmd/misc-sh"
+    echo "       $(basename -- "$0") --diff sageify/sh@v0.0.1"
     ;;
 
   edit | e | -e | -e-)
@@ -89,9 +89,9 @@ g() {
     ;;
   -pa | -ap) shift && g -l "$@" | while read repo; do g -p- "$repo"; done ;;
   -ph | -hp)
-    echo "usage: $(basename "$0") --pull [-ah] org/repo[@tag] ..."
-    echo "       $(basename "$0") --pull sageify/sh dockcmd/misc-sh"
-    echo "       $(basename "$0") --pull sageify/sh@v0.0.1"
+    echo "usage: $(basename -- "$0") --pull [-ah] org/repo[@tag] ..."
+    echo "       $(basename -- "$0") --pull sageify/sh dockcmd/misc-sh"
+    echo "       $(basename -- "$0") --pull sageify/sh@v0.0.1"
     ;;
 
   rm | -r-)
@@ -106,7 +106,7 @@ g() {
         return 1
       fi
 
-      printf %s "Remove $dir (y/n): " && 
+      printf %s "Remove $dir (y/n): " &&
         read yn &&
         [ "$yn" = "y" ] &&
         rm -rf -- "$dir"
@@ -133,7 +133,7 @@ g() {
 
   help | -h | --help | -h-)
     cat <<EOF
-Usage:	$(basename $0) COMMAND
+Usage:	$(basename -- "$0") COMMAND
 
 Git repository manager.
 
@@ -188,17 +188,16 @@ grm_dir() {
 }
 
 grm_menu() {
-  if [ "$2" ] && g -l- | cat -n; then
-    printf %s "$1 repo number(s): "
-    if read _menu_lines; then
-      for _menu_line in $_menu_lines; do
-        [ "$_menu_line" -eq "$_menu_line" ] 2>/dev/null &&
-          _menu_repo=$(g -l- | sed $_menu_line'!d') &&
-          printf %s\\n "$_menu_repo" &&
-          g "$2" "$_menu_repo"
-      done
-      return 0
-    fi
+  if [ "$2" ] && g -l- | cat -n &&
+    printf %s "$1 repo number(s): " && read _menu_lines; then
+    for _menu_line in $_menu_lines; do
+      [ "$_menu_line" -eq "$_menu_line" ] 2>/dev/null &&
+        _menu_repo=$(g -l- | sed $_menu_line'!d') &&
+        [ "$_menu_repo" ] &&
+        printf %s\\n "$_menu_repo" &&
+        g "$2" "$_menu_repo"
+    done
+    return 0
   fi
 }
 
