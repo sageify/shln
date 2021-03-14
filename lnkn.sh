@@ -3,6 +3,12 @@
 l() {
   case "$1" in
   '') l ls ;;
+  '-l')
+    cd -- "$LNKN_HOME"
+    ls | while read item; do
+      [ -L "$item" ] && printf "%-10s -> %s\\n" "$item" "$(readlink -- "$item")"
+    done
+    ;;
   cmd | c | -c)
     shift
     ! [ "$2" ] && echo "usage: cmd SOURCE LINK " 1>&2 && return 1
@@ -17,15 +23,13 @@ l() {
       # reset cache for where executable found in case link shadows an existing executable
       ln -s "$source" "$link" && hash -r && ls -l "$link"
     ;;
-  env)
-    echo LNKN_HOME=$LNKN_HOME
-    grm env
-    ;;
+  env) "echo LNKN_HOME=$LNKN_HOME" && grm env ;;
+  exec) shift && cd -- "$LNKN_HOME" && exec -- "$@" ;;
   grm | g | -g)
     shift
     ! [ "$1" ] && echo "usage: lnkn grm SOURCE " 1>&2 && return 1
 
-    base="$(basename $1)"
+    base="$(basename -- $1)"
     link_name="$LNKN_HOME/${2-${base%.*}}"
 
     if [ -f "$link_name" ]; then
@@ -84,7 +88,6 @@ l() {
     printf %s\\n "$(readlink "$file")"
     ;;
   rm | ls | mv | ln) l exec "$@" ;;
-  exec) shift && cd $LNKN_HOME && exec "$@" ;;
   -h)
     cat <<EOF
 Usage:	lnkn COMMAND | CUSTOM
@@ -120,7 +123,7 @@ lnkn_install() {
     return 1
   fi
 
-  base="$(basename $script)"
+  base="$(basename -- $script)"
   link_name="$LNKN_HOME/${base%.*}"
 
   ln -s "$script" "$link_name" &&
@@ -134,11 +137,11 @@ lnkn_uninstall() {
 
   grm rm "$1" && ls "$LNKN_HOME" | while read link; do
     # any link that references the git directory is removed
-    [ "$dir" = "$(dirname $(readlink $LNKN_HOME/$link))" ] &&
+    [ "$dir" = "$(dirname -- $(readlink -- $LNKN_HOME/$link))" ] &&
       rm "$LNKN_HOME/$link"
   done
 }
 
-LNKN_HOME="${LNKN_HOME-$(dirname "$0")}"
+LNKN_HOME="${LNKN_HOME-$(dirname -- "$0")}"
 
 l "$@"
