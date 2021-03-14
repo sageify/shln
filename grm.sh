@@ -67,7 +67,6 @@ g() {
     echo GRM_DEFAULT_ORG=$GRM_DEFAULT_ORG
     echo GRM_DEFAULT_SCHEME=$GRM_DEFAULT_SCHEME
     echo GRM_HOME=$GRM_HOME
-    # echo GRM_SCRIPT=$GRM_SCRIPT
     echo GRM_SCRIPT_HOME=$GRM_SCRIPT_HOME
     ;;
 
@@ -107,10 +106,10 @@ g() {
         return 1
       fi
 
-      read -p "Remove $dir (y/n): " yn
-      if [ "y" = "$yn" ]; then
+      printf %s "Remove $dir (y/n): " && 
+        read yn &&
+        [ "$yn" = "y" ] &&
         rm -rf -- "$dir"
-      fi
     done
     ;;
 
@@ -190,7 +189,7 @@ grm_dir() {
 
 grm_menu() {
   if [ "$2" ] && g -l- | cat -n; then
-    echo "$1 repo number(s): "
+    printf %s "$1 repo number(s): "
     if read _menu_lines; then
       for _menu_line in $_menu_lines; do
         [ "$_menu_line" -eq "$_menu_line" ] 2>/dev/null &&
@@ -274,9 +273,9 @@ grm_clone() {
 }
 
 if [ -L "$0" ]; then
-  GRM_SCRIPT_HOME="$(dirname $(readlink "$0"))"
+  GRM_SCRIPT_HOME="$(dirname -- $(readlink -- "$0"))"
 else
-  GRM_SCRIPT_HOME="$(dirname "$0")"
+  GRM_SCRIPT_HOME="$(dirname -- "$0")"
 fi
 
 GRM_HOME="${GRM_HOME-$(cd $GRM_SCRIPT_HOME/../../.. && pwd -P)}"
