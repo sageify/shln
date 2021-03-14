@@ -1,91 +1,31 @@
 #!/bin/sh
+
+# set split and word environment variables for the provided expansion key
+# example: kubectl>g
 xpn() {
-  if ! xpn_name "$1"; then
-    echo "xpn: $1: Invalid command name" 1>&2
-    return 1
-  fi
-
-  pos=1
-  while [ $pos -le $# ] && ! [ "$ignore_all" ]; do
-    unset split word
-
-    eval 'arg=$'$pos
-    case $arg in
-    -*=*)
-      # -opt=value
-      opt="${arg%%=*}"
-      if xpn_name "$opt"; then
-        val=${arg#*=}
-        xpn_sw "$cmd$opt=" "$val" || xpn_sw "$1\\*$opt=" "$val"
-      fi
-      ;;
-    -*)
-      # -opt
-      if xpn_name "$arg"; then
-        xpn_sw "$cmd$arg" || xpn_sw "$1\\*$arg"
-      fi
-      ;;
-    *)
-      # cmd
-      if ! [ "$ignore_commands" ]; then
-        if xpn_name "$arg"; then
-          if ! xpn_sw "$cmd$arg" && ! [ "$ignore_all" ]; then
-            cmd="$cmd$arg>"
-            grep -q -e "^[ /t]*$cmd$" <"$dot_xpn" && ignore_commands=y
-          fi
-        else
-          echo "expn: $cmd ($lastarg): $arg: warning: Invalid command name" 1>&2
-        fi
-      fi
-      ;;
-    esac
-    lastarg="$arg"
-
-    if [ "$split" ] || [ "$word" ]; then
-      if [ $pos -eq 1 ]; then
-        set -- $split ${word+"$word"} "${@:(($pos + 1))}"
-      else
-        set -- "${@:1:(($pos - 1))}" $split ${word+"$word"} "${@:(($pos + 1))}"
-      fi
-      continue
-    fi
-
-    pos=$(($pos + 1))
-  done
-
-  # if not dry run, exec (which terminates script)
-  ! [ "${dr+x}" ] && exec "$@"
-
-  xpn_escape "$1"
-  shift
-  for item in "$@"; do
-    printf ' '
-    if [ "$dr" = l ]; then printf '\\\n'; fi
-    xpn_escape "$item"
-  done
-  printf "\n"
-}
-
-xpn_sw() {
-  xpn="$(grep -e "^[ /t]*$1[ /t]" <"$dot_xpn" | sed -e "s/^[ /t]*$1[ /t]*//")"
+  xpn="$(grep -m 1 -e "^[ /t]*$1[ /t]" <"$dot_xpn" | sed -e "s/^[ /t]*$1[ /t]*//")"
+  case $xpn in
+  \+*)
+    add_next=y
+    xpn="${xpn#\+*}"
+    ;;
+  esac
   case $xpn in
   '') return 1 ;;
-  '!1') pos=$(($pos + 1)) ;;
-  '!*') return 2 ;;
-  \`*) word="${xpn#\`*}$2" ;;
+  '!1') ignore_count=1 ;;
+  '!*') ignore_count=-1 ;;
+  \`*) word="${xpn#\`*}" ;;
   *)
     for item in $xpn; do
       case $item in
       \"* | *\" | \'* | *\')
-        echo "xpn: $item: warning: Use \` to prevent splitting.  Quotes are treated as literals" 1>&2
+        echo "xpn: $item: Warning. Use \` to prevent splitting.  Quotes are treated as literals" 1>&2
         ;;
       esac
       [ "$word" ] && split="$split $word"
       word=$item
     done
-    if [ "$2" ]; then
-      word="$word$2"
-    fi
+    word="$word"
     ;;
   esac
   return 0
@@ -99,7 +39,7 @@ xpn_name() {
 xpn_escape() {
   # poor man's escaping
   a="$1"
-  e=$(set | grep -e "^a=")
+  e=$(set | grep -m 1 -e "^a=")
   printf %s "${e#*=}"
 }
 
@@ -118,9 +58,86 @@ xpn_escape() {
 # ln -s xpn.sh kc
 #
 
+# must be a symoblic link to this file
+! [ -L "$0" ] &&
+  echo "xpn: Must be called with a symbolic link" 1>&2 &&
+  echo "     create link, for example: ln -s xpn.sh kc" 1>&2 &&
+  exit 1
+
+# current search order: XPN_CONFIG, link directory, $HOME/.xpn, this scripts directory
+! dot_xpn="${XPN_CONFIG-$(dirname -- "$0")/.xpn}" && exit 1
+if ! [ -f "$dot_xpn" ]; then
+  ! dot_xpn="$HOME/.xpn" && exit 1
+  if ! [ -f "$dot_xpn" ]; then
+    ! dot_xpn="$(dirname -- $(readlink -- "$0"))/.xpn" && exit 1
+    ! [ -f "$dot_xpn" ] &&
+      echo "xpn: Can't find .xpn configuration file" 1>&2 &&
+      exit 1
+  fi
+fi
+
+! xpn "$(basename -- "$0")" && echo "xpn: $(basename -- "$0"): Can't find mapping" 1>&2 && exit 1
+base="$word" cmd="$word>"
+grep -q -m 1 -e "^[ /t]*$cmd[ /t]*$" "$dot_xpn" && ignore_commands=y
+
 #
-# Install default expansions
+# Main Loop./
 #
 
-dot_xpn="${XPN_CONFIG-$HOME/.xpn}"
-xpn "$(basename "$0")" "$@"
+pos=1
+while [ $pos -le $# ]; do
+  unset split word add_next
+
+  if [ "$ignore_count" ]; then
+    ignore_count=$((ignore_count - 1))
+    [ "$ignore_count" -eq 0 ] && unset ignore_count
+  else
+    case $1 in
+    -*) ! xpn_name "$1" || xpn "$cmd$1" || xpn "$base\\*$1" ;;
+    *)
+      # cmd
+      if ! [ "$ignore_commands" ]; then
+        if xpn_name "$1"; then
+          if ! xpn "$cmd$1"; then
+            cmd="$cmd$1>"
+            grep -q -m 1 -e "^[ /t]*$cmd[ /t]*$" "$dot_xpn" && ignore_commands=y
+          fi
+        else
+          echo "xpn: $cmd ($lastparam): $1: Warning. Invalid command name" 1>&2
+        fi
+      fi
+      ;;
+    esac
+
+    if [ "$word" ]; then
+      # xpn() succeeded and we have an expansion for $1
+      shift
+      if [ "$add_next" ] && [ $pos -le $# ]; then
+        word="$word$1"
+        shift
+      fi
+      set -- $split "$word" "$@"
+      continue
+    fi
+  fi
+
+  # no expansion, pass positional parameter through
+  lastparam="$1"
+  shift
+  set -- "$@" "$lastparam"
+  pos=$(($pos + 1))
+done
+
+#
+# Execute or if dry run, print
+#
+
+! [ "${dr+x}" ] && exec "$base" "$@"
+
+xpn_escape "$base"
+for item in "$@"; do
+  printf ' '
+  [ "$dr" = l ] && printf '\\\n'
+  xpn_escape "$item"
+done
+printf "\n"
