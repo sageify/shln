@@ -1,3 +1,5 @@
+# shellcheck shell=sh
+
 nv() {
   ENVY_HOME="${ENVY_HOME-$HOME/.config/envy}"
   ENVY_EXCLUDE="${ENVY_EXCLUDE-^HOSTNAME=|^HOME=|^LC_|^OLDPWD=|^PATH=|^PWD=|^SHELL=|^SHLVL=|^TERM=|^TERM_|^USER|^_=|^__}"
@@ -25,7 +27,7 @@ nv() {
 
   close | c | -c)
     shift && case "$1" in
-    '') nv -c- $(nv -d-) ;;
+    '') nv -c- "$(nv -d-)" ;;
     -*) __="${1#-}" && shift && nv "-c$__" "$@" ;;
     *) nv -c- "$@" ;;
     esac
@@ -34,7 +36,7 @@ nv() {
   -ca | -ac | reset)
     nv -pc
     for __ in $(nv -da); do
-      nv -ec $__
+      nv -ec "$__"
     done
     unset -v envy_name
     ;;
@@ -42,42 +44,42 @@ nv() {
 
   domain | d | -d)
     shift && case "$1" in
-    -*) __="${1#-}" && shift && nv "-d$__" "$@" ;;
     --) shift && nv -d- "$@" ;;
+    -*) __="${1#-}" && shift && nv "-d$__" "$@" ;;
     *) nv -d- "$@" ;;
     esac
     ;;
   -d-) nv _e "$2" "domain" && nv -rd "$envy_name" ;;
   -da | -ad)
-    nv _e "$2" "domain -a" && set | grep -e '^envy_env_' | while IFS='=' read key _; do
-      echo ${key#envy_env_}
+    nv _e "$2" "domain -a" && set | grep -e '^envy_env_' | while IFS='=' read -r key _; do
+      printf %s\\n "${key#envy_env_}"
     done
     ;;
   -df | -fd)
     nv _e "$3" "domain -f $2" &&
-      find "$ENVY_HOME" -mindepth 1 -maxdepth 1 -type d -path "*$2" | while read file; do
+      find "$ENVY_HOME" -mindepth 1 -maxdepth 1 -type d -path "*$2" | while read -r file; do
         printf %s\\n "${file#$ENVY_HOME/}"
       done
     ;;
-  -du | -ud) nv _e "$2" "domain -u" && nv -eu $(nv -d-) ;;
+  -du | -ud) nv _e "$2" "domain -u" && nv -eu "$(nv -d-)" ;;
   -dh | hd) echo "usage: domain -acdhu" ;;
 
   env | e | -e)
     shift && case "$1" in
-    '') nv -e- $(nv -d-) ;;
-    -*) __="${1#-}" && shift && nv "-e$__" "$@" ;;
+    '') nv -e- "$(nv -d-)" ;;
     --) shift && nv -e- "$@" ;;
+    -*) __="${1#-}" && shift && nv "-e$__" "$@" ;;
     *) nv -e- "$@" ;;
     esac
     ;;
-  -e-) [ "$2" ] && __="$(eval 'echo $envy_env_'$(nv -rd "$2"))" &&
+  -e-) [ "$2" ] && __="$(eval 'echo $envy_env_'"$(nv -rd "$2")")" &&
     [ "$__" ] && echo "$__" ;;
   -ea | -ae)
     nv _e "$2" "env -a" && for __ in $(nv -da); do
-      printf %s\\n "$(nv -e- $__)"
+      printf %s\\n "$(nv -e- "$__")"
     done
     ;;
-  -ec | -ce) nv -eu "$2" && unset envy_env_$2 ;;
+  -ec | -ce) nv -eu "$2" && unset envy_env_"$2" ;;
   -en | -ne) __="$(nv -e- "$2")" && printf %s\\n "${__%%=*}" ;;
   -ep | -pe) __="$(nv -e- "$2")" && printf %s\\n "${__#*=}" ;;
   -et | -te) nv -e- "$2" 1>/dev/null ;;
@@ -86,8 +88,8 @@ nv() {
 
   grep | g | -g)
     shift && case "$1" in
-    *) nv -g- "$@" ;;
     -u) nv -gu "$@" ;;
+    *) nv -g- "$@" ;;
     esac
     ;;
   -g-)
@@ -100,7 +102,7 @@ nv() {
     fi
     ;;
   -gu | -ug)
-    while IFS='=' read __ _; do
+    while IFS='=' read -r __ _; do
       [ "$__" ] && unset "$__"
     done <<EOF
 $(nv -g- "$2")
@@ -112,30 +114,32 @@ EOF
 
   name | n | -n | pwd)
     shift && case "$1" in
-    -*) __="${1#-}" && shift && nv "-n$__" "$@" ;;
     --) shift && nv -n- "$@" ;;
+    -*) __="${1#-}" && shift && nv "-n$__" "$@" ;;
     *) nv -n- "$@" ;;
     esac
     ;;
   -n-)
     if [ "${2+x}" ]; then
-      __=$(nv -nr "$2") && envy_name=$__ && echo $__
+      __=$(nv -nr "$2") && envy_name=$__ && echo "$__"
     else
       nv -nr "$envy_name"
     fi
     ;;
   ls | -na | -an)
     for __ in $(nv -da); do
-      nv -en $__
+      nv -en "$__"
     done
     ;;
   find | f | -fn | -nf)
-    find "$ENVY_HOME" -mindepth 2 -maxdepth 2 -type f -path "$ENVY_HOME/${2-*}" | while read file; do
+    find "$ENVY_HOME" -mindepth 2 -maxdepth 2 -type f -path "$ENVY_HOME/${2-*}" | 
+      while read -r file; do
       printf %s\\n "${file#$ENVY_HOME/}"
     done
     ;;
   -ff)
-    find "$ENVY_HOME/$(nv -d-)" -mindepth 1 -maxdepth 1 -type f -name "${2-*}" | while read file; do
+    find "$ENVY_HOME/$(nv -d-)" -mindepth 1 -maxdepth 1 -type f -name "${2-*}" | 
+    while read -r file; do
       printf %s\\n "${file#$ENVY_HOME/$(nv -d-)/}"
     done
     ;;
@@ -148,7 +152,7 @@ EOF
 
   open | o | -o)
     shift
-    ! [ "$1" ] && set -- $(nv -n-)
+    ! [ "$1" ] && set -- "$(nv -n-)"
 
     for __ in "$@"; do
       ! nv -n- "$__" && return 1
@@ -157,15 +161,15 @@ EOF
       nv -du
 
       __=x
-      while read _nv_line || [ "$_nv_line" ]; do
+      while read -r _nv_line || [ "$_nv_line" ]; do
         if [ $__ ]; then
           nv -p- "$_nv_line"
-          eval 'envy_env_'$(nv -d-)'="$(nv -n-)=$(nv -p-)"'
+          eval 'envy_env_'"$(nv -d-)"'="$(nv -n-)=$(nv -p-)"'
           unset __
           continue
         fi
 
-        IFS='=' read _nv_key _nv_value <<EOF
+        IFS='=' read -r _nv_key _nv_value <<EOF
 $_nv_line
 EOF
         printf %s "$_nv_key" | nv -g- . - >/dev/null && export "$_nv_key=$_nv_value"
@@ -189,7 +193,7 @@ EOF
   -pa | -ap)
     nv _e "$2" "pattern -a" &&
       for __ in $(nv -da); do
-        nv -ep $__
+        nv -ep "$__"
       done
     ;;
   -pu | -up) nv _e "$2" "pattern -u" && nv -gu "$(nv -p-)" ;;
@@ -198,7 +202,7 @@ EOF
 
   reload)
     nv -ca
-    while read __; do
+    while read -r __; do
       [ "$__" ] && nv -o "$__"
     done <<EOF
 $(nv -fn '*/default')
@@ -207,8 +211,8 @@ EOF
 
   resolve | -r)
     shift && case "$1" in
-    -*) __="${1#-}" && shift && nv "-r$__" "$@" ;;
     --) shift && nv -rn "$@" ;;
+    -*) __="${1#-}" && shift && nv "-r$__" "$@" ;;
     *) nv -rn "$@" ;;
     esac
     ;;
@@ -231,15 +235,15 @@ EOF
     ;;
   -dr | -rd)
     nv -nt "$2" && case "$2" in
-    */*) echo ${2%/*} ;;
+    */*) echo "${2%/*}" ;;
     '') if [ "$envy_name" ]; then nv -rd "$envy_name"; else echo 'nv'; fi ;;
-    *) echo $2 ;;
+    *) echo "$2" ;;
     esac
     ;;
   -nr | -rn)
     nv -nt "$2" && case "$2" in
-    */*) echo $2 ;;
-    *) echo $(nv -rd)/$2 ;;
+    */*) echo "$2" ;;
+    *) echo "$(nv -rd)/$2" ;;
     esac
     ;;
   -rh | -hr) echo "usage: resolve -ndh" ;;
@@ -253,7 +257,7 @@ EOF
 
     nv isnew && echo "save: Must provide a new environment name" 1>&2 && return 1
 
-    eval 'envy_env_'$(nv -d-)'="$(nv -n-)=$(nv -p-)"'
+    eval 'envy_env_'"$(nv -d-)"'="$(nv -n-)=$(nv -p-)"'
 
     mkdir -p "$ENVY_HOME/$(nv -d-)"
     printf %s\\n "$(nv -p-)" >"$ENVY_HOME/$(nv -n-)"
@@ -266,11 +270,11 @@ EOF
       if ! printf %s "$__" | nv -g- "$(nv -p-)" - >/dev/null; then
         echo "set: '$__': Not applicable to current environment" 1>&2
       else
+        # shellcheck disable=SC2163
         export "$__"
       fi
     done
     ;;
-
 
   unset | u | -u)
     shift && case "$1" in
@@ -313,7 +317,7 @@ EOF
     printf %s\\n "$__"
     ;;
 
-  exclude) printf %s\\n "$ENVY_EXCLUDE";;
+  exclude) printf %s\\n "$ENVY_EXCLUDE" ;;
 
   help | -h | --help)
     cat <<EOF

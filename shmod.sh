@@ -1,3 +1,5 @@
+# shellcheck shell=sh
+
 # <repo>@<tag/branch> <file1> <file2>
 # import dockcmd/sh@v0.0.2 docker.sh other.sh ...
 #
@@ -13,11 +15,12 @@ import() {
   shift
   for _file in "$@"; do
     if ! [ -f "$_repo/$_file" ]; then
-      echo "import: "$_repo/$_file": File not found" 1>&2
+      echo "import: $_repo/$_file: File not found" 1>&2
       unset _repo
       unset _file
       exit 1
     fi
+    # shellcheck source=/dev/null
     . "$_repo/$_file"
   done
 

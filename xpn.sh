@@ -9,7 +9,7 @@ xpn() {
     add_next=y
     xpn="${xpn#\+*}"
     ;;
-  esac
+  esac 
   case $xpn in
   '') return 1 ;;
   '!1') ignore_count=1 ;;
@@ -38,6 +38,7 @@ xpn_name() {
 
 xpn_escape() {
   # poor man's escaping
+  # shellcheck disable=SC2034
   a="$1"
   e=$(set | grep -m 1 -e "^a=")
   printf %s "${e#*=}"
@@ -69,7 +70,7 @@ xpn_escape() {
 if ! [ -f "$dot_xpn" ]; then
   ! dot_xpn="$HOME/.xpn" && exit 1
   if ! [ -f "$dot_xpn" ]; then
-    ! dot_xpn="$(dirname -- $(readlink -- "$0"))/.xpn" && exit 1
+    ! dot_xpn="$(dirname -- "$(readlink -- "$0")")/.xpn" && exit 1
     ! [ -f "$dot_xpn" ] &&
       echo "xpn: Can't find .xpn configuration file" 1>&2 &&
       exit 1
@@ -78,7 +79,7 @@ fi
 
 ! xpn "$(basename -- "$0")" && echo "xpn: $(basename -- "$0"): Can't find mapping" 1>&2 && exit 1
 base="$word" cmd="$word>"
-grep -q -m 1 -e "^[ /t]*$cmd[ /t]*$" "$dot_xpn" && ignore_commands=y
+grep -q -m 1 -e '^[ /t]*'"$cmd"'[ /t]*$' "$dot_xpn" && ignore_commands=y
 
 #
 # Main Loop./
@@ -100,7 +101,7 @@ while [ $pos -le $# ]; do
         if xpn_name "$1"; then
           if ! xpn "$cmd$1"; then
             cmd="$cmd$1>"
-            grep -q -m 1 -e "^[ /t]*$cmd[ /t]*$" "$dot_xpn" && ignore_commands=y
+            grep -q -m 1 -e '^[ /t]*'"$cmd"'[ /t]*$' "$dot_xpn" && ignore_commands=y
           fi
         else
           echo "xpn: $cmd ($lastparam): $1: Warning. Invalid command name" 1>&2
@@ -116,6 +117,7 @@ while [ $pos -le $# ]; do
         word="$word$1"
         shift
       fi
+      # shellcheck disable=SC2086
       set -- $split "$word" "$@"
       continue
     fi
@@ -125,13 +127,14 @@ while [ $pos -le $# ]; do
   lastparam="$1"
   shift
   set -- "$@" "$lastparam"
-  pos=$(($pos + 1))
+  pos=$((pos + 1))
 done
 
 #
 # Execute or if dry run, print
 #
 
+# shellcheck disable=SC2154
 ! [ "${dr+x}" ] && exec "$base" "$@"
 
 xpn_escape "$base"

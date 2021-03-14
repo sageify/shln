@@ -7,8 +7,8 @@ g() {
 
   menu | m | -m)
     shift && case "$1" in
-    -*) __="${1#-}" && shift && g "-m$__" "$@" ;;
     --) shift && g -me "$@" ;;
+    -*) __="${1#-}" && shift && g "-m$__" "$@" ;;
     *) g -me "$@" ;;
     esac
     ;;
@@ -18,7 +18,11 @@ g() {
   -mh | -hm) echo "usage: menu -edph" ;;
 
   ls | -l | -l-)
-    grm_cd && find . -mindepth 3 -maxdepth 3 -type d -path "./${2-*}" | cut -c 3- | sort
+    if [ "$2" ]; then
+      cd -- "$(grm -w "$2")" && find . -maxdepth 1 -type f | cut -c 3-
+    else
+      grm_cd && find . -mindepth 3 -maxdepth 3 -type d | cut -c 3- | sort
+    fi
     ;;
 
   clone | c | -c | -c-)
@@ -30,8 +34,8 @@ g() {
 
   diff | d | -d)
     shift && case "$1" in
-    -*) __="${1#-}" && shift && g "-d$__" "$@" ;;
     --) shift && g -d- "$@" ;;
+    -*) __="${1#-}" && shift && g "-d$__" "$@" ;;
     *) g -d- "$@" ;;
     esac
     ;;
@@ -40,11 +44,11 @@ g() {
     for repo in "$@"; do
       [ "$repo" ] &&
         path="$(g -w- "$repo")" &&
-        dir="$(GRM_HOME= grm_dir "$repo")" &&
+        dir="$(GRM_HOME='' grm_dir "$repo")" &&
         grm_diff "$path" "$dir/"
     done
     ;;
-  -da | -ad) shift && g -l "$@" | while read repo; do g -d- "$repo"; done ;;
+  -da | -ad) shift && g -l "$@" | while read -r repo; do g -d- "$repo"; done ;;
   -dh | -hd)
     echo "usage: $(basename -- "$0") --diff [-ah] org/repo[@tag] ..."
     echo "       $(basename -- "$0") --diff sageify/sh dockcmd/misc-sh"
@@ -53,7 +57,7 @@ g() {
 
   edit | e | -e | -e-)
     shift
-    ! command -v $GRM_EDITOR >/dev/null &&
+    ! command -v -- "$GRM_EDITOR" >/dev/null &&
       echo "edit: Editor '$GRM_EDITOR' not found" 1>&2 &&
       return 1
 
@@ -63,11 +67,11 @@ g() {
     ;;
 
   env)
-    echo GRM_DEFAULT_HOST=$GRM_DEFAULT_HOST
-    echo GRM_DEFAULT_ORG=$GRM_DEFAULT_ORG
-    echo GRM_DEFAULT_SCHEME=$GRM_DEFAULT_SCHEME
-    echo GRM_HOME=$GRM_HOME
-    echo GRM_SCRIPT_HOME=$GRM_SCRIPT_HOME
+    echo "GRM_DEFAULT_HOST=$GRM_DEFAULT_HOST"
+    echo "GRM_DEFAULT_ORG=$GRM_DEFAULT_ORG"
+    echo "GRM_DEFAULT_SCHEME=$GRM_DEFAULT_SCHEME"
+    echo "GRM_HOME=$GRM_HOME"
+    echo "GRM_SCRIPT_HOME=$GRM_SCRIPT_HOME"
     ;;
 
   find | f | -f | -f-) grm_cd && find . -path "./${2-*}" | cut -c 3- ;;
@@ -76,8 +80,8 @@ g() {
 
   pull | p | -p)
     shift && case "$1" in
-    -*) __="${1#-}" && shift && g "-p$__" "$@" ;;
     --) shift && g -p- "$@" ;;
+    -*) __="${1#-}" && shift && g "-p$__" "$@" ;;
     *) g -p- "$@" ;;
     esac
     ;;
@@ -87,7 +91,7 @@ g() {
       [ "$repo" ] && dir="$(grm_dir "$repo")" && git -C "$dir" pull
     done
     ;;
-  -pa | -ap) shift && g -l "$@" | while read repo; do g -p- "$repo"; done ;;
+  -pa | -ap) shift && g -l "$@" | while read -r repo; do g -p- "$repo"; done ;;
   -ph | -hp)
     echo "usage: $(basename -- "$0") --pull [-ah] org/repo[@tag] ..."
     echo "       $(basename -- "$0") --pull sageify/sh dockcmd/misc-sh"
@@ -102,12 +106,12 @@ g() {
 
       if [ "$diff" ]; then
         echo "grm: $dir: Deleted, modified, unstaged, staged, or unpushed files exist:" 1>&2
-        echo $diff 1>&2
+        echo "$diff" 1>&2
         return 1
       fi
 
       printf %s "Remove $dir (y/n): " &&
-        read yn &&
+        read -r yn &&
         [ "$yn" = "y" ] &&
         rm -rf -- "$dir"
     done
@@ -117,8 +121,8 @@ g() {
     shift
     grm_set_repo_tag "$1"
 
-    git ls-remote --tags "$repo" | while read commit t; do
-      basename $t
+    git ls-remote --tags "$repo" | while read -r _ t; do
+      basename -- "$t"
     done
     ;;
 
@@ -155,7 +159,7 @@ General Commands
 -h, help    show this page
 EOF
     ;;
-  -* | --*)
+  -*)
     echo "grm: $1: Option not found" 1>&2
     g -h- 1>&2 || return 1
     ;;
@@ -189,10 +193,10 @@ grm_dir() {
 
 grm_menu() {
   if [ "$2" ] && g -l- | cat -n &&
-    printf %s "$1 repo number(s): " && read _menu_lines; then
+    printf %s "$1 repo number(s): " && read -r _menu_lines; then
     for _menu_line in $_menu_lines; do
       [ "$_menu_line" -eq "$_menu_line" ] 2>/dev/null &&
-        _menu_repo=$(g -l- | sed $_menu_line'!d') &&
+        _menu_repo=$(g -l- | sed "$_menu_line"'!d') &&
         [ "$_menu_repo" ] &&
         printf %s\\n "$_menu_repo" &&
         g "$2" "$_menu_repo"
@@ -203,7 +207,7 @@ grm_menu() {
 
 # set repo and tag
 grm_set_repo_tag() {
-  IFS='@' read repo tag <<EOF
+  IFS='@' read -r repo tag <<EOF
 $1
 EOF
   repo="${repo%.git}"
@@ -230,17 +234,17 @@ EOF
 
 grm_diff() {
   # deleted, modified, other (unstaged)
-  git -C "$1" ls-files -dmo --exclude-standard | while read file; do
+  git -C "$1" ls-files -dmo --exclude-standard | while read -r file; do
     printf %s\\n "$2$file"
   done
 
   # staged changes
-  git -C "$1" diff --cached --name-only | while read file; do
+  git -C "$1" diff --cached --name-only | while read -r file; do
     printf %s\\n "$2$file"
   done
 
   # committed but not pushed
-  git -C "$1" log --branches --not --remotes --name-only --format="$d" | while read file; do
+  git -C "$1" log --branches --not --remotes --name-only --format="%d" | while read -r file; do
     printf %s\\n "$2$file"
   done
 }
@@ -263,8 +267,9 @@ grm_clone() {
   fi
 
   grm_set_repo_tag "$1"
+  # shellcheck disable=SC2154,SC2086
   if ! git -c advice.detachedHead=false clone $clone_opts -q ${tag:+--branch "$tag"} "$repo" "$dir"; then
-    echo "clone: $clone_opts -q ${tag:+--branch "$tag"} "$repo" "$dir 1>&2
+    echo "clone: $clone_opts -q ${tag:+--branch "$tag"} $repo $dir" 1>&2
     return 1
   fi
 
@@ -272,12 +277,12 @@ grm_clone() {
 }
 
 if [ -L "$0" ]; then
-  GRM_SCRIPT_HOME="$(dirname -- $(readlink -- "$0"))"
+  GRM_SCRIPT_HOME="$(dirname -- "$(readlink -- "$0")")"
 else
   GRM_SCRIPT_HOME="$(dirname -- "$0")"
 fi
 
-GRM_HOME="${GRM_HOME-$(cd $GRM_SCRIPT_HOME/../../.. && pwd -P)}"
+GRM_HOME="${GRM_HOME-$(cd "$GRM_SCRIPT_HOME/../../.." && pwd -P)}"
 GRM_DEFAULT_SCHEME="${GRM_DEFAULT_SCHEME-https}"
 GRM_DEFAULT_HOST="${GRM_DEFAULT_HOST-github.com}"
 GRM_EDITOR='code'

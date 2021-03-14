@@ -4,9 +4,8 @@ l() {
   case "$1" in
   '') l ls ;;
   '-l')
-    cd -- "$LNKN_HOME"
-    ls | while read item; do
-      [ -L "$item" ] && printf "%-10s -> %s\\n" "$item" "$(readlink -- "$item")"
+    find "$LNKN_HOME" -maxdepth 1 | while read -r item; do
+      [ -L "$item" ] && printf "%-12s\t%s\\n" "${item#"$LNKN_HOME"/*}" "$(readlink -- "$item")"
     done
     ;;
   cmd | c | -c)
@@ -24,12 +23,12 @@ l() {
       ln -s "$source" "$link" && hash -r && ls -l "$link"
     ;;
   env) "echo LNKN_HOME=$LNKN_HOME" && grm env ;;
-  exec) shift && cd -- "$LNKN_HOME" && exec -- "$@" ;;
+  exec) shift && cd -- "$LNKN_HOME" && exec "$@" ;;
   grm | g | -g)
     shift
     ! [ "$1" ] && echo "usage: lnkn grm SOURCE " 1>&2 && return 1
 
-    base="$(basename -- $1)"
+    base="$(basename -- "$1")"
     link_name="$LNKN_HOME/${2-${base%.*}}"
 
     if [ -f "$link_name" ]; then
@@ -44,7 +43,7 @@ l() {
 
     if [ "$count" -gt 1 ]; then
       echo "grm: multiple sources (limit 10), try 'lnkn grm '*<name>/$1':" 1>&2
-      grm find "$1" | head -n 10 | while read file; do
+      grm find "$1" | head -n 10 | while read -r file; do
         printf %s\\n "$file"
       done 1>&2
       return 1
@@ -74,9 +73,9 @@ l() {
 
   which | w | -w)
     shift
-    if ! [ $1 ]; then
-      printf %s\\n "$LNKN_HOME" && return 0
-      return $?
+    if ! [ "$1" ]; then
+      printf %s\\n "$LNKN_HOME"
+      return 0
     fi
 
     file="$LNKN_HOME/$1"
@@ -87,7 +86,7 @@ l() {
 
     printf %s\\n "$(readlink "$file")"
     ;;
-  rm | ls | mv | ln) l exec "$@" ;;
+  ln | ls | mv | rm) l exec "$@" ;;
   -h)
     cat <<EOF
 Usage:	lnkn COMMAND | CUSTOM
@@ -109,21 +108,20 @@ Git Repsoitory and Link Commands
  uninstall   remove git repository and any associated links
 EOF
     ;;
-  -* | --*) echo "lnkn: $1: Option not found" 1>&2 && return 1 ;;
+  -*) echo "lnkn: $1: Option not found" 1>&2 && return 1 ;;
   *) echo "lnkn: $1: Unknown command" 1>&2 && l -h 1>&2 && return 1 ;;
-
   esac
 }
 
 lnkn_install() {
   # if more than one script, don't link
-  if ! dir=$(grm clone $1) || ! script=$(ls $dir/*.sh) ||
-    [ $(printf %s "$script" | wc -w) -ne 1 ]; then
-    ls $dir
+  if ! dir=$(grm clone "$1") || ! script=$(ls -- "$dir/*.sh") ||
+    [ "$(printf %s "$script" | wc -w)" -ne 1 ]; then
+    ls -- "$dir"
     return 1
   fi
 
-  base="$(basename -- $script)"
+  base="$(basename -- "$script")"
   link_name="$LNKN_HOME/${base%.*}"
 
   ln -s "$script" "$link_name" &&
@@ -133,12 +131,12 @@ lnkn_install() {
 }
 
 lnkn_uninstall() {
-  ! dir="$(grm which $1)" && return 1
+  ! dir="$(grm which "$1")" && return 1
 
-  grm rm "$1" && ls "$LNKN_HOME" | while read link; do
+  grm rm "$1" && find "$LNKN_HOME" -maxdepth 1 | while read -r link; do
     # any link that references the git directory is removed
-    [ "$dir" = "$(dirname -- $(readlink -- $LNKN_HOME/$link))" ] &&
-      rm "$LNKN_HOME/$link"
+    [ "$dir" = "$(dirname -- "$(readlink -- "$link")")" ] &&
+      rm "$link"
   done
 }
 
