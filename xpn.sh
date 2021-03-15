@@ -9,7 +9,7 @@ xpn() {
     add_next=y
     xpn="${xpn#\+*}"
     ;;
-  esac 
+  esac
   case $xpn in
   '') return 1 ;;
   '!1') ignore_count=1 ;;
@@ -37,11 +37,7 @@ xpn_name() {
 }
 
 xpn_escape() {
-  # poor man's escaping
-  # shellcheck disable=SC2034
-  a="$1"
-  e=$(set | grep -m 1 -e "^a=")
-  printf %s "${e#*=}"
+  printf %s "$1" | sed "s/'/'\\\\''/g;1s/^/'/;\$s/\$/'/"
 }
 
 # Command Expansion

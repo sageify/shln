@@ -85,3 +85,8 @@ import dockcmd/sh@v0.0.4 docker.sh
 ```
 
 By default, the files are imported to ~/.shmod directory.  To specific a folder, set the SHMOD_HOME environment variable.
+
+
+
+## References
+http://www.etalabs.net/sh_tricks.html
