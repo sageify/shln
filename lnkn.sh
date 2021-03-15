@@ -50,7 +50,7 @@ l() {
     fi
 
     # link to script
-    ln -s "$(grm w)/$(grm find "*/$1" | head -n 1)" "$link_name" &&
+    ln -s "$(grm which)/$(grm find "*/$1" | head -n 1)" "$link_name" &&
       # reset cache for where executable found in case link covers an existing executable
       hash -r &&
       # output link
