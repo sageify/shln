@@ -1,8 +1,7 @@
 # shellcheck shell=sh
-
 nv() {
   ENVY_HOME="${ENVY_HOME-$HOME/.config/envy}"
-  ENVY_EXCLUDE="${ENVY_EXCLUDE-^HOSTNAME=|^HOME=|^LC_|^OLDPWD=|^PATH=|^PWD=|^SHELL=|^SHLVL=|^TERM=|^TERM_|^USER|^_=|^__}"
+  ENVY_EXCLUDE="${ENVY_EXCLUDE-^COLOR|^COMMAND_|^HOSTNAME=|^HOME=|^LANG=|^LOGNAME=|^ITERM_|^LC_|^OLDPWD=|^PATH=|^PWD=|^SHELL=|^SHLVL=|^SSH_|^TERM=|^TERM_|^TMPDIR=|^USER|^XPC_|^_=|^__}"
 
   case "$1" in
 
@@ -200,15 +199,6 @@ EOF
   -pc | -cp) nv _e "$2" "pattern -c" && nv -pu && unset envy_pattern ;;
   -ph | -hp) echo "usage: name -achu" ;;
 
-  reload)
-    nv -ca
-    while read -r __; do
-      [ "$__" ] && nv -o "$__"
-    done <<EOF
-$(nv -fn '*/default')
-EOF
-    ;;
-
   resolve | -r)
     shift && case "$1" in
     --) shift && nv -rn "$@" ;;
@@ -353,7 +343,6 @@ Environment File
 -f, find    find all environment files
 -o, open    open a new environment from file
 -s, save    save or replace the environment
-    reload  reset environment to default files
 -w, which   show full file path to saved environment
 
 General Commands
@@ -385,7 +374,3 @@ mkdir -p -- "${ENVY_HOME-$HOME/.config/envy}"
 #
 # must install nv: . nv
 #
-# installer can specify a single command, typically open env..
-#
-
-[ "$1" ] && nv "$@"
