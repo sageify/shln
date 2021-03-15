@@ -131,16 +131,16 @@ EOF
     done
     ;;
   find | f | -fn | -nf)
-    find "$ENVY_HOME" -mindepth 2 -maxdepth 2 -type f -path "$ENVY_HOME/${2-*}" | 
+    find "$ENVY_HOME" -mindepth 2 -maxdepth 2 -type f -path "$ENVY_HOME/${2-*}" |
       while read -r file; do
-      printf %s\\n "${file#$ENVY_HOME/}"
-    done
+        printf %s\\n "${file#$ENVY_HOME/}"
+      done
     ;;
   -ff)
-    find "$ENVY_HOME/$(nv -d-)" -mindepth 1 -maxdepth 1 -type f -name "${2-*}" | 
-    while read -r file; do
-      printf %s\\n "${file#$ENVY_HOME/$(nv -d-)/}"
-    done
+    find "$ENVY_HOME/$(nv -d-)" -mindepth 1 -maxdepth 1 -type f -name "${2-*}" |
+      while read -r file; do
+        printf %s\\n "${file#$ENVY_HOME/$(nv -d-)/}"
+      done
     ;;
   -nh) echo "usage: name -afhrt" ;;
 
