@@ -1,12 +1,12 @@
 #!/bin/sh
 g() {
-  case "$1" in
+  case $1 in
   '' | --ls)
     g -l
     ;;
 
   menu | m | -m)
-    shift && case "$1" in
+    shift && case $1 in
     --) shift && g -me "$@" ;;
     -*) __="${1#-}" && shift && g "-m$__" "$@" ;;
     *) g -me "$@" ;;
@@ -33,7 +33,7 @@ g() {
     ;;
 
   diff | d | -d)
-    shift && case "$1" in
+    shift && case $1 in
     --) shift && g -d- "$@" ;;
     -*) __="${1#-}" && shift && g "-d$__" "$@" ;;
     *) g -d- "$@" ;;
@@ -79,7 +79,7 @@ g() {
   exec) shift && grm_cd && exec "$@" ;;
 
   pull | p | -p)
-    shift && case "$1" in
+    shift && case $1 in
     --) shift && g -p- "$@" ;;
     -*) __="${1#-}" && shift && g "-p$__" "$@" ;;
     *) g -p- "$@" ;;
@@ -119,9 +119,7 @@ g() {
 
   tags)
     shift
-    grm_set_repo_tag "$1"
-
-    git ls-remote --tags "$repo" | while read -r _ t; do
+    repo=$(grm_repo "$1") && git ls-remote --tags "$repo" | while read -r _ t; do
       basename -- "$t"
     done
     ;;
@@ -170,6 +168,20 @@ EOF
   esac
 }
 
+grm_menu() {
+  if [ "$2" ] && g -l- | cat -n &&
+    printf %s "$1 repo number(s): " && read -r _menu_lines; then
+    for _menu_line in $_menu_lines; do
+      [ "$_menu_line" -eq "$_menu_line" ] 2>/dev/null &&
+        _menu_repo=$(g -l- | sed "$_menu_line"'!d') &&
+        [ "$_menu_repo" ] &&
+        printf %s\\n "$_menu_repo" &&
+        g "$2" "$_menu_repo"
+    done
+    return 0
+  fi
+}
+
 # return local directory for repo
 grm_dir() {
   repo="${1%.git}"
@@ -191,42 +203,28 @@ grm_dir() {
   return 0
 }
 
-grm_menu() {
-  if [ "$2" ] && g -l- | cat -n &&
-    printf %s "$1 repo number(s): " && read -r _menu_lines; then
-    for _menu_line in $_menu_lines; do
-      [ "$_menu_line" -eq "$_menu_line" ] 2>/dev/null &&
-        _menu_repo=$(g -l- | sed "$_menu_line"'!d') &&
-        [ "$_menu_repo" ] &&
-        printf %s\\n "$_menu_repo" &&
-        g "$2" "$_menu_repo"
-    done
-    return 0
-  fi
-}
-
-# set repo and tag
-grm_set_repo_tag() {
-  IFS='@' read -r repo tag <<EOF
-$1
-EOF
+grm_repo() {
+  repo="${1%%@*}"
   repo="${repo%.git}"
 
-  if ! [ "$repo" ]; then
-    echo "repo: repository may not be empty" 1>&2
+  ! [ "$repo" ] &&
+    echo "repo: repository may not be empty" 1>&2 &&
     return 1
-  fi
 
-  case "$repo" in
+  case $repo in
   .. | */.. | */../* | ../*)
     echo "repo: $repo: Can not use .. in repository name" 1>&2
     return 1
     ;;
-  https://*) repo="$repo.git" ;;
-  ssh://*) repo="$repo.git" ;;
-  */*/*) repo="$GRM_DEFAULT_SCHEME://$repo.git" ;;
-  */*) repo="$GRM_DEFAULT_SCHEME://$GRM_DEFAULT_HOST/$repo.git" ;;
-  *) repo="$GRM_DEFAULT_SCHEME://$GRM_DEFAULT_HOST/$GRM_DEFAULT_ORG/$repo.git" ;;
+  */. | */./* | ./*)
+    echo "repo: $repo: Can not use . in repository name" 1>&2
+    return 1
+    ;;
+  https://*) printf %s\\n "$repo.git" ;;
+  ssh://*) printf %s\\n "$repo.git" ;;
+  */*/*) printf %s\\n "$GRM_DEFAULT_SCHEME://$repo.git" ;;
+  */*) printf %s\\n "$GRM_DEFAULT_SCHEME://$GRM_DEFAULT_HOST/$repo.git" ;;
+  *) printf %s\\n "$GRM_DEFAULT_SCHEME://$GRM_DEFAULT_HOST/$GRM_DEFAULT_ORG/$repo.git" ;;
   esac
 
   return 0
@@ -266,10 +264,10 @@ grm_clone() {
     return 0
   fi
 
-  grm_set_repo_tag "$1"
+  case $1 in *@*) tag="${1#*@}" ;; *) unset tag ;; esac
   # shellcheck disable=SC2154,SC2086
-  if ! git -c advice.detachedHead=false clone $clone_opts -q ${tag:+--branch "$tag"} "$repo" "$dir"; then
-    echo "clone: $clone_opts -q ${tag:+--branch "$tag"} $repo $dir" 1>&2
+  if ! repo=$(grm_repo "$1") || ! git -c advice.detachedHead=false clone $clone_opts -q ${tag:+--branch "$tag"} "$repo" "$dir"; then
+    echo "clone $clone_opts -q ${tag:+--branch "$tag"} $repo $dir" 1>&2
     return 1
   fi
 
@@ -285,6 +283,6 @@ fi
 GRM_HOME="${GRM_HOME-$(cd "$GRM_SCRIPT_HOME/../../.." && pwd -P)}"
 GRM_DEFAULT_SCHEME="${GRM_DEFAULT_SCHEME-https}"
 GRM_DEFAULT_HOST="${GRM_DEFAULT_HOST-github.com}"
-GRM_EDITOR='code'
+GRM_EDITOR="${GRM_EDITOR-code}"
 
 g "$@"
