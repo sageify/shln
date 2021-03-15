@@ -3,12 +3,12 @@ nv() {
   ENVY_HOME="${ENVY_HOME-$HOME/.config/envy}"
   ENVY_EXCLUDE="${ENVY_EXCLUDE-^COLOR|^COMMAND_|^HOSTNAME=|^HOME=|^LANG=|^LOGNAME=|^ITERM_|^LC_|^OLDPWD=|^PATH=|^PWD=|^SHELL=|^SHLVL=|^SSH_|^TERM=|^TERM_|^TMPDIR=|^USER|^XPC_|^_=|^__}"
 
-  case "$1" in
+  case $1 in
 
   '') nv -g- "$(nv -p-)" ;;
 
   all | a | -a | .)
-    shift && case "$1" in
+    shift && case $1 in
     -*) __="${1#-}" && shift && nv "-a$__" "$@" ;;
     *) nv -a- "$@" ;;
     esac
@@ -25,7 +25,7 @@ nv() {
     ;;
 
   close | c | -c)
-    shift && case "$1" in
+    shift && case $1 in
     '') nv -c- "$(nv -d-)" ;;
     -*) __="${1#-}" && shift && nv "-c$__" "$@" ;;
     *) nv -c- "$@" ;;
@@ -42,7 +42,7 @@ nv() {
   -ch | -hc) echo "usage: close -aehp" ;;
 
   domain | d | -d)
-    shift && case "$1" in
+    shift && case $1 in
     --) shift && nv -d- "$@" ;;
     -*) __="${1#-}" && shift && nv "-d$__" "$@" ;;
     *) nv -d- "$@" ;;
@@ -64,7 +64,7 @@ nv() {
   -dh | hd) echo "usage: domain -acdhu" ;;
 
   env | e | -e)
-    shift && case "$1" in
+    shift && case $1 in
     '') nv -e- "$(nv -d-)" ;;
     --) shift && nv -e- "$@" ;;
     -*) __="${1#-}" && shift && nv "-e$__" "$@" ;;
@@ -86,7 +86,7 @@ nv() {
   -eh | he) echo "usage: env -acnptu" ;;
 
   grep | g | -g)
-    shift && case "$1" in
+    shift && case $1 in
     -u) nv -gu "$@" ;;
     *) nv -g- "$@" ;;
     esac
@@ -109,10 +109,10 @@ EOF
     return 0
     ;;
 
-  isnew) case "$(nv -n-)" in */) ;; *) return 1 ;; esac ;;
+  isnew) case $(nv -n-) in */) ;; *) return 1 ;; esac ;;
 
   name | n | -n | pwd)
-    shift && case "$1" in
+    shift && case $1 in
     --) shift && nv -n- "$@" ;;
     -*) __="${1#-}" && shift && nv "-n$__" "$@" ;;
     *) nv -n- "$@" ;;
@@ -168,16 +168,15 @@ EOF
           continue
         fi
 
-        IFS='=' read -r _nv_key _nv_value <<EOF
-$_nv_line
-EOF
-        printf %s "$_nv_key" | nv -g- . - >/dev/null && export "$_nv_key=$_nv_value"
+        # pass through grep of pattern to exluce any excluded envirnment variables
+        printf %s "${_nv_line%%=*}" | nv -g- . - >/dev/null && 
+          export "${_nv_line%%=*}=${_nv_line#*=}"
       done <"$ENVY_HOME/$(nv -n-)"
     done
     ;;
 
   pattern | p | -p)
-    shift && case "$1" in
+    shift && case $1 in
     -*) __="${1#-}" && shift && nv "-p$__" "$@" ;;
     *) nv -p- "$@" && [ "$1" ] && ! nv && echo "nv: $1: No environment variables found" 1>&2 ;;
     esac
@@ -200,14 +199,14 @@ EOF
   -ph | -hp) echo "usage: name -achu" ;;
 
   resolve | -r)
-    shift && case "$1" in
+    shift && case $1 in
     --) shift && nv -rn "$@" ;;
     -*) __="${1#-}" && shift && nv "-r$__" "$@" ;;
     *) nv -rn "$@" ;;
     esac
     ;;
   -nt | -tn)
-    case "$2" in
+    case $2 in
     /*)
       echo "name: $2: May not have a leading slash" 1>&2
       return 1
@@ -224,14 +223,14 @@ EOF
     esac
     ;;
   -dr | -rd)
-    nv -nt "$2" && case "$2" in
+    nv -nt "$2" && case $2 in
     */*) echo "${2%/*}" ;;
     '') if [ "$envy_name" ]; then nv -rd "$envy_name"; else echo 'nv'; fi ;;
     *) echo "$2" ;;
     esac
     ;;
   -nr | -rn)
-    nv -nt "$2" && case "$2" in
+    nv -nt "$2" && case $2 in
     */*) echo "$2" ;;
     *) echo "$(nv -rd)/$2" ;;
     esac
@@ -267,7 +266,7 @@ EOF
     ;;
 
   unset | u | -u)
-    shift && case "$1" in
+    shift && case $1 in
     -*) __="${1#-}" && shift && nv "-u$__" "$@" ;;
     *) nv -u- "$@" ;;
     esac
