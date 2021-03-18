@@ -3,15 +3,17 @@
 Envy manages enviornment variable contexts.  A context consists of a context name and a grep pattern.  A context is created as follows:
 
 ```sh
-# unload any previous context
 nv close -a
-nv new '^SAY='
+nv new hello '^SAY='
 nv set SAY='Hello World!'
 nv
 nv save
 
-# in full environemnt
+# see full environemnt
 env
+
+# managed environment
+nv .
 
 # show saved file
 nv cat
@@ -36,23 +38,23 @@ Domains are established by creating a context directory.
 For example, only one git configuration should be available at one time.
 
 ``sh
-nv new '^SAY='
-export SAY='Hello World!'
-nv save hello
+nv new nv/hello '^SAY='
+nv set SAY='Hello World!'
+nv save
 
-nv new '^GIT_'
+nv new git/john '^GIT_'
 export GIT_COMMITTER_NAME='John Doe'
 export GIT_COMMITTER_EMAIL='john@example.com'
 export GIT_AUTHOR_NAME='John Doe'
 export GIT_AUTHOR_EMAIL='john@example.com'
-nv save git/john
+nv save
 
-nv new '^GIT_'
+nv new jane '^GIT_'
 export GIT_COMMITTER_NAME='Jane Doe'
 export GIT_COMMITTER_EMAIL='jane@example.com'
 export GIT_AUTHOR_NAME='Jane Doe'
 export GIT_AUTHOR_EMAIL='jane@example.com'
-nv save jane
+nv save
 
 nv new '^SAY='
 export SAY='Goodbye!'
@@ -65,7 +67,6 @@ nv
 ``
 
 
-
 ## Install
 
 ```sh
@@ -74,22 +75,15 @@ typeset -f
 ```
 
 
+## Todo
 
-## Resolve
+### 
+- Ability to show all environment variables not being managed by an nv environment.  For example, if git environment only one loaded, show any other unmanaged. 
 
-nv resolve [-c] [-d] name
+### Menu
+- menu for envionrment value changing (menu set)
 
-Resolve a name.  Returns -1 if invalid name. -c resolve to a context, -d resolve to a domain.
-
-## Notes
-
-Revert to behavior in busy box.
-
-
-## env, export, set and unset
-
-### set
-
+### Exclude pattern?
 
 
 ## References

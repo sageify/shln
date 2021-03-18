@@ -6,7 +6,7 @@ Add new links.  By default, lnkn will look in the git package root directories.
 
 For example, upon first creation, 
 
-```bash
+```sh
 lnkn grm helloworld.sh
 
 ```

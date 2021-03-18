@@ -1,5 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 
+# shellcheck source=/dev/null
 . shmod
-# import dockcmd/sh@v0.0.1 docker.sh
-import dockcmd/sh@main docker.sh
+
+import github.com/dockcmd/sh@v0.0.1 missing.sh

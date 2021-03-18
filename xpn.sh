@@ -2,18 +2,46 @@
 
 # set split and word environment variables for the provided expansion key
 # example: kubectl>g
-xpn() {
-  xpn="$(grep -m 1 -e "^[ /t]*$1[ /t]" <"$dot_xpn" | sed -e "s/^[ /t]*$1[ /t]*//")"
+xpn_option() {
+  for key in "$@"; do
+    xpn="$(grep -m 1 -e '^[ /t]*'"$key"'[ /t]' "$dot_xpn" | sed -e 's/^[ /t]*'"$key"'[ /t]*//')"
+    case $xpn in
+    '') continue ;;
+    '!c' | '!k') echo "xpn: $key: Option may not have directive" 1>&2 && exit 1 ;;
+    esac
+    xpn_word
+    return 0
+  done
+}
+
+xpn_command() {
+  [ "$command_ignore" ] && return 1
+  [ "$command_ignore_next" ] && command_ignore=y
+  for key in "$@"; do
+    xpn="$(grep -m 1 -e '^[ /t]*'"$key"'[ /t]' "$dot_xpn" | sed -e 's/^[ /t]*'"$key"'[ /t]*//')"
+    case $xpn in
+    '') continue ;;
+    '!c') command_ignore=y && return 0 ;;
+    '!k') command_ignore_next=y && return 0 ;;
+    esac
+    # if expanded, then we don't have a native command
+    xpn_word && return 1
+    break
+  done
+  [ "$command_ignore" ] && return 1
+  return 0
+}
+
+xpn_word() {
   case $xpn in
+  '!1') ignore_count=1 && return 1 ;;
+  '!*') ignore_count=-1 && return 1 ;;
   \+*)
     add_next=y
     xpn="${xpn#\+*}"
     ;;
   esac
   case $xpn in
-  '') return 1 ;;
-  '!1') ignore_count=1 ;;
-  '!*') ignore_count=-1 ;;
   \`*) word="${xpn#\`*}" ;;
   *)
     for item in $xpn; do
@@ -25,14 +53,8 @@ xpn() {
       [ "$word" ] && split="$split $word"
       word=$item
     done
-    word="$word"
     ;;
   esac
-  return 0
-}
-
-xpn_name() {
-  case $1 in '' | *[![:alnum:]_-]*) return 1 ;; esac
   return 0
 }
 
@@ -73,16 +95,18 @@ if ! [ -f "$dot_xpn" ]; then
   fi
 fi
 
-! xpn "$(basename -- "$0")" && echo "xpn: $(basename -- "$0"): Can't find mapping" 1>&2 && exit 1
+# Need to put this back into the loop, all processing can go in xpn function
+xpn_command "$(basename -- "$0")" && ! [ "$word" ] && echo "xpn: $(basename -- "$0"): Can't find mapping" 1>&2 && exit 1
 base="$word" cmd="$word>"
-grep -q -m 1 -e '^[ /t]*'"$cmd"'[ /t]*$' "$dot_xpn" && ignore_commands=y
+xpn_command "$base"
+# grep -q -m 1 -e '^[ /t]*'"$cmd"'[ /t]*$' "$dot_xpn" && command_ignore=y
 
 #
-# Main Loop./
+# Main Loop
 #
 
-pos=1
-while [ $pos -le $# ]; do
+params=1
+while [ $params -le $# ]; do
   unset split word add_next
 
   if [ "$ignore_count" ]; then
@@ -90,27 +114,29 @@ while [ $pos -le $# ]; do
     [ "$ignore_count" -eq 0 ] && unset ignore_count
   else
     case $1 in
-    -*) ! xpn_name "$1" || xpn "$cmd$1" || xpn "$base\\*$1" ;;
-    *)
-      # cmd
-      if ! [ "$ignore_commands" ]; then
-        if xpn_name "$1"; then
-          if ! xpn "$cmd$1"; then
-            cmd="$cmd$1>"
-            grep -q -m 1 -e '^[ /t]*'"$cmd"'[ /t]*$' "$dot_xpn" && ignore_commands=y
-          fi
-        else
-          echo "xpn: $cmd ($lastparam): $1: Warning. Invalid command name" 1>&2
-        fi
-      fi
+    *[![:alnum:]_-]*) ;;
+    -? | --*) xpn_option "$cmd$1" "$base:$1" ;;
+    -*)
+      # -au -> -a -u
+      flags=${1#-}
+      shift
+      while [ "$flags" ]; do
+        head=${flags%?}
+        set -- "-${flags#$head}" "$@"
+        flags="$head"
+      done
+      continue
       ;;
+    *) xpn_command "$cmd$1" && cmd="$cmd$1>" ;;
     esac
 
     if [ "$word" ]; then
-      # xpn() succeeded and we have an expansion for $1
+      # xpn() succeeded and we have an expansion for $1, drop it
       shift
-      if [ "$add_next" ] && [ $pos -le $# ]; then
+      if [ "$add_next" ] && [ $params -le $# ]; then
+        # command>-n +name=  "-n jane" becomes "-name=jane"
         word="$word$1"
+        # drop parameter added to last word
         shift
       fi
       # shellcheck disable=SC2086
@@ -118,21 +144,18 @@ while [ $pos -le $# ]; do
       continue
     fi
   fi
-
   # no expansion, pass positional parameter through
   lastparam="$1"
   shift
   set -- "$@" "$lastparam"
-  pos=$((pos + 1))
+  params=$((params + 1))
 done
 
-#
-# Execute or if dry run, print
-#
-
+# if not a dry run, execute underlying command
 # shellcheck disable=SC2154
 ! [ "${dr+x}" ] && exec "$base" "$@"
 
+# dry run
 xpn_escape "$base"
 for item in "$@"; do
   printf ' '

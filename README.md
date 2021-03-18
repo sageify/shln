@@ -11,20 +11,20 @@ Why?
 
 To install on Mac/Linux/WSL2:
 
-```bash
+```sh
 curl -fsSL https://raw.githubusercontent.com/sageify/shln/master/install.sh | sh
 ```
 
 ## Usage
 
-```bash
+```sh
 # Assuming PATH has been updated 
 lnkn
 ```
 
 ## Cheat Sheet
 
-```bash
+```sh
 
 # install dockcmd/misc-sh and link to alpine.sh
 lnkn install dockcmd/misc-sh
@@ -37,7 +37,7 @@ alpine
 
 To add a hello world script for use under lnkn:
 
-```bash
+```sh
 cd $LNKN_HOME
 
 # create simple hello world
@@ -64,7 +64,7 @@ Any git repository may be used as a package of shell scripts.  A collection of s
 
 Assuming docker is installed, the following will install the aws cli:
 
-```bash
+```sh
 # Install aws cli
 grm tags dockcmd/aws-sh
 lnkn install dockcmd/aws-sh@v0.0.3
@@ -76,8 +76,8 @@ aws --version
 
 ### Usage
 
-```bash
-#!/bin/bash
+```sh
+#!/bin/sh
 
 . shmod
 import dockcmd/sh@v0.0.4 docker.sh
@@ -87,6 +87,12 @@ import dockcmd/sh@v0.0.4 docker.sh
 By default, the files are imported to ~/.shmod directory.  To specific a folder, set the SHMOD_HOME environment variable.
 
 
+## Todo
+- pull simple unit testing from test/pf.sh into own github
+- modify test/pf.sh to shmod the unit testing
+- pull envy into own.
+- pull expansion into own.
+- clone_opts in shmod.sh is hacky
 
 ## References
 http://www.etalabs.net/sh_tricks.html

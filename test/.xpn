@@ -1,28 +1,43 @@
 kc kubectl
 
-# prevent global option values from being treated as commands
+#
+# Set behavior of native commands
+#
+
+# prevent native global option values from being treated as commands
 # without these settings:  kc -n c c > kc -n create c
 # with settings: kc -n c c > kc -n c create
-kubectl*-f           !1
-kubectl*--filename   !1
-kubectl*-n           !1
-kubectl*--namespace  !1
-kubectl*-s           !1
-kubectl*--server     !1
-kubectl*-v           !1
-kubectl*--v          !1
+kubectl:-n           !1
+kubectl:--namespace  !1
+kubectl:-s           !1
+kubectl:--server     !1
+kubectl:-v           !1
+kubectl:--v          !1
 
+# native command, no further subcommand
+kubectl>config>set-credentials   !c
+
+# native command, no further subcommand, but next argument is available for expansion
+# handles   kc get p -> kc get po  but keeps command and kubectl>get
+kubectl>create    !k
+kubectl>describe  !k
+kubectl>get       !k
 
 # treated as global even though they are not.
 # this is an invalid command:  kc -all gp > kc --all-namespaces get po  
 # this is:  kc gp -all > kc get po --all-namespaces  
-kubectl*-all        --all-namespaces
-kubectl*-fs         +--field-selector=
-kubectl*-nks        -n=kube-system
-kubectl*-ow         -o=wide
-kubectl*-oy         -o=yaml
-kubectl*-ojp        +-o=jsonpath=
-kubectl*-sl         --show-labels
+kubectl:-f           !1
+kubectl:--filename   !1
+kubectl:--all        --all-namespaces
+kubectl:--fs         +--field-selector=
+kubectl:--nks        -n=kube-system
+kubectl:--ow         -o=wide
+kubectl:--ojp        +-o=jsonpath=
+kubectl:--sl         --show-labels
+
+#
+# Expansions
+#
 
 kubectl>a   apply
 kubectl>af  apply -f
@@ -53,7 +68,6 @@ kubectl>config>s    set-context
 kubectl>config>v    view
 kubectl>config>scr  set-credentials
 
-kubectl>config>set-credentials>
 kubectl>config>set-credentials>-p  +--password=
 kubectl>config>set-credentials>-u  +--username=
 kubectl>config>view>
@@ -70,24 +84,27 @@ kubectl>explain>d  deploy
 kubectl>explain>p  po
 kubectl>explain>s  svc
 
-kubectl>get>c  configmap
-kubectl>get>d  deploy
-kubectl>get>p  po
-kubectl>get>s  svc
+kubectl>get>-s  --sort-by=.metadata.name
+kubectl>get>-y  -o=yaml
+kubectl>get>c   configmap
+kubectl>get>d   deploy
+kubectl>get>p   po
+kubectl>get>s   svc
 
 
 pf printf
-printf*-all          all
+printf                !c
 printf>
+printf:--all          all
+printf>--dang         edge case
+printf>--dangcase     +edge case=
+printf>--dangword     +`edge case=
+printf>--ignore-next  !1
+printf>--ignore-rest  !*
+printf>--lines        -s -w
+printf>--spaces       `   
+printf>--warning      "Hello World"
 printf>-b            `[%s]
-printf>-dang         edge case
-printf>-dangcase     +edge case=
-printf>-dangword     +`edge case=
-printf>-ignore-rest  !*
-printf>-ignore-next  !1
-printf>-lines        -split -word
-printf>-spaces       `   
-printf>-split        Hello World
-printf>-tilde        `Hello `World
-printf>-warning      "Hello World"
-printf>-word         `Hello World
+printf>-s             Hello World
+printf>-t             `Hello `World
+printf>-w             `Hello World

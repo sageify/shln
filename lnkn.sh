@@ -4,12 +4,12 @@ l() {
   case "$1" in
   '') l ls ;;
   '-l')
-    find "$LNKN_HOME" -maxdepth 1 | while read -r item; do
+    find "$LNKN_HOME" -maxdepth 1 | sort | while read -r item; do
       [ -L "$item" ] && printf "%-12s\t%s\\n" "${item#"$LNKN_HOME"/*}" "$(readlink -- "$item")"
     done
     ;;
-  cmd | c | -c)
-    shift
+  cmd | c)
+    shift && [ "$1" = -- ] && shift
     ! [ "$2" ] && echo "usage: cmd SOURCE LINK " 1>&2 && return 1
 
     link=$LNKN_HOME/$2
@@ -18,14 +18,14 @@ l() {
       return 0
     fi
 
-    source=$(which "$1") &&
+    source=$(which -- "$1") &&
       # reset cache for where executable found in case link shadows an existing executable
       ln -s "$source" "$link" && hash -r && ls -l "$link"
     ;;
   env) "echo LNKN_HOME=$LNKN_HOME" && grm env ;;
   exec) shift && cd -- "$LNKN_HOME" && exec "$@" ;;
-  grm | g | -g)
-    shift
+  grm | g)
+    shift && [ "$1" = -- ] && shift
     ! [ "$1" ] && echo "usage: lnkn grm SOURCE " 1>&2 && return 1
 
     base="$(basename -- "$1")"
@@ -50,11 +50,15 @@ l() {
     fi
 
     # link to script
-    ln -s "$(grm which)/$(grm find "*/$1" | head -n 1)" "$link_name" &&
+    ln -s "$(grm home)/$(grm find "*/$1" | head -n 1)" "$link_name" &&
       # reset cache for where executable found in case link covers an existing executable
       hash -r &&
       # output link
       ls -l "$link_name"
+    ;;
+
+  home)
+    printf %s\\n "$LNKN_HOME"
     ;;
 
   install)
@@ -71,41 +75,43 @@ l() {
     done
     ;;
 
-  which | w | -w)
-    shift
-    if ! [ "$1" ]; then
-      printf %s\\n "$LNKN_HOME"
-      return 0
-    fi
+  which | w)
+    shift && [ "$1" = -- ] && shift
 
     file="$LNKN_HOME/$1"
     if ! [ -L "$file" ]; then
       echo "which: $1 not found or not a link" 1>&2
-      exit 1
+      return 1
     fi
 
     printf %s\\n "$(readlink "$file")"
     ;;
   ln | ls | mv | rm) l exec "$@" ;;
-  -h)
+
+  version) echo "$(basename -- "$0") version 0.4.1" ;;
+  h | help | -h | -help | --help)
     cat <<EOF
 Usage:	lnkn COMMAND | CUSTOM
 
-Linkin commands.
+Show the current links.  To list in long format, use lnkn -l.
 
 Link Commands
- ls     list links
- mv     move a link 
- rm     remove a link
- cmd    add shortcut link to an existing command
- grm    add link to a Groom repository file
- exec   execute any linux command in $LNKN_HOME  
- env    show Linkin and Groom environments
- which  show source file location for a link
+    ls     List links
+    mv     Move a link 
+    rm     Remove a link
+ c, cmd    Add shortcut link to an existing command
+ g, grm    Add link to a Groom repository file
+ w, which  Print source file location for a link
 
 Git Repsoitory and Link Commands
- install     clone a new git repository and add default links
- uninstall   remove git repository and any associated links
+ install     Clone a new git repository and add default links
+ uninstall   Remove git repository and any associated links
+
+Other Commands
+ exec     Execute any linux command in $LNKN_HOME  
+ env      Print Linkin and Groom environment information
+ version  Print the version information
+ help     Show this help
 EOF
     ;;
   -*) echo "lnkn: $1: Option not found" 1>&2 && return 1 ;;
@@ -115,7 +121,7 @@ EOF
 
 lnkn_install() {
   # if more than one script, don't link
-  if ! dir=$(grm clone "$1") || ! script=$(ls -- "$dir/*.sh") ||
+  if ! dir=$(grm clone -- "$1") || ! script=$(ls -- "$dir/*.sh") ||
     [ "$(printf %s "$script" | wc -w)" -ne 1 ]; then
     ls -- "$dir"
     return 1
@@ -131,9 +137,9 @@ lnkn_install() {
 }
 
 lnkn_uninstall() {
-  ! dir="$(grm which "$1")" && return 1
+  ! dir="$(grm which -- "$1")" && return 1
 
-  grm rm "$1" && find "$LNKN_HOME" -maxdepth 1 | while read -r link; do
+  grm rm -- "$1" && find "$LNKN_HOME" -maxdepth 1 | while read -r link; do
     # any link that references the git directory is removed
     [ "$dir" = "$(dirname -- "$(readlink -- "$link")")" ] &&
       rm "$link"

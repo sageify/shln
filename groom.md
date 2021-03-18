@@ -2,25 +2,35 @@
 
 Groom is a git repository manager simplifying the cloning and coding within git repositories.
 
+Groom makes it easy to:
+
+- Clone git repositories into a standard local directory
+- Safely remove repositories
+- Find diffs for all repositories
+- Easily start an editor for a repository
+
 ## Comman Usage
 
-```bash
+```sh
 # launch visual studio code for the supplied repository, cloning if neccessary
-grm code sageify/shln
+grm edit sageify/shln
+grm e sageify/shln
 
 # find a file in all repositories
-grm find README.md
+grm find "*README.md"
 
-# show diffs for all cloned repositories (both are equivalent)
-grm diff
-grm diff $(grm find)
+# show diffs for all cloned repositories (all are equivalent)
 grm diff -a
+grm diff $(grm)
+grm d -a
+grm da
 
 # show diffs for a single repository
 grm diff sageify/shln
 
 # show actual location of a repository
 grm which sageify/shln
+grm w sageify/shln
 
 # show the groom environment
 grm env
@@ -29,17 +39,21 @@ grm env
 grm exec pwd
 
 # show groom help
-grm
+grm help
 
 # pull latest for a repo
 grm pull sageify/shln
+
+# menu based approach
+grm menu edit
+# 1 2
 
 ```
 
 
 ## Advanced Usage
 
-```bash
+```sh
 # change to the directory of a repository
 cd $(grm which sageify/shln)
 
@@ -47,3 +61,6 @@ cd $(grm which sageify/shln)
 lnkn mv terraform tf
 
 ```
+
+
+## Todo
