@@ -1,61 +1,58 @@
-#!/bin/sh
+#!/bin/sh --posix
 
-# set split and word environment variables for the provided expansion key
-# example: kubectl>g
-xpn_option() {
-  for key in "$@"; do
-    xpn="$(grep -m 1 -e '^[ /t]*'"$key"'[ /t]' "$dot_xpn" | sed -e 's/^[ /t]*'"$key"'[ /t]*//')"
+# returns 0 if expanded (word assigned), 1 otherwise (a directive, no entry in .xpn)
+xpn_word() {
+  for param in "$@"; do
+    xpn="$(grep -m 1 -e '^[ /t]*'"$param"'[ /t]' "$dot_xpn" | sed -e 's/^[ /t]*'"$param"'[ /t]*//')"
     case $xpn in
     '') continue ;;
-    '!c' | '!k') echo "xpn: $key: Option may not have directive" 1>&2 && exit 1 ;;
+    '<'*)
+      for direct in ${xpn#?}; do
+        case $direct in
+        'arg='[[:digit:]] | 'arg='[[:digit:]][[:digit:]])
+          arg_directive=${direct#*=}
+          ;;
+        'cmd') cmd_count=1 ;;
+        'cmd+'[[:digit:]] | 'cmd+'[[:digit:]][[:digit:]])
+          cmd_count=$((1 + ${direct#*+}))
+          ;;
+        'cmd_arg='[[:digit:]] | 'cmd_arg='[[:digit:]][[:digit:]])
+          cmd_arg_count=${direct#*=}
+          ;;
+        'native+'[[:digit:]] | 'native+'[[:digit:]][[:digit:]])
+          native_count=$((0 + ${direct#*+}))
+          ;;
+        'native') ;;
+        *) echo "xpn: $xpn: Unknown directive" 1>&2 && exit 1 ;;
+        esac
+      done
+      return 1
+      ;;
+    '+'*)
+      append_next_param=y
+      xpn="${xpn#?}"
+      ! [ "$xpn" ] && echo "xpn: $param +: Missing argument" 1>&2 && exit 1
+      ;;
     esac
-    xpn_word
+
+    case $xpn in
+    '`'*) word="${xpn#?}" && return 0 ;;
+    *)
+      xpn="${xpn#\|}"
+      for item in $xpn; do
+        case $item in
+        \"* | *\" | \'* | *\')
+          echo "xpn: $item: Warning. Use \` to prevent splitting.  Quotes are treated as literals" 1>&2
+          ;;
+        esac
+        [ "$word" ] && split="$split $word"
+        word=$item
+      done
+      ;;
+    esac
     return 0
   done
-}
-
-xpn_command() {
-  [ "$command_ignore" ] && return 1
-  [ "$command_ignore_next" ] && command_ignore=y
-  for key in "$@"; do
-    xpn="$(grep -m 1 -e '^[ /t]*'"$key"'[ /t]' "$dot_xpn" | sed -e 's/^[ /t]*'"$key"'[ /t]*//')"
-    case $xpn in
-    '') continue ;;
-    '!c') command_ignore=y && return 0 ;;
-    '!k') command_ignore_next=y && return 0 ;;
-    esac
-    # if expanded, then we don't have a native command
-    xpn_word && return 1
-    break
-  done
-  [ "$command_ignore" ] && return 1
-  return 0
-}
-
-xpn_word() {
-  case $xpn in
-  '!1') ignore_count=1 && return 1 ;;
-  '!*') ignore_count=-1 && return 1 ;;
-  \+*)
-    add_next=y
-    xpn="${xpn#\+*}"
-    ;;
-  esac
-  case $xpn in
-  \`*) word="${xpn#\`*}" ;;
-  *)
-    for item in $xpn; do
-      case $item in
-      \"* | *\" | \'* | *\')
-        echo "xpn: $item: Warning. Use \` to prevent splitting.  Quotes are treated as literals" 1>&2
-        ;;
-      esac
-      [ "$word" ] && split="$split $word"
-      word=$item
-    done
-    ;;
-  esac
-  return 0
+  return 1
 }
 
 xpn_escape() {
@@ -95,48 +92,62 @@ if ! [ -f "$dot_xpn" ]; then
   fi
 fi
 
-# Need to put this back into the loop, all processing can go in xpn function
-xpn_command "$(basename -- "$0")" && ! [ "$word" ] && echo "xpn: $(basename -- "$0"): Can't find mapping" 1>&2 && exit 1
-base="$word" cmd="$word>"
-xpn_command "$base"
-# grep -q -m 1 -e '^[ /t]*'"$cmd"'[ /t]*$' "$dot_xpn" && command_ignore=y
-
 #
 # Main Loop
 #
 
-params=1
-while [ $params -le $# ]; do
-  unset split word add_next
+set -- "$(basename -- "$0")" "$@"
 
-  if [ "$ignore_count" ]; then
-    ignore_count=$((ignore_count - 1))
-    [ "$ignore_count" -eq 0 ] && unset ignore_count
+param_pos=1 native_count=0 cmd_count=1 cmd_arg_count=1 arg_count=1
+while [ $param_pos -le $# ]; do
+  unset -v xpn split word append_next_param arg_directive
+
+  if [ $native_count -gt 0 ]; then
+    native_count=$((native_count - 1))
   else
     case $1 in
     *[![:alnum:]_-]*) ;;
-    -? | --*) xpn_option "$cmd$1" "$base:$1" ;;
+    -? | --*) xpn_word "$cmd$1" "$base:$1" ;;
     -*)
-      # -au -> -a -u
-      flags=${1#-}
-      shift
-      while [ "$flags" ]; do
-        head=${flags%?}
-        set -- "-${flags#$head}" "$@"
-        flags="$head"
-      done
-      continue
+      xpn_word "$cmd$1" "$base:$1"
+      if ! [ "$xpn" ]; then
+        # -au -> -a -u
+        flags=${1#-}
+        shift
+        while [ "$flags" ]; do
+          head=${flags%?}
+          set -- "-${flags#$head}" "$@"
+          flags="$head"
+        done
+        continue
+      fi
       ;;
-    *) xpn_command "$cmd$1" && cmd="$cmd$1>" ;;
+    *)
+      if [ $arg_count -gt 0 ] && ! xpn_word "$cmd$1"; then
+        arg_count=$((arg_count - 1))
+        if [ $cmd_count -gt 0 ]; then
+          cmd="$cmd$1>"
+          cmd_count=$((cmd_count - 1))
+          if [ "$arg_directive" ]; then
+            arg_count=$arg_directive
+          elif [ "$cmd_count" -eq 0 ]; then
+            arg_count=0
+          else
+            arg_count=$cmd_arg_count
+          fi
+        fi
+      fi
+      ;;
     esac
 
     if [ "$word" ]; then
-      # xpn() succeeded and we have an expansion for $1, drop it
       shift
-      if [ "$add_next" ] && [ $params -le $# ]; then
-        # command>-n +name=  "-n jane" becomes "-name=jane"
+      if [ "$append_next_param" ]; then
+        # command>-n +name=; -n jane; -name=jane"
+        # abort if hit end of param_pos; -n (no jane)
+        [ $param_pos -gt $# ] && echo "xpn: $word: Missing parameter" 1>&2 && exit 1
+
         word="$word$1"
-        # drop parameter added to last word
         shift
       fi
       # shellcheck disable=SC2086
@@ -144,19 +155,22 @@ while [ $params -le $# ]; do
       continue
     fi
   fi
-  # no expansion, pass positional parameter through
+
+  # have a native parameter
   lastparam="$1"
   shift
   set -- "$@" "$lastparam"
-  params=$((params + 1))
+  [ $param_pos -eq 1 ] && base="$lastparam"
+  param_pos=$((param_pos + 1))
 done
 
-# if not a dry run, execute underlying command
 # shellcheck disable=SC2154
-! [ "${dr+x}" ] && exec "$base" "$@"
+# if not a dry run, execute underlying command
+! [ "${dr+x}" ] && exec "$@"
 
 # dry run
-xpn_escape "$base"
+xpn_escape "$1"
+shift
 for item in "$@"; do
   printf ' '
   [ "$dr" = l ] && printf '\\\n'

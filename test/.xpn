@@ -4,30 +4,35 @@ kc kubectl
 # Set behavior of native commands
 #
 
-# prevent native global option values from being treated as commands
+# kubectl has 1 subcommand as standard
+kubectl  <cmd+1
+
+# prevent native global option arguments from being treated as commands
 # without these settings:  kc -n c c > kc -n create c
 # with settings: kc -n c c > kc -n c create
-kubectl:-n           !1
-kubectl:--namespace  !1
-kubectl:-s           !1
-kubectl:--server     !1
-kubectl:-v           !1
-kubectl:--v          !1
+# declare the option and additional arg as native (no expansion)
+kubectl:-n           <native+1
+kubectl:--namespace  <native+1
+kubectl:-s           <native+1
+kubectl:--server     <native+1
+kubectl:-v           <native+1
+kubectl:--v          <native+1
 
-# native command, no further subcommand
-kubectl>config>set-credentials   !c
+# normal behavior when reaching last command is no more args are expanded
+# however, for these, allow one arg to expand resource
+# kc get d -> kc get deploy
+kubectl>create      <arg=1
+kubectl>describe    <arg=1
+kubectl>get         <arg=1
 
-# native command, no further subcommand, but next argument is available for expansion
-# handles   kc get p -> kc get po  but keeps command and kubectl>get
-kubectl>create    !k
-kubectl>describe  !k
-kubectl>get       !k
+# kubectl set to only one subcommand, enable config explicitly for another
+kubectl>config      <cmd+1
 
 # treated as global even though they are not.
 # this is an invalid command:  kc -all gp > kc --all-namespaces get po  
 # this is:  kc gp -all > kc get po --all-namespaces  
-kubectl:-f           !1
-kubectl:--filename   !1
+kubectl:-f           <native+1
+kubectl:--filename   <native+1
 kubectl:--all        --all-namespaces
 kubectl:--fs         +--field-selector=
 kubectl:--nks        -n=kube-system
@@ -91,20 +96,26 @@ kubectl>get>d   deploy
 kubectl>get>p   po
 kubectl>get>s   svc
 
-
 pf printf
-printf                !c
-printf>
+printf
 printf:--all          all
 printf>--dang         edge case
 printf>--dangcase     +edge case=
 printf>--dangword     +`edge case=
-printf>--ignore-next  !1
-printf>--ignore-rest  !*
+printf>--ignore-next  <native+1
+printf>--ignore-rest  <native+99
 printf>--lines        -s -w
 printf>--spaces       `   
 printf>--warning      "Hello World"
-printf>-b            `[%s]
+printf>-b             `[%s]
 printf>-s             Hello World
 printf>-t             `Hello `World
 printf>-w             `Hello World
+
+# normal behavior for -xy is to become -x -y
+# however, if for some reason want to maintain
+printf>-xy            <native
+
+# 
+printf>--e1           +
+printf>--e4           $unknown
