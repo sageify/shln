@@ -1,5 +1,4 @@
-#!/bin/sh
-
+#!/bin/sh --posix
 l() {
   case "$1" in
   '') l ls ;;
@@ -88,8 +87,8 @@ l() {
     ;;
   ln | ls | mv | rm) l exec "$@" ;;
 
-  version) echo "$(basename -- "$0") version 0.4.1" ;;
-  h | help | -h | -help | --help)
+  version | --version) echo "$(basename -- "$0") version 0.5.0" ;;
+  help | -h | --help)
     cat <<EOF
 Usage:	lnkn COMMAND | CUSTOM
 
