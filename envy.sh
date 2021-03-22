@@ -3,19 +3,21 @@ nv() {
   case $1 in
   '') nv g-- "$(nv p--)" ;;
 
-  close | c | domain | d | env | e | find | f | grep | g | name | n | pattern | p | resolve)
-    # normal style command
-    cmd=$1
+  close | c | domain | d | env | e | find | f | grep | g | name | n | open | o | pattern | p | profile-open | profile-save | resolve)
+    _cmd=$1
     shift && case $1 in
     '')
-      case $cmd in
+      case $_cmd in
       close | c) nv c-- "$(nv d--)" ;;
       env | e) nv ea ;;
-      *) nv "$cmd--" ;;
+      open | o) nv o-- "$(nv n--)" ;;
+      profile-open) nv profile-open-- "$ENVY_PROFILE" ;;
+      profile-save) nv profile-save-- "$ENVY_PROFILE" ;;
+      *) nv "$_cmd--" ;;
       esac
       ;;
-    -*) __="$1" && shift && nv "$cmd$__" "$@" ;;
-    *) nv "$cmd--" "$@" ;;
+    -*) __="$1" && shift && nv "$_cmd$__" "$@" ;;
+    *) nv "$_cmd--" "$@" ;;
     esac
     ;;
 
@@ -88,7 +90,7 @@ nv() {
       [ "$2" ] && env | nv g-- "$2" -
     fi
     ;;
-  grep-u | gu | ug)
+  grep-u | g-u | gu)
     while IFS='=' read -r __ _; do
       [ "$__" ] && unset "$__"
     done <<EOF
@@ -110,6 +112,32 @@ EOF
     done
     ;;
 
+  open-- | o--)
+    shift && for __ in "$@"; do
+      ! nv n-- "$__" && return 1
+      nv isnew && continue
+
+      # unset new domain set above
+      nv du
+
+      while read -r _nv_line || [ "$_nv_line" ]; do
+        case $_nv_line in
+        \#*) continue ;;
+        +*)
+          nv p-- "${_nv_line#*+}"
+          eval 'envy_env_'"$(nv d--)"'="$(nv n--) $(nv p--)"'
+          ;;
+        *=*)
+          # pass through grep of pattern to exlude any excluded envirnment variables
+          printf %s "${_nv_line%%=*}" | nv g-- . - >/dev/null &&
+            export "${_nv_line%%=*}=${_nv_line#*=}"
+          ;;
+        *) [ "$_nv_line" ] && echo "open: $_nv_line: Warning. Line ignored" 1>&2 ;;
+        esac
+      done <"$ENVY_HOME/env/$(nv n--)"
+    done
+    ;;
+
   pattern-- | p--)
     if [ -n "${2+x}" ]; then
       envy_pattern="$2"
@@ -117,14 +145,14 @@ EOF
       printf %s\\n "${envy_pattern-.}"
     fi
     ;;
-  pattern-a | pa | ap)
+  pattern-a | p-a | pa)
     nv _e "$2" "pattern -a" &&
       for __ in $(nv da); do
         nv ep "$__"
       done
     ;;
-  pattern-c | pc | cp) nv _e "$2" "pattern -c" && nv pu && unset envy_pattern ;;
-  pattern-u | pu | up) nv _e "$2" "pattern -u" && nv gu "$(nv p--)" ;;
+  pattern-c | p-c | pc) nv _e "$2" "pattern -c" && nv pu && unset envy_pattern ;;
+  pattern-u | p-u | pu) nv _e "$2" "pattern -u" && nv gu "$(nv p--)" ;;
 
   resolve-- | rn)
     nv rt "$2" && case $2 in
@@ -140,7 +168,7 @@ EOF
       return 1
       ;;
     *[![:alnum:]/_]*)
-      echo "name: $2: May only be alphanumeric or underscore" 1>&2
+      echo "name: $2: May contain only alphanumeric or underscore" 1>&2
       return 1
       ;;
     */*/*)
@@ -192,56 +220,30 @@ EOF
 
   profile)
     shift && case $1 in
-    '') nv profile-h 1>&2 && return 1 ;;
+    '') printf %s\\n "$ENVY_PROFILE" && return 0 ;;
     *) __="$1" && shift && nv "profile-$__" "$@" ;;
     esac
     ;;
-  profile-open | profile-open--)
-    shift
-    for __ in "$@"; do
-      # shellcheck disable=SC2046
-      nv open $(cat -- "$ENVY_HOME/profile/$__")
-    done
+  profile-open--) # shellcheck disable=SC2046
+    shift && [ "$1" ] &&
+      nv open $(cat -- "$ENVY_HOME/profile/$1") && ENVY_PROFILE="$1" ;;
+  profile-save--)
+    shift && [ "$1" ] &&
+      nv na >"$ENVY_HOME/profile/$1" && ENVY_PROFILE="$1" &&
+      nv na
     ;;
-  profile-save | profile-save--)
-    shift && ! [ "$1" ] && echo "nv: Expecting profile name" && return 1
-    nv na >"$ENVY_HOME/profile/$1"
+  profile-find | profile-find--)
+    find "$ENVY_HOME/profile" -type f -path "$ENVY_HOME/profile/${2-*}" | sort |
+      while read -r file; do
+        printf %s\\n "${file#$ENVY_HOME/profile/}"
+      done
     ;;
-  profile-find | profile-find--) ;;
 
   pwd) nv _e "$2" "pwd" && nv n-- ;;
 
   new)
     nv n-- "$2"
     nv p-- "${3-$(nv p--)}"
-    ;;
-
-  open | o | open-- | o--)
-    shift
-    ! [ "$1" ] && set -- "$(nv n--)"
-    for __ in "$@"; do
-      ! nv n-- "$__" && return 1
-      nv isnew && continue
-
-      # unset new domain set above
-      nv du
-
-      while read -r _nv_line || [ "$_nv_line" ]; do
-        case $_nv_line in
-        \#*) continue ;;
-        +*)
-          nv p-- "${_nv_line#*+}"
-          eval 'envy_env_'"$(nv d--)"'="$(nv n--) $(nv p--)"'
-          ;;
-        *=*)
-          # pass through grep of pattern to exlude any excluded envirnment variables
-          printf %s "${_nv_line%%=*}" | nv g-- . - >/dev/null &&
-            export "${_nv_line%%=*}=${_nv_line#*=}"
-          ;;
-        *) [ "$_nv_line" ] && echo "open: $_nv_line: Warning. Line ignored" 1>&2 ;;
-        esac
-      done <"$ENVY_HOME/env/$(nv n--)"
-    done
     ;;
 
   save | s)
@@ -372,12 +374,14 @@ ENVY_HOME="${ENVY_HOME-$HOME/.config/envy}"
 ENVY_EXCLUDE="${ENVY_EXCLUDE-^(COLOR|COMMAND_|ENVY_|HOSTNAME=|HOME=|LANG=|LaunchInstanceID=|LOGNAME=|ITERM_|LC_|OLDPWD=|PATH=|PWD=|SECURITYSESSIONID=|SHELL=|SHLVL=|SSH_|TERM=|TERM_|TMPDIR=|USER|XPC_|_=|__)}"
 # any default (or override of above) environment variables may be set in .nvrc
 [ -f "$ENVY_HOME/.nvrc" ] &&
-  while read -r __; do
+  while read -r __ || [ "$__" ]; do
+    case $__ in '' | \#*) continue ;; esac
     # shellcheck disable=SC2163
     export "$__"
   done <"$ENVY_HOME/.nvrc"
 
-[ -f "$ENVY_HOME/profile/nv" ] && nv profile open-- nv
+[ -f "$ENVY_HOME/profile/${ENVY_PROFILE-nv}" ] &&
+  nv profile open -- "${ENVY_PROFILE-nv}"
 
 mkdir -p -- "$ENVY_HOME/env"
 mkdir -p -- "$ENVY_HOME/profile"
