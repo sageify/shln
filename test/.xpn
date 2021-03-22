@@ -7,9 +7,9 @@ kc kubectl
 # kubectl has 1 subcommand as standard
 kubectl  <cmd+1
 
-# prevent native global option arguments from being treated as commands
-# without these settings:  kc -n c c > kc -n create c
-# with settings: kc -n c c > kc -n c create
+# prevent arguments of native global option  from being treated as commands
+# without these settings:  kc -n c c  >>>  kc -n create c
+# with settings: kc -n c c  >>>  kc -n c create
 # declare the option and additional arg as native (no expansion)
 kubectl:-n           <native+1
 kubectl:--namespace  <native+1
@@ -18,7 +18,7 @@ kubectl:--server     <native+1
 kubectl:-v           <native+1
 kubectl:--v          <native+1
 
-# normal behavior when reaching last command is no more args are expanded
+# normal behavior when reaching last sub command is no more args are expanded
 # however, for these, allow one arg to expand resource
 # kc get d -> kc get deploy
 kubectl>create      <arg=1
@@ -96,6 +96,11 @@ kubectl>get>d   deploy
 kubectl>get>p   po
 kubectl>get>s   svc
 
+
+#
+# Test suite on options
+#
+
 pf printf
 printf
 printf:--all          all
@@ -113,9 +118,11 @@ printf>-t             `Hello `World
 printf>-w             `Hello World
 
 # normal behavior for -xy is to become -x -y
-# however, if for some reason want to maintain
+# however, if for some reason want to maintain -xy with no change
 printf>-xy            <native
 
-# 
+# possible error - if allowed, would have the effect of deleting --e1, 
 printf>--e1           +
-printf>--e4           $unknown
+
+# unknown directive error
+printf>--e4           <unknown
