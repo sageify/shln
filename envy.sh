@@ -1,36 +1,40 @@
 # shellcheck shell=sh
 nv() {
   case $1 in
-  '') nv g-- "$(nv p--)" ;;
+  '') nv printenv ;;
 
-  close | c | domain | d | env | e | find | f | grep | g | name | n | open | o | pattern | p | profile-open | profile-save | resolve)
-    _cmd=$1
+  close | c | domain | d | env | e | find | f | grep | g | name | n | open | o | pattern | p | printenv | profile-open | profile-save | resolve | save | s)
+    __nv_cmd=$1
     shift && case $1 in
     '')
-      case $_cmd in
-      close | c) nv c-- "$(nv d--)" ;;
+      case $__nv_cmd in
+      close | c) nv c-- "$(nv rd "$envy_name")" ;;
+      domain | d) nv rd "$envy_name" ;;
       env | e) nv ea ;;
-      open | o) nv o-- "$(nv n--)" ;;
-      profile-open) nv profile-open-- "$ENVY_PROFILE" ;;
-      profile-save) nv profile-save-- "$ENVY_PROFILE" ;;
-      *) nv "$_cmd--" ;;
+      name | n) nv rn "$envy_name" ;;
+      open | o) nv o-- "$(nv rn "$envy_name")" ;;
+      pattern | p) printf %s\\n "${envy_pattern-.}" ;;
+      printenv) nv g-- "$(printf %s\\n "${envy_pattern-.}")" ;;
+      profile-open) nv profile-open-- "$envy_profile" ;;
+      profile-save) nv profile-save-- "$envy_profile" ;;
+      save | s) nv s-- "$(nv rn "$envy_name")" ;;
+      *) nv "$__nv_cmd--" ;;
       esac
       ;;
-    -*) __="$1" && shift && nv "$_cmd$__" "$@" ;;
-    *) nv "$_cmd--" "$@" ;;
+    -*) __="$1" && shift && nv "$__nv_cmd$__" "$@" ;;
+    *) nv "$__nv_cmd--" "$@" ;;
     esac
     ;;
 
   close-- | c--) nv ec "$2" && nv n-- "" ;;
   reset | close-a | c-a | ca)
-    nv pc
     for __ in $(nv da); do
       nv ec "$__"
     done
     unset -v envy_name
+    unset -v envy_pattern
     ;;
 
-  domain-- | d--) nv _e "$2" "domain" && nv rd "$envy_name" ;;
   domain-a | d-a | da)
     nv _e "$2" "domain -a" && set | grep -e '^envy_env_' | while IFS='=' read -r key _; do
       printf %s\\n "${key#envy_env_}"
@@ -38,11 +42,11 @@ nv() {
     ;;
   domain-f | d-f | df)
     nv _e "$3" "domain -f $2" &&
-      find "$ENVY_HOME/env" -mindepth 1 -maxdepth 1 -type d -path "*$2" | while read -r file; do
-        printf %s\\n "${file#$ENVY_HOME/env/}"
+      find "$envy_home/env" -mindepth 1 -maxdepth 1 -type d -path "*$2" | while read -r file; do
+        printf %s\\n "${file#$envy_home/env/}"
       done
     ;;
-  domain-u | d-u | du) nv _e "$2" "domain -u" && nv eu "$(nv d--)" ;;
+  domain-u | d-u | du) nv _e "$2" "domain -u" && nv eu "$(nv d)" ;;
   domain-h | d-h | dh) echo "usage: domain -afu" ;;
 
   env-- | e--)
@@ -69,23 +73,22 @@ nv() {
   env-u | e-u | eu) __="$(nv ep "$2")" && nv gu "$__" ;;
 
   find-- | f--)
-    find "$ENVY_HOME/env" -mindepth 2 -maxdepth 2 -type f -path "$ENVY_HOME/env/$(nv d--)/${2-*}" |
+    find "$envy_home/env" -mindepth 2 -maxdepth 2 -type f -path "$envy_home/env/$(nv d)/${2-*}" |
       while read -r file; do
-        printf %s\\n "${file#$ENVY_HOME/env/}"
+        printf %s\\n "${file#$envy_home/env/}"
       done
     ;;
   find-all | find-a | f-a | fa)
-    find "$ENVY_HOME/env" -mindepth 2 -maxdepth 2 -type f -path "$ENVY_HOME/env/${2-*}" |
+    find "$envy_home/env" -mindepth 2 -maxdepth 2 -type f -path "$envy_home/env/${2-*}" |
       while read -r file; do
-        printf %s\\n "${file#$ENVY_HOME/env/}"
+        printf %s\\n "${file#$envy_home/env/}"
       done
     ;;
 
   grep-- | g--)
     if [ "$3" = '-' ]; then
       # '-' for stdin. last grep is to get return 1 on empty
-      grep -vE -e "$ENVY_EXCLUDE" | grep -v -e "^ENVY_HOME|^ENVY_EXCLUDE|^envy_name|^envy_env*" |
-        grep -E -e "$2" | sort | grep -e '.'
+      grep -vE -e "^($envy_exclude)" | grep -E -e "^($2)" | sort | grep -e '.'
     else
       [ "$2" ] && env | nv g-- "$2" -
     fi
@@ -99,13 +102,7 @@ EOF
     return 0
     ;;
 
-  name-- | n--)
-    if [ "${2+x}" ]; then
-      __=$(nv rn "$2") && envy_name=$__ && echo "$__"
-    else
-      nv rn "$envy_name"
-    fi
-    ;;
+  name-- | n--) [ "${2+x}" ] && __=$(nv rn "$2") && envy_name=$__ && echo "$__" ;;
   name-a | n-a | ls | na)
     for __ in $(nv da); do
       nv en "$__"
@@ -113,38 +110,33 @@ EOF
     ;;
 
   open-- | o--)
-    shift && for __ in "$@"; do
+    shift && ! [ "$1" ] && return 1
+    for __ in "$@"; do
       ! nv n-- "$__" && return 1
       nv isnew && continue
 
       # unset new domain set above
       nv du
 
-      while read -r _nv_line || [ "$_nv_line" ]; do
-        case $_nv_line in
+      while read -r __nv_line || [ "$__nv_line" ]; do
+        case $__nv_line in
         \#*) continue ;;
         +*)
-          nv p-- "${_nv_line#*+}"
-          eval 'envy_env_'"$(nv d--)"'="$(nv n--) $(nv p--)"'
+          nv p-- "${__nv_line#*+}"
+          eval 'envy_env_'"$(nv d)"'="$(nv n) $(nv p)"'
           ;;
         *=*)
           # pass through grep of pattern to exlude any excluded envirnment variables
-          printf %s "${_nv_line%%=*}" | nv g-- . - >/dev/null &&
-            export "${_nv_line%%=*}=${_nv_line#*=}"
+          printf %s "$__nv_line" | nv g-- . - >/dev/null &&
+            export "${__nv_line%%=*}=${__nv_line#*=}"
           ;;
-        *) [ "$_nv_line" ] && echo "open: $_nv_line: Warning. Line ignored" 1>&2 ;;
+        *) [ "$__nv_line" ] && echo "open: $__nv_line: Warning. Line ignored" 1>&2 ;;
         esac
-      done <"$ENVY_HOME/env/$(nv n--)"
+      done <"$envy_home/env/$(nv n)"
     done
     ;;
 
-  pattern-- | p--)
-    if [ -n "${2+x}" ]; then
-      envy_pattern="$2"
-    else
-      printf %s\\n "${envy_pattern-.}"
-    fi
-    ;;
+  pattern-- | p--) [ -n "${2+x}" ] && envy_pattern="$2" ;;
   pattern-a | p-a | pa)
     nv _e "$2" "pattern -a" &&
       for __ in $(nv da); do
@@ -152,7 +144,14 @@ EOF
       done
     ;;
   pattern-c | p-c | pc) nv _e "$2" "pattern -c" && nv pu && unset envy_pattern ;;
-  pattern-u | p-u | pu) nv _e "$2" "pattern -u" && nv gu "$(nv p--)" ;;
+  pattern-u | p-u | pu) nv _e "$2" "pattern -u" && nv gu "$(nv p)" ;;
+
+  printenv--)
+    shift
+    for __ in "$@"; do
+      __nv_line=$(nv g-- "$__=") && printf %s\\n "${__nv_line#*=}"
+    done
+    ;;
 
   resolve-- | rn)
     nv rt "$2" && case $2 in
@@ -186,13 +185,27 @@ EOF
     esac
     ;;
 
+  save-- | s--)
+    shift && ! [ "$1" ] && return 1
+    ! nv n-- "$1" && return 1
+
+    # if still new (name wasn't assigned above)
+    nv isnew && echo "save: Must provide a new environment name" 1>&2 && return 1
+
+    eval 'envy_env_'"$(nv d)"'="$(nv n) $(nv p)"'
+
+    mkdir -p -- "$envy_home/env/$(nv d)"
+    printf %s\\n "+$(nv p)" >"$envy_home/env/$(nv n)"
+    nv g-- "$(nv p)" >>"$envy_home/env/$(nv n)"
+    ;;
+
   #
   # No options or flags
   #
 
   all | .) nv g-- "." ;;
 
-  cat) cat -- "$ENVY_HOME/env/$(nv rn "${2-$(nv n--)}")" ;;
+  cat) cat -- "$envy_home/env/$(nv rn "${2-$(nv n)}")" ;;
 
   cd)
     ! nv et "$2" && return 1
@@ -201,71 +214,57 @@ EOF
     ;;
 
   edit)
+    ! [ "$VISUAL" ] && echo "nv: Editor not specified in VISUAL environment variable" 1>&2 && return 1
+    ! command -v -- "$VISUAL" >/dev/null &&
+      echo "edit: $VISUAL: Editor not found" 1>&2 &&
+      return 1
+
     shift
-    # ! command -v -- "$GRM_EDITOR" >/dev/null &&
-    #   echo "edit: Editor '$GRM_EDITOR' not found" 1>&2 &&
-    #   return 1
     if [ "$1" ]; then
-      code "$(nv w-- "$(nv rn "$1")")"
+      "$VISUAL" "$(nv w-- "$(nv rn "$1")")"
     else
-      code "$(nv home)"
+      "$VISUAL" "$(nv home)"
     fi
     ;;
 
-  exclude) printf %s\\n "$ENVY_EXCLUDE" ;;
+  exclude) printf %s\\n "$envy_exclude" ;;
 
-  home) printf %s\\n "$ENVY_HOME" ;;
+  home) printf %s\\n "$envy_home" ;;
 
-  isnew) case $(nv n--) in */) ;; *) return 1 ;; esac ;;
+  isnew) case $(nv n) in */) ;; *) return 1 ;; esac ;;
 
   profile)
     shift && case $1 in
-    '') printf %s\\n "$ENVY_PROFILE" && return 0 ;;
+    '') nv rt "$envy_profile" && echo "$envy_profile" ;;
     *) __="$1" && shift && nv "profile-$__" "$@" ;;
     esac
     ;;
   profile-open--) # shellcheck disable=SC2046
-    shift && [ "$1" ] &&
-      nv open $(cat -- "$ENVY_HOME/profile/$1") && ENVY_PROFILE="$1" ;;
+    shift && [ "$1" ] && nv rt "$1" &&
+      nv open $(cat -- "$envy_home/profile/$1") && envy_profile="$1" ;;
   profile-save--)
-    shift && [ "$1" ] &&
-      nv na >"$ENVY_HOME/profile/$1" && ENVY_PROFILE="$1" &&
+    shift && [ "$1" ] && nv rt "$1" &&
+      nv na >"$envy_home/profile/$1" && envy_profile="$1" &&
       nv na
     ;;
   profile-find | profile-find--)
-    find "$ENVY_HOME/profile" -type f -path "$ENVY_HOME/profile/${2-*}" | sort |
+    find "$envy_home/profile" -type f -path "$envy_home/profile/${2-*}" | sort |
       while read -r file; do
-        printf %s\\n "${file#$ENVY_HOME/profile/}"
+        printf %s\\n "${file#$envy_home/profile/}"
       done
     ;;
 
-  pwd) nv _e "$2" "pwd" && nv n-- ;;
+  pwd) nv _e "$2" "pwd" && nv n ;;
 
   new)
     nv n-- "$2"
-    nv p-- "${3-$(nv p--)}"
-    ;;
-
-  save | s)
-    if [ "$2" ]; then
-      ! nv n-- "$2" && return 1
-    else
-      nv n--
-    fi
-
-    nv isnew && echo "save: Must provide a new environment name" 1>&2 && return 1
-
-    eval 'envy_env_'"$(nv d--)"'="$(nv n--) $(nv p--)"'
-
-    mkdir -p -- "$ENVY_HOME/env/$(nv d--)"
-    printf %s\\n "+$(nv p--)" >"$ENVY_HOME/env/$(nv n--)"
-    nv g-- "$(nv p--)" >>"$ENVY_HOME/env/$(nv n--)"
+    nv p-- "${3-$(nv p)}"
     ;;
 
   set | set--)
     shift
     for __ in "$@"; do
-      if ! printf %s "$__" | nv g-- "$(nv p--)" - >/dev/null; then
+      if ! printf %s "$__" | nv g-- "$(nv p)" - >/dev/null; then
         echo "set: '$__': Not applicable to current environment" 1>&2
       else
         # shellcheck disable=SC2163
@@ -277,7 +276,7 @@ EOF
   unset | u)
     shift
     for __ in "$@"; do
-      if ! printf %s "$__" | nv g-- "$(nv p--)" - >/dev/null; then
+      if ! printf %s "$__" | nv g-- "$(nv p)" - >/dev/null; then
         echo "unset: '$__': Not applicable to current environment" 1>&2
       else
         unset "$__"
@@ -287,16 +286,17 @@ EOF
 
   uninstall)
     nv ca
-    unset -v ENVY_HOME
-    # dangling local environment variables
-    unset -v _ __ _nv_dv _nv_key _nv_line _nv_value
+    # envy wide variables
+    unset -v envy_home envy_exclude envy_profile
+    # dangling variables local to functions
+    unset -v _ __ __nv_cmd __nv_line
     unset -f nv
     ;;
 
   version | --version) echo "envy version 0.5.0" ;;
 
   which | w | which-- | w--)
-    __="$ENVY_HOME/env/$2" && ! [ -f "$__" ] && ! [ -d "$__" ] &&
+    __="$envy_home/env/$2" && ! [ -f "$__" ] && ! [ -d "$__" ] &&
       echo "$2 not found" 1>&2 &&
       return 1
     printf %s\\n "$__"
@@ -313,7 +313,7 @@ EOF
     cat <<EOF
 usage:  nv [OPTIONS] [ [ RESOUCE ] | [ COMMAND ] ]
 
-Shows and manages the domain environment variables.
+Shows current envionment variables and manages multiple environments.
 
 Options
 -a  show for all active environments
@@ -321,7 +321,7 @@ Options
 -h  help
 
 Resource
-d, domain    Print current environment domain name
+d, domain    Print current environment name
 n, name      Print/set current environment full name
 p, pattern   Print/set current environment pattern
 e, env       Print all opened environments or a specified environment
@@ -331,8 +331,12 @@ Environment Commands
    cd        Change to an environment
 c, close     Close environment
    ls, na    Print active environment names
-   new       Create a new environment
+   new       Create a new unsaved environment for a name and pattern
 n, pwd       Print name of current environment
+
+Environment Variable Commands
+   get       Get a current environemnt variable by name
+   set       Set a current envionrment variable
 u, unset     Unset a current environment variable
 
 Environment File
@@ -370,22 +374,28 @@ EOF
   esac
 }
 
-ENVY_HOME="${ENVY_HOME-$HOME/.config/envy}"
-ENVY_EXCLUDE="${ENVY_EXCLUDE-^(COLOR|COMMAND_|ENVY_|HOSTNAME=|HOME=|LANG=|LaunchInstanceID=|LOGNAME=|ITERM_|LC_|OLDPWD=|PATH=|PWD=|SECURITYSESSIONID=|SHELL=|SHLVL=|SSH_|TERM=|TERM_|TMPDIR=|USER|XPC_|_=|__)}"
-# any default (or override of above) environment variables may be set in .nvrc
-[ -f "$ENVY_HOME/.nvrc" ] &&
+envy_home="${ENVY_HOME-$HOME/.config/envy}"
+
+# native environment variables, expands variables
+# No restriction (may set PATH, etc.) except for envy_* and ENVY_HOME
+[ -f "$envy_home/.nvrc" ] &&
   while read -r __ || [ "$__" ]; do
-    case $__ in '' | \#*) continue ;; esac
-    # shellcheck disable=SC2163
-    export "$__"
-  done <"$ENVY_HOME/.nvrc"
+    case $__ in
+    '' | \#*) continue ;;
+    envy_*=* | ENVY_HOME=*) echo "nvrc: ${__%%=*}: Ignoring invalid environment variable" 1>&2 ;;
+    *=*) export "${__%%=*}"="$(eval 'printf %s "'"${__#*=}"'"')" ;;
+    *) echo "nvrc: $__: Ignoring invalid nvrc statement" 1>&2 ;;
+    esac
+  done <"$envy_home/.nvrc"
 
-[ -f "$ENVY_HOME/profile/${ENVY_PROFILE-nv}" ] &&
-  nv profile open -- "${ENVY_PROFILE-nv}"
+envy_exclude="${ENVY_EXCLUDE-COLOR|COMMAND_|EDITOR=|ENVY_|HOSTNAME=|HOME=|LANG=|LaunchInstanceID=|LOGNAME=|ITERM_|LC_|OLDPWD=|PATH=|PWD=|SECURITYSESSIONID=|SHELL=|SHLVL=|SSH_|TERM=|TERM_|TMPDIR=|VSCODE_|USER|VISUAL=|XPC_|_=|__${ENVY_EXCLUDE_APPEND:+|$ENVY_EXCLUDE_APPEND}}"
+envy_profile="${ENVY_PROFILE-nv}"
 
-mkdir -p -- "$ENVY_HOME/env"
-mkdir -p -- "$ENVY_HOME/profile"
+[ -f "$envy_home/profile/$envy_profile" ] && nv profile open -- "$envy_profile"
+
+mkdir -p -- "$envy_home/env"
+mkdir -p -- "$envy_home/profile"
 
 #
-# must source: . nv
+# must source to use nv: . envy.sh
 #

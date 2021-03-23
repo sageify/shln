@@ -38,27 +38,30 @@ Domains are established by creating a context directory.
 For example, only one git configuration should be available at one time.
 
 ``sh
-nv new nv/hello '^SAY='
+nv new nv/hello SAY=
 nv set SAY='Hello World!'
 nv save
 
-nv new git/john '^GIT_'
-export GIT_COMMITTER_NAME='John Doe'
-export GIT_COMMITTER_EMAIL='john@example.com'
-export GIT_AUTHOR_NAME='John Doe'
-export GIT_AUTHOR_EMAIL='john@example.com'
+nv new git/john GIT_
+nv set GIT_COMMITTER_NAME='John Doe'
+nv set GIT_COMMITTER_EMAIL='john@example.com'
+nv set GIT_AUTHOR_NAME='John Doe'
+nv set GIT_AUTHOR_EMAIL='john@example.com'
 nv save
 
-nv new jane '^GIT_'
-export GIT_COMMITTER_NAME='Jane Doe'
-export GIT_COMMITTER_EMAIL='jane@example.com'
-export GIT_AUTHOR_NAME='Jane Doe'
-export GIT_AUTHOR_EMAIL='jane@example.com'
+nv new jane GIT_
+nv set GIT_COMMITTER_NAME='Jane Doe'
+nv set GIT_COMMITTER_EMAIL='jane@example.com'
+nv set GIT_AUTHOR_NAME='Jane Doe'
+nv set GIT_AUTHOR_EMAIL='jane@example.com'
 nv save
 
-nv new '^SAY='
-export SAY='Goodbye!'
-nv save goodbye
+nv cd nv
+nv get SAY
+
+nv new goodbye SAY=
+nv set SAY='Goodbye!'
+nv save
 nv
 
 nv open hello
@@ -81,9 +84,7 @@ typeset -f
 - Ability to show all environment variables not being managed by an nv environment.  For example, if git environment only one loaded, show any other unmanaged. 
 
 ### Menu
-- menu for envionrment value changing (menu set)
-
-### Exclude pattern?
+- menu for envionrment value changing (menu set) - use nv edit
 
 
 ## References
