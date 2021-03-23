@@ -1,8 +1,9 @@
 
 
-## Expansion File Syntax
+## Expansion File Syntax 
 
 ### Words
+
 
 ### Splitting
 
@@ -23,7 +24,6 @@ printf>-b `[%s]
 ```
 
 ```sh
-
 printf '[%s]' "Hello World"
 # [Hello World]
 
@@ -73,21 +73,10 @@ p -b -dangword=edge case
 # [edge case=edge][case]
 
 p -b -warning
-
 ```
 
 
 
-```sh
-w>words
-words>-hello "Hello World"
-
-w -hello
-words '"Hello' 'World"'
-```
-
-Instead, use a single quote to mark the word:
-```sh
 
 
 ## Quotes

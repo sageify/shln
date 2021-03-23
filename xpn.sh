@@ -8,18 +8,19 @@ xpn_word() {
     '') continue ;;
     '<'*)
       for direct in ${xpn#?}; do
+        # case is glob(7).  No way to specify any number of digits. 999 should be enough
         case $direct in
-        'arg='[[:digit:]] | 'arg='[[:digit:]][[:digit:]])
+        'arg='[0-9] | 'arg='[0-9][0-9] | 'arg='[0-9][0-9][0-9])
           arg_directive=${direct#*=}
           ;;
         'cmd') cmd_count=1 ;;
-        'cmd+'[[:digit:]] | 'cmd+'[[:digit:]][[:digit:]])
+        'cmd+'[0-9] | 'cmd+'[0-9][0-9] | 'cmd+'[0-9][0-9][0-9])
           cmd_count=$((1 + ${direct#*+}))
           ;;
-        'cmd_arg='[[:digit:]] | 'cmd_arg='[[:digit:]][[:digit:]])
+        'cmd_arg='[0-9] | 'cmd_arg='[0-9][0-9] | 'cmd_arg='[0-9][0-9][0-9])
           cmd_arg_count=${direct#*=}
           ;;
-        'native+'[[:digit:]] | 'native+'[[:digit:]][[:digit:]])
+        'native+'[0-9] | 'native+'[0-9][0-9] | 'native+'[0-9][0-9][0-9])
           native_count=$((0 + ${direct#*+}))
           ;;
         'native') ;;
