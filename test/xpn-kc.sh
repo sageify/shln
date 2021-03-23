@@ -1,10 +1,6 @@
 #!/bin/sh
 
-assert_equals() {
-  ! [ "$1" = "$2" ] &&
-    printf "assert: '%s': found: '%s'%s\n" "$1" "$2" "${3+": $3"}" &&
-    return 1
-}
+. shert.sh
 
 ## cheat sheet - https://kubernetes.io/docs/reference/kubectl/cheatsheet/
 assert_equals "'kubectl' 'config' 'view'" "$(dr='' ./kc co v)"

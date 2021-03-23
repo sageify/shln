@@ -1,21 +1,6 @@
 #!/bin/sh
 
-assert_equals() {
-  [ "$1" = "$2" ] && return 0
-  echo "assert equals: '$1': found: '$2'${3+": $3"}"
-  return 1
-}
-
-assert_eq() {
-  [ "$1" -eq "$2" ] && return 0
-  echo "assert eq: '$1': found: '$2'${3+": $3"}"
-  return 1
-}
-
-assert_fail() {
-  echo "assert fail${1+": $1"}"
-  return 1
-}
+. shert.sh
 
 GRM_HOME=$(../grm.sh home)
 assert_equals 'github.com/sageify/xxx' "$(../grm.sh resolve "sageify/xxx")"

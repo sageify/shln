@@ -98,7 +98,7 @@ kubectl>get>s   svc
 
 
 #
-# Test suite on options
+# Test suite for options
 #
 
 pf printf
