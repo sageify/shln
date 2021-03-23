@@ -30,16 +30,17 @@ g() {
     ;;
 
   edit-- | e--)
-    shift
-    ! command -v -- "$GRM_EDITOR" >/dev/null &&
-      echo "edit: Editor '$GRM_EDITOR' not found" 1>&2 &&
+    ! [ "$VISUAL" ] && echo "nv: Editor not specified in VISUAL environment variable" 1>&2 && return 1
+    ! command -v -- "$VISUAL" >/dev/null &&
+      echo "edit: $VISUAL: Editor not found" 1>&2 &&
       return 1
 
+    shift
     for e in $(grm_resolve "$@"); do
       ed=$(grm_resolve_dir "$e")
-      [ -d "$ed" ] && $GRM_EDITOR "$ed" && continue
-      grm_clone "$e" && $GRM_EDITOR "$ed" && continue
-      grm_init "$e" && $GRM_EDITOR "$ed" && continue
+      [ -d "$ed" ] && $VISUAL "$ed" && continue
+      grm_clone "$e" && $VISUAL "$ed" && continue
+      grm_init "$e" && $VISUAL "$ed" && continue
     done
     ;;
 
@@ -101,17 +102,17 @@ g() {
   dirs) grm_dirs ;;
 
   env)
-    echo "GRM_DEFAULT_HOST=$GRM_DEFAULT_HOST"
+    echo "GRM_DEFAULT_HOST=$grm_default_host"
     echo "GRM_DEFAULT_ORG=$GRM_DEFAULT_ORG"
-    echo "GRM_DEFAULT_SCHEME=$GRM_DEFAULT_SCHEME"
-    echo "GRM_HOME=$GRM_HOME"
+    echo "GRM_DEFAULT_SCHEME=$grm_default_scheme"
+    echo "GRM_HOME=$grm_home"
     ;;
 
-  home) printf %s\\n "$GRM_HOME" ;;
+  home) printf %s\\n "$grm_home" ;;
 
   exec) shift && grm_cd && exec "$@" ;;
 
-  find | f )
+  find | f)
     grm_cd && find . -type f -path "./${2-*}" | cut -c 3-
     ;;
 
@@ -167,9 +168,9 @@ t, tags    Show remote tags
 General Commands
 e, edit     Launch editor for repository, cloning if necessary
    env      Show the groom envinroment variables
-   exec     Execute any linux command in groom home ($GRM_HOME)
+   exec     Execute any linux command in groom home ($grm_home)
 f, find     Find files in local repositories
-   home     Show repository home directory ($GRM_HOME)
+   home     Show repository home directory ($grm_home)
    ls       List all repos
 m, menu     List menu of repos
    version  Print the version information
@@ -247,14 +248,14 @@ grm_init() {
 }
 
 grm_cd() {
-  if ! cd "$GRM_HOME" 2>/dev/null; then
-    echo "$GRM_HOME directory does not exist" 1>&2
+  if ! cd "$grm_home" 2>/dev/null; then
+    echo "$grm_home directory does not exist" 1>&2
     exit 1
   fi
 }
 
 grm_dirs() {
-  find "$GRM_HOME" -type d -name ".git" | rev | cut -c 6- | rev | sort
+  find "$grm_home" -type d -name ".git" | rev | cut -c 6- | rev | sort
 }
 
 grm_find() {
@@ -298,12 +299,12 @@ grm_resolve() {
       echo "resolve: $_rn: Can not use . in repository name" 1>&2 && return 1
       ;;
     */*/*) printf %s\\n "$_rn" ;;
-    */*) printf %s\\n "$GRM_DEFAULT_HOST/$_rn" ;;
+    */*) printf %s\\n "$grm_default_host/$_rn" ;;
     *)
       ! [ "$GRM_DEFAULT_ORG" ] &&
         echo "resolve: $_rn: GRM_DEFAULT_ORG required to resolve repository name" 1>&2 &&
         return 1
-      printf %s\\n "$GRM_DEFAULT_HOST/$GRM_DEFAULT_ORG/$_rn"
+      printf %s\\n "$grm_default_host/$GRM_DEFAULT_ORG/$_rn"
       ;;
     esac
   done
@@ -326,10 +327,10 @@ grm_resolve_name_repo() {
 # return local directory for repo
 grm_resolve_dir() {
   case $1 in
-  https://*) printf %s\\n "${GRM_HOME:+$GRM_HOME/}${1#https://}" ;;
-  http://*) printf %s\\n "${GRM_HOME:+$GRM_HOME/}${1#http://}" ;;
-  ssh://*) printf %s\\n "${GRM_HOME:+$GRM_HOME/}${1#ssh://}" ;;
-  *) printf %s\\n "${GRM_HOME:+$GRM_HOME/}$1" ;;
+  https://*) printf %s\\n "${grm_home:+$grm_home/}${1#https://}" ;;
+  http://*) printf %s\\n "${grm_home:+$grm_home/}${1#http://}" ;;
+  ssh://*) printf %s\\n "${grm_home:+$grm_home/}${1#ssh://}" ;;
+  *) printf %s\\n "${grm_home:+$grm_home/}$1" ;;
   esac
 }
 
@@ -338,7 +339,7 @@ grm_resolve_dir() {
 grm_resolve_repo() {
   case "${1%@*}.git" in
   *://*) printf %s\\n "${1%@*}.git" ;;
-  *) printf %s\\n "$GRM_DEFAULT_SCHEME://${1%@*}.git" ;;
+  *) printf %s\\n "$grm_default_scheme://${1%@*}.git" ;;
   esac
 }
 
@@ -348,9 +349,8 @@ else
   GRM_SCRIPT_HOME="$(dirname -- "$0")"
 fi
 
-GRM_HOME="${GRM_HOME-$(cd "$GRM_SCRIPT_HOME/../../.." && pwd -P)}"
-GRM_DEFAULT_SCHEME="${GRM_DEFAULT_SCHEME-https}"
-GRM_DEFAULT_HOST="${GRM_DEFAULT_HOST-github.com}"
-GRM_EDITOR="${GRM_EDITOR-code}"
+readonly grm_home="${GRM_HOME-$(cd "$GRM_SCRIPT_HOME/../../.." && pwd -P)}"
+readonly grm_default_scheme="${GRM_DEFAULT_SCHEME-https}"
+readonly grm_default_host="${GRM_DEFAULT_HOST-github.com}"
 
 g "$@"
