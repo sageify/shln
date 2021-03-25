@@ -1,11 +1,58 @@
 # Envy
 
-Envy manages enviornment variable contexts.  A context consists of a context name and a grep pattern.  A context is created as follows:
+Envy manages enviornment variable contexts.  
+
+
+## Basic Usage
+
+In it's basic usage, it simply shows non-system environment variables:
 
 ```sh
-nv close -a
-nv new hello '^SAY='
-nv set SAY='Hello World!'
+nv
+# CUSTOM=Hello World!
+```
+
+The non-system environment variables excluded are:
+
+```sh
+nv exclude
+# COLOR|COMMAND_|EDITOR$|ENVY_|HOSTNAME$|HOME$|LANG$ ...
+```
+
+Prevents exporting of system variables
+
+```sh
+nv PATH=
+# nv: export: 'PATH=': bad variable name
+```
+
+Add new variables
+
+```sh
+nv SAY='Hello World!'
+nv
+```
+
+Save variables
+
+```sh
+nv save
+# nv/default
+```
+
+
+## Multiple Environment Management
+
+A context consists of a context name and a grep pattern.  A context is created as follows:
+
+```sh
+
+# get fresh environment
+nv ca
+nv ua
+
+nv new hello 'SAY$'
+nv export SAY='Hello World!'
 nv
 nv save
 
@@ -86,6 +133,27 @@ typeset -f
 ### Menu
 - menu for envionrment value changing (menu set) - use nv edit
 
+### Multi-Line
+
+Multi-line support is provided in both .nvrc and environment files as follows:
+
+```sh
+VAR<<eof
+Two line assignment
+to variable
+eof
+```
+
+## Developer Notes
+
+Follow behavior of native printenv, env, export, and unset commands.
+Follow behavior of busybox for return codes and error output.
+
+### Export
+
+The export -p command prints export statements in a platform specific format.  Same is true for nv.
+The export -n removes export flag.
 
 ## References
 http://www.etalabs.net/sh_tricks.html
+https://man7.org/linux/man-pages/man7/glob.7.html

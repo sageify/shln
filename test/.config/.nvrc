@@ -1,2 +1,11 @@
-ENVY_EXCLUDE=COLOR|COMMAND_|ENVY_|HOSTNAME=|HOME=|LANG=|LaunchInstanceID=|LOGNAME=|ITERM_|LC_|OLDPWD=|PATH=|PWD=|SECURITYSESSIONID=|SHELL=|SHLVL=|SSH_|TERM=|TERM_|TMPDIR=|VSCODE_|USER|XPC_|_=|__|APPLICATION_INSIGHTS_|ORIGINAL_XDG_
+# unlike environment files which contain all literals, all values are processed as if there were in a here-document
+# no support provided for multi-line varaibles
+ENVY_EXCLUDE=COLOR|COMMAND_|ENVY_|HOSTNAME$|HOME$|LANG$|LaunchInstanceID$|LOGNAME$|ITERM_|LC_|OLDPWD$|PATH$|PWD$|SECURITYSESSIONID$|SHELL$|SHLVL$|SSH_|TERM$|TERM_|TMPDIR$|VISUAL$|VSCODE_|USER|XPC_|_$|__|APPLICATION_INSIGHTS_|ORIGINAL_XDG_
 ENVY_PROFILE=nv
+HELLO=literal: ", edge cases: \" \\", evaluate: $((1 + 1)), no escape: \n \t, dollar: $, two trailing spaces:  
+LOCAL=$envy_home
+MULTI<<___
+one 
+two 
+___
+WD=$PWD

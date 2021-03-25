@@ -1,186 +1,335 @@
 # shellcheck shell=sh
 nv() {
+  # shellcheck disable=SC2046
   case $1 in
-  '') nv printenv ;;
 
-  close | c | domain | d | env | e | find | f | grep | g | name | n | open | o | pattern | p | printenv | profile-open | profile-save | resolve | save | s)
-    __nv_cmd=$1
+  #
+  # Options
+  #
+
+  '') nv pep ;;
+  -g) shift && nv peap-- $(nv peg-- "$1") ;;
+  --unset | -u)
+    shift
+    nv unset-- "$1"
+    nv pep
+    ;;
+  --version | version) echo "envy version 0.6.0" ;;
+
+  #
+  # Commands
+  #
+
+  . | -a | cat | cd | close | c | close-a | ca | \
+    domain | d | domain-a | da | domain-u | du | domain-f | df | \
+    edit | env | e | env-a | ea | env-c | ec | env-n | en | env-p | ep | env-t | et | env-u | eu | \
+    export | x | export-p | export-d | exclude | \
+    find | f | find-a | fa | gn | \
+    home | isnew | \
+    name | n | name-a | ls | na | new | \
+    open | o | \
+    pattern | p | pattern-a | pa | pattern-c | pc | \
+    printenv | pe | printenv-p | pep | printenv-ap | peap | printenv-n | pen | printenv-an | pean | \
+    profile-open | profile-save | save | s | \
+    unset | unset-v | unset-a | ua | unset-p | pu | \
+    pwd | which | w)
+
+    _nv_cmd=$1
+
+    # look ahead
     shift && case $1 in
     '')
-      case $__nv_cmd in
-      close | c) nv c-- "$(nv rd "$envy_name")" ;;
-      domain | d) nv rd "$envy_name" ;;
-      env | e) nv ea ;;
-      name | n) nv rn "$envy_name" ;;
-      open | o) nv o-- "$(nv rn "$envy_name")" ;;
+      # commands or options with no argument
+      case $_nv_cmd in
+      cat) nv cat-- "$envy_name" ;;
+      close | c) nv c-- "$(nv rd-- "$envy_name")" ;;
+      close-a | ca)
+        for __ in $(nv da); do
+          nv ec-- "$__"
+        done
+        unset -v envy_name envy_pattern
+        ;;
+      domain | d) nv rd-- "$envy_name" ;;
+      domain-a | da)
+        set | grep -e '^envy_env_' | while IFS='=' read -r key _; do
+          printf %s\\n "${key#envy_env_}"
+        done
+        ;;
+      domain-f | df) nv df-- "" ;;
+      domain-u | du) nv eu-- "$(nv d)" ;;
+      env-a | ea)
+        for __ in $(nv da); do
+          printf %s\\n "$(nv e-- "$__")"
+        done
+        ;;
+      env-n | en) nv na ;;
+      env-p | ep) nv pa ;;
+      exclude) printf %s\\n "$envy_exclude" ;;
+      export | x | export-p)
+        for _nv_name in $(nv pen); do
+          if [ "$(printf %s "$(printenv "$_nv_name")" | wc -l)" -eq 0 ]; then
+            printf '%s=%s\n' "$_nv_name" "$(printenv "$_nv_name")"
+          else
+            printf "%s<<___.,-,.___\\n" "$_nv_name"
+            printf %s "$(printenv "$_nv_name")" | while read -r || [ "$REPLY" ]; do
+              printf '%s\n' "$REPLY"
+            done
+            printf '%s\n' "___.,-,.___"
+          fi
+        done | grep -e "."
+        ;;
+      find | f) nv f-- "*" ;;
+      find-a | fa) nv fa-- "*" ;;
+      home) printf %s\\n "$envy_home" ;;
+      isnew) case $(nv n) in */) ;; *) return 1 ;; esac ;;
+      name | n) nv rn-- "$envy_name" ;;
+      name-a | ls | na)
+        for __ in $(nv da); do
+          nv en-- "$__"
+        done | grep -e "."
+        ;;
+      open | o) nv o-- "$envy_name" ;;
       pattern | p) printf %s\\n "${envy_pattern-.}" ;;
-      printenv) nv g-- "$(printf %s\\n "${envy_pattern-.}")" ;;
+      pattern-a | pa)
+        for __ in $(nv da); do
+          nv ep-- "$__"
+        done | grep -e "."
+        ;;
+      pattern-c | pc) nv up && unset -v envy_pattern ;;
+      printenv | pe | printenv-p | pep | env | e) nv -g "$(nv p)" ;;
+      printenv-n | pen) nv peg-- "$(nv p)" ;;
+      printenv-an | pean) nv peg-- ;;
+      . | -a | printenv-ap | peap) nv -g ;;
+      profile-find) nv profile-find-- "*" ;;
       profile-open) nv profile-open-- "$envy_profile" ;;
       profile-save) nv profile-save-- "$envy_profile" ;;
-      save | s) nv s-- "$(nv rn "$envy_name")" ;;
-      *) nv "$__nv_cmd--" ;;
+      pwd) nv n ;;
+      save | s) nv s-- "$envy_name" ;;
+      uninstall)
+        nv ca
+        # envy wide variables
+        unset -v envy_home envy_exclude envy_profile
+        # dangling variables local to functions
+        unset -v _ __ _nv_cmd __nv_line
+        unset -f nv
+        ;;
+      unset-a | ua) unset -v $(nv peg--) ;;
+      unset-p | up) unset -v $(nv pen) ;;
+      *) nv "$_nv_cmd--" ;;
       esac
       ;;
-    -*) __="$1" && shift && nv "$__nv_cmd$__" "$@" ;;
-    *) nv "$__nv_cmd--" "$@" ;;
+    -*) __="$1" && shift && nv "$_nv_cmd$__" "$@" ;;
+    *) nv "$_nv_cmd--" "$@" ;;
     esac
     ;;
 
-  close-- | c--) nv ec "$2" && nv n-- "" ;;
-  reset | close-a | c-a | ca)
-    for __ in $(nv da); do
-      nv ec "$__"
-    done
-    unset -v envy_name
-    unset -v envy_pattern
+  cat--) shift && cat -- "$envy_home/env/$(nv rn-- "$1")" ;;
+
+  cd--)
+    ! nv et-- "$2" && return 1
+    nv n-- "$(nv en-- "$2")"
+    nv p-- "$(nv ep-- "$2")"
     ;;
 
-  domain-a | d-a | da)
-    nv _e "$2" "domain -a" && set | grep -e '^envy_env_' | while IFS='=' read -r key _; do
-      printf %s\\n "${key#envy_env_}"
-    done
-    ;;
-  domain-f | d-f | df)
-    nv _e "$3" "domain -f $2" &&
-      find "$envy_home/env" -mindepth 1 -maxdepth 1 -type d -path "*$2" | while read -r file; do
+  close-- | c--) shift && nv ec-- "$1" && nv n-- "" ;;
+
+  domain-f-- | df--)
+    shift && for __; do
+      find "$envy_home/env" -mindepth 1 -maxdepth 1 -type d -path "*$__" | while read -r file; do
         printf %s\\n "${file#$envy_home/env/}"
       done
+    done | grep -e "."
     ;;
-  domain-u | d-u | du) nv _e "$2" "domain -u" && nv eu "$(nv d)" ;;
-  domain-h | d-h | dh) echo "usage: domain -afu" ;;
 
+  edit--)
+    ! [ "$VISUAL" ] && echo "nv: Editor not specified in VISUAL environment variable" 1>&2 && return 1
+    ! command -v -- "$VISUAL" >/dev/null &&
+      echo "edit: $VISUAL: Editor not found" 1>&2 &&
+      return 1
+
+    shift
+    if [ "$1" ]; then
+      for __; do
+        "$VISUAL" "$(nv w-- "$(nv rn-- "$__")")"
+      done
+    else
+      "$VISUAL" "$(nv home)"
+    fi
+
+    ;;
+
+  # get information for an environment
   env-- | e--)
-    [ "$2" ] && __="$(eval 'echo $envy_env_'"$(nv rd "$2")")" && [ "$__" ] &&
+    [ "$2" ] && __="$(eval 'echo $envy_env_'"$(nv rd-- "$2")")" && [ "$__" ] &&
       echo "$__"
     ;;
-  env-a | e-a | ea)
-    nv _e "$2" "env -a" && for __ in $(nv da); do
-      printf %s\\n "$(nv e-- "$__")"
+  env-c-- | ec--) nv eu-- "$2" && unset envy_env_"$2" ;;
+  env-n-- | en--) __="$(nv e-- "$2")" && printf %s\\n "${__%% *}" ;;
+  env-p-- | ep--) __="$(nv e-- "$2")" && printf %s\\n "${__#* }" ;;
+  env-t-- | et--) nv e-- "$2" 1>/dev/null ;;
+  env-u-- | eu--) __="$(nv ep-- "$2")" && unset -v $(nv peg-- "$__") ;;
+
+  export-- | x--)
+    shift
+    for __; do
+      if nv export-d-- "$__" >/dev/null; then
+        # shellcheck disable=SC2163
+        export "$__"
+      else
+        echo "nv: export: '$__': bad variable name" 1>&2
+      fi
     done
     ;;
-  env-c | e-c | ec) nv eu "$2" && unset envy_env_"$2" ;;
-  env-n | e-n | en)
-    if [ "$2" ]; then
-      __="$(nv e-- "$2")" && printf %s\\n "${__%% *}"
-    else
-      nv na
-    fi
-    ;;
-  env-p | e-p | ep)
-    __="$(nv e-- "$2")" && printf %s\\n "${__#* }"
-    ;;
-  env-t | e-t | et) nv e-- "$2" 1>/dev/null ;;
-  env-u | e-u | eu) __="$(nv ep "$2")" && nv gu "$__" ;;
+  export-d--) printf %s "$2" | nv gnr-- "$(nv p)" ;;
 
   find-- | f--)
-    find "$envy_home/env" -mindepth 2 -maxdepth 2 -type f -path "$envy_home/env/$(nv d)/${2-*}" |
-      while read -r file; do
-        printf %s\\n "${file#$envy_home/env/}"
-      done
+    shift && for __; do
+      find "$envy_home/env" -mindepth 2 -maxdepth 2 -type f -path "$envy_home/env/$(nv d)/$__" |
+        while read -r; do
+          printf %s\\n "${REPLY#$envy_home/env/}"
+        done
+    done | grep -e "."
     ;;
-  find-all | find-a | f-a | fa)
-    find "$envy_home/env" -mindepth 2 -maxdepth 2 -type f -path "$envy_home/env/${2-*}" |
-      while read -r file; do
-        printf %s\\n "${file#$envy_home/env/}"
-      done
-    ;;
-
-  grep-- | g--)
-    if [ "$3" = '-' ]; then
-      # '-' for stdin. last grep is to get return 1 on empty
-      grep -vE -e "^($envy_exclude)" | grep -E -e "^($2)" | sort | grep -e '.'
-    else
-      [ "$2" ] && env | nv g-- "$2" -
-    fi
-    ;;
-  grep-u | g-u | gu)
-    while IFS='=' read -r __ _; do
-      [ "$__" ] && unset "$__"
-    done <<EOF
-$(nv g-- "$2")
-EOF
-    return 0
+  find-a-- | fa--)
+    shift && for __; do
+      find "$envy_home/env" -mindepth 2 -maxdepth 2 -type f -path "$envy_home/env/$__" |
+        while read -r; do
+          printf %s\\n "${REPLY#$envy_home/env/}"
+        done
+    done | grep -e "."
     ;;
 
-  name-- | n--) [ "${2+x}" ] && __=$(nv rn "$2") && envy_name=$__ && echo "$__" ;;
-  name-a | n-a | ls | na)
-    for __ in $(nv da); do
-      nv en "$__"
-    done
+  var-name--) printf %s "$2" | grep -E -e "^[_A-Za-z][_A-Za-z0-9]*$" | grep -E -e "^($3)" | grep -qvE -e "^($envy_exclude)" ;;
+
+  gn--)
+    # this is a lot of work just to get names, should be easier
+    shift && nv gnr-- "^($1)" | sort |
+      while read -r; do
+        printenv "$REPLY" 1>/dev/null && printf '%s\n' "$REPLY"
+      done | grep -e "."
+    ;;
+  gnr--)
+    grep -oE -e "^[_A-Za-z][_A-Za-z0-9]*(=|<<)" | grep -oE -e "^[_A-Za-z][_A-Za-z0-9]*" |
+      grep -E -e "^($2)" | grep -vE -e "^($envy_exclude)"
+    ;;
+
+  name-- | n--) [ "${2+x}" ] && __=$(nv rn-- "$2") && envy_name=$__ && echo "$__" ;;
+
+  new--)
+    nv n-- "$2"
+    nv p-- "${3-$(nv p)}"
     ;;
 
   open-- | o--)
     shift && ! [ "$1" ] && return 1
-    for __ in "$@"; do
+    for __; do
       ! nv n-- "$__" && return 1
       nv isnew && continue
 
       # unset new domain set above
       nv du
 
-      while read -r __nv_line || [ "$__nv_line" ]; do
-        case $__nv_line in
-        \#*) continue ;;
+      exec 3<"$envy_home/env/$(nv n)"
+      while read -r || [ "$REPLY" ]; do
+        case $REPLY in
+        \#* | '') continue ;;
         +*)
-          nv p-- "${__nv_line#*+}"
+          nv p-- "${REPLY#*+}"
           eval 'envy_env_'"$(nv d)"'="$(nv n) $(nv p)"'
           ;;
-        *=*)
-          # pass through grep of pattern to exlude any excluded envirnment variables
-          printf %s "$__nv_line" | nv g-- . - >/dev/null &&
-            export "${__nv_line%%=*}=${__nv_line#*=}"
+        *=*) nv x-- "$REPLY" ;;
+        *\<\<*)
+          unset _nv_value
+          _nv_name=${REPLY%%<<*} _nv_delim=${REPLY#*<<}
+          while read -r || [ "$REPLY" ]; do
+            [ "$REPLY" = "$_nv_delim" ] && break
+            _nv_value="${_nv_value+$_nv_value
+}$REPLY"
+          done <&3
+          nv x-- "$_nv_name=$_nv_value"
           ;;
-        *) [ "$__nv_line" ] && echo "open: $__nv_line: Warning. Line ignored" 1>&2 ;;
+        *) echo "nv: open: $REPLY: line ignored" 1>&2 ;;
         esac
-      done <"$envy_home/env/$(nv n)"
+      done <&3
     done
     ;;
 
-  pattern-- | p--) [ -n "${2+x}" ] && envy_pattern="$2" ;;
-  pattern-a | p-a | pa)
-    nv _e "$2" "pattern -a" &&
-      for __ in $(nv da); do
-        nv ep "$__"
-      done
-    ;;
-  pattern-c | p-c | pc) nv _e "$2" "pattern -c" && nv pu && unset envy_pattern ;;
-  pattern-u | p-u | pu) nv _e "$2" "pattern -u" && nv gu "$(nv p)" ;;
+  pattern-- | p--) [ "${2+x}" ] && envy_pattern="$2" ;;
 
-  printenv--)
-    shift
-    for __ in "$@"; do
-      __nv_line=$(nv g-- "$__=") && printf %s\\n "${__nv_line#*=}"
+  printenv-- | pe--) # current environment values
+    shift && nv pea-- $(printf %s "$@" | grep -E -e "^($(nv p))")
+    ;;
+  printenv-a-- | pea--) # all environment values
+    shift && for _nv_name; do
+      nv var-name-- "$_nv_name" && printenv "$_nv_name"
     done
     ;;
+  printenv-p-- | pep--) # current environment pairs
+    shift && nv peap-- $(printf %s "$@" | grep -E -e "^($(nv p))")
+    ;;
+  printenv-ap-- | peap--) # all environment pairs
+    shift && for _nv_name; do
+      nv var-name-- "$_nv_name" && _nv_value=$(printenv "$_nv_name") &&
+        printf '%s=%s\n' "$_nv_name" "$_nv_value"
+    done
+    ;;
+  printenv-n-- | pen--) shift && printf %s "$@" | nv gn-- "$(nv p)" ;;
+  printenv-an-- | pean--) shift && printf %s "$@" | nv gn-- ;;
+  printenv-g-- | peg--) shift && env | nv gn-- "$1" ;;
 
-  resolve-- | rn)
-    nv rt "$2" && case $2 in
-    */*) echo "$2" ;;
-    *) echo "$(nv rd)/$2" ;;
+  profile)
+    # handle sub commands here
+    shift && case $1 in
+    '') nv rt-- "$envy_profile" && echo "$envy_profile" ;;
+    *) __="$1" && shift && nv "profile-$__" "$@" ;;
     esac
     ;;
-  resolve-t | rt)
+  profile-open--)
+    shift && [ "$1" ] && nv rt-- "$1" &&
+      nv o-- $(cat -- "$envy_home/profile/$1") && envy_profile="$1"
+    ;;
+  profile-save--)
+    shift && [ "$1" ] && nv rt-- "$1" &&
+      nv na >"$envy_home/profile/$1" && envy_profile="$1" &&
+      nv na
+    ;;
+  profile-find--)
+    shift && for __; do
+      find "$envy_home/profile" -type f -path "$envy_home/profile/$__" | sort |
+        while read -r file; do
+          printf %s\\n "${file#$envy_home/profile/}"
+        done | grep -e "."
+    done
+    ;;
+
+  rn--)
+    nv rt-- "$2" && case $2 in
+    */*) echo "$2" ;;
+    *) echo "$(nv rd--)/$2" ;;
+    esac
+    ;;
+  rt--)
     # resolve test name
     case $2 in
     /*)
-      echo "name: $2: May not have a leading slash" 1>&2
+      echo "name: $2: may not have a leading slash" 1>&2
       return 1
       ;;
-    *[![:alnum:]/_]*)
-      echo "name: $2: May contain only alphanumeric or underscore" 1>&2
+    *[![:alnum:]/_]* | [[:digit:]]*)
+      echo "name: $2: may only contain alphanumeric or underscore" 1>&2
       return 1
       ;;
     */*/*)
-      echo "name: $2: May only have one path separator" 1>&2
+      echo "name: $2: may only have one path separator" 1>&2
       return 1
       ;;
     *) return 0 ;;
     esac
     ;;
-  resolve-d | rd)
-    nv rt "$2" && case $2 in
+  rd--)
+    nv rt-- "$2" && case $2 in
     */*) echo "${2%/*}" ;;
-    '') if [ "$envy_name" ]; then nv rd "$envy_name"; else echo 'nv'; fi ;;
+    '') if [ "$envy_name" ]; then nv rd-- "$envy_name"; else echo 'nv'; fi ;;
     *) echo "$2" ;;
     esac
     ;;
@@ -196,106 +345,16 @@ EOF
 
     mkdir -p -- "$envy_home/env/$(nv d)"
     printf %s\\n "+$(nv p)" >"$envy_home/env/$(nv n)"
-    nv g-- "$(nv p)" >>"$envy_home/env/$(nv n)"
+    nv export >>"$envy_home/env/$(nv n)"
     ;;
 
-  #
-  # No options or flags
-  #
-
-  all | .) nv g-- "." ;;
-
-  cat) cat -- "$envy_home/env/$(nv rn "${2-$(nv n)}")" ;;
-
-  cd)
-    ! nv et "$2" && return 1
-    nv n-- "$(nv en "$2")"
-    nv p-- "$(nv ep "$2")"
-    ;;
-
-  edit)
-    ! [ "$VISUAL" ] && echo "nv: Editor not specified in VISUAL environment variable" 1>&2 && return 1
-    ! command -v -- "$VISUAL" >/dev/null &&
-      echo "edit: $VISUAL: Editor not found" 1>&2 &&
-      return 1
-
-    shift
-    if [ "$1" ]; then
-      "$VISUAL" "$(nv w-- "$(nv rn "$1")")"
-    else
-      "$VISUAL" "$(nv home)"
-    fi
-    ;;
-
-  exclude) printf %s\\n "$envy_exclude" ;;
-
-  home) printf %s\\n "$envy_home" ;;
-
-  isnew) case $(nv n) in */) ;; *) return 1 ;; esac ;;
-
-  profile)
-    shift && case $1 in
-    '') nv rt "$envy_profile" && echo "$envy_profile" ;;
-    *) __="$1" && shift && nv "profile-$__" "$@" ;;
-    esac
-    ;;
-  profile-open--) # shellcheck disable=SC2046
-    shift && [ "$1" ] && nv rt "$1" &&
-      nv open $(cat -- "$envy_home/profile/$1") && envy_profile="$1" ;;
-  profile-save--)
-    shift && [ "$1" ] && nv rt "$1" &&
-      nv na >"$envy_home/profile/$1" && envy_profile="$1" &&
-      nv na
-    ;;
-  profile-find | profile-find--)
-    find "$envy_home/profile" -type f -path "$envy_home/profile/${2-*}" | sort |
-      while read -r file; do
-        printf %s\\n "${file#$envy_home/profile/}"
-      done
-    ;;
-
-  pwd) nv _e "$2" "pwd" && nv n ;;
-
-  new)
-    nv n-- "$2"
-    nv p-- "${3-$(nv p)}"
-    ;;
-
-  set | set--)
-    shift
-    for __ in "$@"; do
-      if ! printf %s "$__" | nv g-- "$(nv p)" - >/dev/null; then
-        echo "set: '$__': Not applicable to current environment" 1>&2
-      else
-        # shellcheck disable=SC2163
-        export "$__"
-      fi
+  unset-- | unset-v--)
+    shift && for __; do
+      nv var-name-- "$__" "$(nv p)" && unset "$__"
     done
     ;;
 
-  unset | u)
-    shift
-    for __ in "$@"; do
-      if ! printf %s "$__" | nv g-- "$(nv p)" - >/dev/null; then
-        echo "unset: '$__': Not applicable to current environment" 1>&2
-      else
-        unset "$__"
-      fi
-    done
-    ;;
-
-  uninstall)
-    nv ca
-    # envy wide variables
-    unset -v envy_home envy_exclude envy_profile
-    # dangling variables local to functions
-    unset -v _ __ __nv_cmd __nv_line
-    unset -f nv
-    ;;
-
-  version | --version) echo "envy version 0.5.0" ;;
-
-  which | w | which-- | w--)
+  which-- | w--)
     __="$envy_home/env/$2" && ! [ -f "$__" ] && ! [ -d "$__" ] &&
       echo "$2 not found" 1>&2 &&
       return 1
@@ -316,27 +375,26 @@ usage:  nv [OPTIONS] [ [ RESOUCE ] | [ COMMAND ] ]
 Shows current envionment variables and manages multiple environments.
 
 Options
--a  show for all active environments
--f  find in saved environments
--h  help
+., -a, --all  Print all environment variables 
+-g            Grep all environment variables by name
+-u, --unset   Remove variable from the current environment
+-h, --help    Help
+--version     Print version information
 
 Resource
-d, domain    Print current environment name
+d, domain    Print current environment domain name
 n, name      Print/set current environment full name
 p, pattern   Print/set current environment pattern
-e, env       Print all opened environments or a specified environment
 
 Environment Commands
-., all       Show all managed environment variables
+e, env       Print current environment or a specified environment
+   export    Set the export attribute for current variables
    cd        Change to an environment
 c, close     Close environment
    ls, na    Print active environment names
    new       Create a new unsaved environment for a name and pattern
+   printenv  Print all or part of the current environment 
 n, pwd       Print name of current environment
-
-Environment Variable Commands
-   get       Get a current environemnt variable by name
-   set       Set a current envionrment variable
 u, unset     Unset a current environment variable
 
 Environment File
@@ -351,47 +409,147 @@ Other Commands
  g, grep        Grep global environment variables
     help        Show this help
     isnew       Check if new environment
-    resolve     Resolve a name
     uninstall   Unset everything and uninstall nv function
     version     Print the version information
 EOF
     ;;
   help-close | help-c | close-h | c-h) echo "usage: close -aehp" ;;
   help-env | help-e | env-h | e-h) echo "usage: env -acnptu" ;;
-  help-name | help-n | name-h | n-h) echo "usage: name -afh" ;;
-  help-pattern | help-p | pattern-h | ph) echo "usage: name -achu" ;;
-  help-resolve | help-r | resolve-h | r-h) echo "usage: resolve -dnth" ;;
 
-  # internal - empty argument
-  _e)
-    ! [ "$2" ] && return 0
-    echo "$3 $2: too many arguments" 1>&2
-    return 1
+  help-export | help-x | export-h | x-h)
+    cat <<'eof'
+usage:  nv export name[=word]...
+
+Set the export attribute for current variables
+
+Options
+-p  write to the standard output the names and values of all exported variables 
+-h  help
+
+Description
+
+The shell shall give the export attribute to the variables
+corresponding to the specified names, which shall cause them to
+be in the environment of subsequently executed commands. If the
+name of a variable is followed by =word, then the value of that
+variable shall be set to word.
+
+When -p is specified, export shall write to the standard output
+the names and values of all exported variables, in the following
+ouput suitable for serialization:
+
+"%s=%s\n", <name>, <value>
+
+for single line variables and:
+
+name<<____
+value...
+___
+
+for multi line variables.
+eof
     ;;
 
+  help-name | help-n | name-h | n-h) echo "usage: name -afh" ;;
+  help-pattern | help-p | pattern-h | ph) echo "usage: name -achu" ;;
+  help-printenv | printenv-h)
+    cat <<'eof'
+usage:  nv printenv [OPTION] [VARIABLE]...
+
+Print all or part of the current environment
+
+Options
+-a  print name and value pairs for all environments
+-n  print current environment names
+-p  print name and value pairs
+-h  help
+
+Description
+
+Print the values of the specified environment VARIABLE(s).  If no
+VARIABLE is specified, print name and value pairs for them all.
+eof
+    ;;
+  help-resolve | help-r | resolve-h | r-h) echo "usage: resolve -dnth" ;;
+  help-unset | unset-h)
+    cat <<'eof'
+usage:  nv unset [-v] NAME... | [-ae]
+
+Unset values and attributes of variables in current environment.
+
+Options
+-a  unset all
+-p  unset current pattern
+-v  provided for compatibility, unset only unsets variables
+-h  help
+
+Description
+
+Each variable specified by name shall be unset.
+
+Unsetting a variable or function that was not previously set
+shall not be considered an error and does not cause the shell to
+abort.
+
+eof
+    ;;
+  help-domain | domain-h) echo "usage: domain -afu" ;;
+
   -*) echo "nv: $1: Unknown option" 1>&2 && nv -h 1>&2 && return 1 ;;
-  *) echo "nv: $1: Unknown resource or command" 1>&2 && nv -h 1>&2 && return 1 ;;
+  [[:alpha:]]*=*) nv x "$1" ;;
+  *)
+    if printf %s "$1" | grep -qE -e '^([[:upper:]]|_)([[:upper:]]|_|[[:digit:]])*$'; then
+      nv pe-- "$1"
+    else
+      echo "nv: $(printf '%s ' "$@"): Unknown resource or command" 1>&2 && nv -h 1>&2 && return 1
+    fi
+    ;;
   esac
 }
 
+#
+# Initailize envy
+#
+
 envy_home="${ENVY_HOME-$HOME/.config/envy}"
 
-# native environment variables, expands variables
-# No restriction (may set PATH, etc.) except for envy_* and ENVY_HOME
 [ -f "$envy_home/.nvrc" ] &&
-  while read -r __ || [ "$__" ]; do
-    case $__ in
+  # native environment variables evaluated in here-document
+  exec 3<"$envy_home/.nvrc" &&
+  while read -r || [ "$REPLY" ]; do
+    case $REPLY in
     '' | \#*) continue ;;
-    envy_*=* | ENVY_HOME=*) echo "nvrc: ${__%%=*}: Ignoring invalid environment variable" 1>&2 ;;
-    *=*) export "${__%%=*}"="$(eval 'printf %s "'"${__#*=}"'"')" ;;
-    *) echo "nvrc: $__: Ignoring invalid nvrc statement" 1>&2 ;;
+    envy_* | _nv* | ENVY_HOME*) echo "nvrc: ${REPLY%%=*}: Ignoring local environment variable" 1>&2 && continue ;;
+    *=*)
+      _nv_name="${REPLY%%=*}" _nv_value="${REPLY#*=}"
+      ;;
+    *\<\<*)
+      unset _nv_value
+      _nv_name=${REPLY%%<<*} _nv_delim=${REPLY#*<<}
+      while read -r || [ "$REPLY" ]; do
+        [ "$REPLY" = "$_nv_delim" ] && break
+        _nv_value="${_nv_value+$_nv_value
+}$REPLY"
+      done <&3
+      ;;
+    *) echo "nvrc: $REPLY: Ignoring invalid nvrc statement" 1>&2 ;;
     esac
-  done <"$envy_home/.nvrc"
 
-envy_exclude="${ENVY_EXCLUDE-COLOR|COMMAND_|EDITOR=|ENVY_|HOSTNAME=|HOME=|LANG=|LaunchInstanceID=|LOGNAME=|ITERM_|LC_|OLDPWD=|PATH=|PWD=|SECURITYSESSIONID=|SHELL=|SHLVL=|SSH_|TERM=|TERM_|TMPDIR=|VSCODE_|USER|VISUAL=|XPC_|_=|__${ENVY_EXCLUDE_APPEND:+|$ENVY_EXCLUDE_APPEND}}"
+    # export and process within here-doc for expansions
+    export "$_nv_name=$(
+      eval 'cat <<ff483722-a9e5-4438-8b00-28ae9f416136
+'"$_nv_value"'
+ff483722-a9e5-4438-8b00-28ae9f416136'
+    )"
+  done <&3
+
+envy_exclude="${ENVY_EXCLUDE-COLOR|COMMAND_|EDITOR$|ENVY_|HOSTNAME$|HOME$|LANG$|LaunchInstanceID$|LOGNAME$|ITERM_|LC_|OLDPWD$|PATH$|PWD$|SECURITYSESSIONID$|SHELL$|SHLVL$|SSH_|TERM$|TERM_|TMPDIR$|VSCODE_|USER|VISUAL$|XPC_|_$|__${ENVY_EXCLUDE_APPEND:+|$ENVY_EXCLUDE_APPEND}}"
 envy_profile="${ENVY_PROFILE-nv}"
 
 [ -f "$envy_home/profile/$envy_profile" ] && nv profile open -- "$envy_profile"
+
+# if no profile set above, set default name
+envy_name="${envy_name-nv/default}"
 
 mkdir -p -- "$envy_home/env"
 mkdir -p -- "$envy_home/profile"
