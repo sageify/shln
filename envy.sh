@@ -546,11 +546,15 @@ ff483722-a9e5-4438-8b00-28ae9f416136'
 envy_exclude="${ENVY_EXCLUDE-COLOR|COMMAND_|EDITOR$|ENVY_|HOSTNAME$|HOME$|LANG$|LaunchInstanceID$|LOGNAME$|ITERM_|LC_|OLDPWD$|PATH$|PWD$|SECURITYSESSIONID$|SHELL$|SHLVL$|SSH_|TERM$|TERM_|TMPDIR$|VSCODE_|USER|VISUAL$|XPC_|_$|__${ENVY_EXCLUDE_APPEND:+|$ENVY_EXCLUDE_APPEND}}"
 envy_profile="${ENVY_PROFILE-nv}"
 
-[ -f "$envy_home/profile/$envy_profile" ] && nv profile open -- "$envy_profile"
+if [ -f "$envy_home/profile/$envy_profile" ]; then
+   nv profile-open-- "$envy_profile"
+else
+  # if no profile set above, set default name
+  envy_name=nv/default
+  [ -f "$envy_home/env/nv/default" ] && nv o-- nv/default 
+fi
 
-# if no profile set above, set default name
-envy_name="${envy_name-nv/default}"
-
+# ensure directories
 mkdir -p -- "$envy_home/env"
 mkdir -p -- "$envy_home/profile"
 
