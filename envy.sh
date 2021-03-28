@@ -7,13 +7,13 @@ nv() {
   #
   --version | version) echo "envy version 0.7.1" ;;
   + | -[!h] | \
-    shell | % | shell^* | %^* | \
-    work | / | work^* | /^* | \
-    '' | env | . | ^* | env^* | .^* | \
+    shell | shell^* | %* | \
+    work | work^* | ^* | \
+    '' | env | env^* | . | .* | \
     */*)
 
     case $1 in
-    '') set -- '-i' '^.' "$@" ;;
+    '') set -- '-i' '.' "$@" ;;
     +) shift ;;
     -*) ;;
     *) set -- '-i' "$@" ;;
@@ -23,55 +23,75 @@ nv() {
     while [ $_nv_param_count -le $# ]; do
       if [ "$_nv_options" ]; then
         case $1 in
-        env | .) shift && set -- '^.' "$@" && continue ;;
-        shell | %) shift && set -- '%^.' "$@" && continue ;;
-        work | /) shift && set -- '/^.' "$@" && continue ;;
-        */)
-          ! __=$(nv ep-- "${1%?}") && echo "nv: $1: domain not open" 1>&2 && nv na 1>&2 && return 1
-          shift && set -- "^$__" "$@"
-          continue
-          ;;
-        shell^* | %^*)
-          _nv_grep="${1#*^}"
-          shift && for _nv_name in $(nv gs-- "$_nv_grep"); do
+        env) shift && set -- '.' "$@" && continue ;;
+        shell) shift && set -- '%' "$@" && continue ;;
+        work) shift && set -- '^' "$@" && continue ;;
+        env^*) __="${1#env^}" && shift && set -- ".$__" "$@" && continue ;;
+        shell^*) __="${1#shell^}" && shift && set -- "%$__" "$@" && continue ;;
+        work^*) __="${1#work^}" && shift && set -- "^$__" "$@" && continue ;;
+        %*)
+          __="${1#?}" && shift && for _nv_name in $(nv gs-- "$__"); do
             set -- "$@" "$_nv_name=$(printenv -- "$_nv_name")"
             _nv_param_count=$((_nv_param_count + 1))
           done
           continue
           ;;
-        ^* | env^* | .^*)
-          _nv_grep="${1#*^}"
-          shift && for _nv_name in $(nv g-- "$_nv_grep"); do
+        .*)
+          __="${1#?}" && shift && for _nv_name in $(nv g-- "$__"); do
             set -- "$@" "$_nv_name=$(printenv -- "$_nv_name")"
             _nv_param_count=$((_nv_param_count + 1))
           done
           continue
           ;;
-        /^* | work^*)
-          _nv_grep="${1#*^}"
-          shift && for _nv_name in $(nv g-- "$_nv_grep" | grep -E -e "$(nv p)"); do
+        ^*)
+          __="${1#?}" && shift && for _nv_name in $(nv g-- "$__" | grep -E -e "$(nv p)"); do
             set -- "$@" "$_nv_name=$(printenv -- "$_nv_name")"
             _nv_param_count=$((_nv_param_count + 1))
           done
           continue
           ;;
-        */*)
-          exec 3<"$ENVY_HOME/env/$1"
+
+        -*) ;;
+        [![:alpha:]]* | */*/*) unset -v _nv_options ;;
+
+        */^*) # domiain/^GREP
+          _nv_grep="${1#*^}"
+          ! _nv_ep=$(nv ep-- "${1%%/*}") && echo "nv: $1: domain not open" 1>&2 && nv na 1>&2 && return 1
+
+          shift && for __ in $(nv g-- "$_nv_grep" | grep -E -e "$_nv_ep"); do
+            set -- "$@" "$__=$(printenv -- "$__")"
+            _nv_param_count=$((_nv_param_count + 1))
+          done
+          continue
+          ;;
+        */) # domain/
+          __="$1" && shift && set -- "$__^" "$@" && continue ;;
+        */[[:alpha:]]*^*) # domain/name^GREP
+          _nv_grep=${1#*^}
+          exec 3<"$ENVY_HOME/env/${1%%^*}"
           shift && while read -r || [ "$REPLY" ]; do
             case $REPLY in
-            \#* | '' | +*) continue ;;
+            \#* | '') continue ;;
             *=*)
+              ! nv vnt-- "${REPLY%%=*}" "$_nv_grep" &&
+                continue
+
               set -- "$@" "$REPLY"
               _nv_param_count=$((_nv_param_count + 1))
               ;;
             *\<\<*)
-              unset _nv_value
               _nv_name=${REPLY%%<<*} _nv_delim=${REPLY#*<<}
+              ! nv vnt-- "$_nv_name" "$_nv_grep" &&
+                continue
+
+              _nv_delim=${REPLY#*<<}
+              unset _nv_value
               while read -r || [ "$REPLY" ]; do
                 [ "$REPLY" = "$_nv_delim" ] && break
                 _nv_value="${_nv_value+$_nv_value
 }$REPLY"
               done <&3
+
               set -- "$@" "$_nv_name=$_nv_value"
               _nv_param_count=$((_nv_param_count + 1))
               ;;
@@ -79,7 +99,9 @@ nv() {
           done <&3
           continue
           ;;
-        -*) ;;
+        */[[:alpha:]]*) # domain/name
+          __="$1" && shift && set -- "$__^" "$@" && continue
+          ;;
         *) unset -v _nv_options ;;
         esac
       fi
@@ -204,13 +226,9 @@ nv() {
     esac
     ;;
 
-  cat--) shift && cat -- "$ENVY_HOME/env/$(nv rn-- "$1")" ;;
-
-  switch--)
-    ! nv et-- "$2" && return 1
-    nv n-- "$(nv en-- "$2")"
-    nv p-- "$(nv ep-- "$2")"
-    ;;
+  #
+  # Working Environment Commands
+  #
 
   close-- | c--) shift && nv ec-- "$1" && nv n-- "" ;;
 
@@ -220,22 +238,6 @@ nv() {
         printf %s\\n "${file#$ENVY_HOME/env/}"
       done
     done | grep .
-    ;;
-
-  edit--)
-    ! [ "$VISUAL" ] && echo "nv: Editor not specified in VISUAL environment variable" 1>&2 && return 1
-    ! command -v -- "$VISUAL" >/dev/null &&
-      echo "edit: $VISUAL: Editor not found" 1>&2 &&
-      return 1
-
-    shift
-    if [ "$1" ]; then
-      for __; do
-        "$VISUAL" "$(nv w-- "$(nv rn-- "$__")")"
-      done
-    else
-      "$VISUAL" "$(nv home)"
-    fi
     ;;
 
   # get information for an environment
@@ -255,13 +257,94 @@ nv() {
 
   export-- | x--)
     shift && [ "${1+.}" ] && for __; do
-      if [ "${__%%=*}" = "ENVY_PATTERN" ] || nv vnt-- "${__%%=*}" "$(nv p)"; then
+      if nv vnt-- "${__%%=*}" "$(nv p)"; then
         # shellcheck disable=SC2163
-        export "$__"
+        export -- "$__"
       else
         echo "nv: export: $__: bad variable name" 1>&2
       fi
     done
+    ;;
+
+  name-- | n--) [ "${2+x}" ] && __=$(nv rn-- "$2") && envy_name=$__ && echo "$__" ;;
+
+  new--)
+    nv n-- "$2"
+    nv p-- "${3-$(nv p)}"
+    ;;
+
+  pattern-- | p--) [ "${2+x}" ] && export ENVY_PATTERN="$2" ;;
+
+  printenv | pe) shift && nv . printenv "$@" ;;
+
+  switch--)
+    ! nv et-- "$2" && return 1
+    nv n-- "$(nv en-- "$2")"
+    nv p-- "$(nv ep-- "$2")"
+    ;;
+
+  unset-- | unset-v-- | u--)
+    shift && [ "$1" ] && for __; do
+      nv vnt-- "$__" "$(nv p)" && unset -v -- "$__"
+    done
+    ;;
+
+  unset-a-- | ua--)
+    shift && [ "$1" ] && for __; do
+      nv vnt-- "$__" && unset -v -- "$__"
+    done
+    ;;
+
+  #
+  # Environment File Commands
+  #
+
+  cat--) shift && cat -- "$ENVY_HOME/env/$(nv rn-- "$1")" ;;
+
+  diff)
+    shift && ! [ "${1+.}" ] && set -- "$(nv n)" -
+
+    _nv_first=0 _nv_files=0
+    for param; do
+      [ "$_nv_first" ] && set -- && unset -v _nv_first
+      case $param in
+      */*)
+        ! __=$(nv w-- "$param") && return 1
+        set "$@" "$__"
+        _nv_files=$((_nv_files + 1))
+        ;;
+      -) _nv_files=$((_nv_files + 1)) ;;
+      *) set "$@" "$param" ;;
+      esac
+    done
+
+    case $_nv_files in
+    0) set "$@" "$(nv w-- "$(nv n)")" - ;;
+    1) set "$@" - ;;
+    esac
+
+    if [ "${edr+.}" ]; then
+      echo nv export "|" diff "$@"
+    else
+      nv export | diff "$@"
+    fi
+
+    ;;
+
+  edit--)
+    ! [ "$VISUAL" ] && echo "nv: Editor not specified in VISUAL environment variable" 1>&2 && return 1
+    ! command -v -- "$VISUAL" >/dev/null &&
+      echo "edit: $VISUAL: Editor not found" 1>&2 &&
+      return 1
+
+    shift
+    if [ "$1" ]; then
+      for __; do
+        "$VISUAL" "$(nv w-- "$(nv rn-- "$__")")"
+      done
+    else
+      "$VISUAL" "$(nv home)"
+    fi
     ;;
 
   find-- | f--)
@@ -281,19 +364,6 @@ nv() {
     done | grep .
     ;;
 
-  grep-- | g--) shift && awk 'BEGIN{for(v in ENVIRON) print v}' |
-    grep -E -e "^($1)" | sort | grep -vE -e "^($envy_shell)" ;;
-
-  grep-s-- | gs--) shift && awk 'BEGIN{for(v in ENVIRON) print v}' |
-    grep -E -e "^($1)" | sort | grep -E -e "^($envy_shell)" ;;
-
-  name-- | n--) [ "${2+x}" ] && __=$(nv rn-- "$2") && envy_name=$__ && echo "$__" ;;
-
-  new--)
-    nv n-- "$2"
-    nv p-- "${3-$(nv p)}"
-    ;;
-
   open-- | o--)
     shift && [ "$1" ] && for __; do
       ! nv n-- "$__" && return 1
@@ -306,6 +376,7 @@ nv() {
       while read -r || [ "$REPLY" ]; do
         case $REPLY in
         \#* | '') continue ;;
+        ENVY_PATTERN=*) nv p-- "${REPLY#*=}" ;;
         *=*) nv x-- "$REPLY" ;;
         *\<\<*)
           unset _nv_value
@@ -325,10 +396,6 @@ nv() {
       printf '%s\n' "$(nv p)"
     done
     ;;
-
-  pattern-- | p--) [ "${2+x}" ] && ENVY_PATTERN="$2" ;;
-
-  printenv | pe) shift && nv . printenv "$@" ;;
 
   profile)
     # handle sub commands here
@@ -399,24 +466,23 @@ nv() {
     nv x >"$ENVY_HOME/env/$(nv n)"
     ;;
 
-  unset-- | unset-v-- | u--)
-    shift && [ "$1" ] && for __; do
-      nv vnt-- "$__" "$(nv p)" && unset -v -- "$__"
-    done
-    ;;
-
-  unset-a-- | ua--)
-    shift && [ "$1" ] && for __; do
-      nv vnt-- "$__" && unset -v -- "$__"
-    done
-    ;;
-
   which-- | w--)
     __="$ENVY_HOME/env/$2" && ! [ -f "$__" ] && ! [ -d "$__" ] &&
       echo "$2 not found" 1>&2 &&
       return 1
     printf %s\\n "$__"
     ;;
+
+  #
+  # Other Commands
+  #
+
+  grep-- | g--) shift && nv ga-- "$@" | grep -vE -e "^($envy_shell)" ;;
+
+  grep-s-- | gs--) shift && nv ga-- "$@" | grep -E -e "^($envy_shell)" ;;
+
+  grep-a-- | ga--) shift && awk 'BEGIN{for(v in ENVIRON) print v}' |
+    sort | grep -E -e "^($1)" ;;
 
   help | -h | --help)
     shift && case $1 in
@@ -455,6 +521,7 @@ Options
 Working Environment Commands
 c, close     Close environment
 d, domain    Print current domain name
+x, export    Set the export attribute for working environment variables
    isnew     Check if new working environment
    na        Print active environment names
 n, name      Print/set curent domain full name
@@ -463,7 +530,6 @@ p, pattern   Print/set current domain environment variable name pattern
    printenv  Print all or part of the working environment
    switch    Switch working environment
 u, unset     Unset a working environment variable
-x, export    Set the export attribute for working environment variables
 
 Environment File
    cat      Print an environment file
@@ -579,8 +645,9 @@ eof
 # Initailize envy
 #
 
-readonly ENVY_HOME="${ENVY_HOME-$HOME/.config/envy}"
-export ENVY_HOME
+export ENVY_HOME="${ENVY_HOME-$HOME/.config/envy}"
+readonly ENVY_HOME
+unset ENVY_PATTERN
 
 [ -f "$ENVY_HOME/.nvrc" ] &&
   # load extension to shell environment
@@ -604,14 +671,14 @@ export ENVY_HOME
     esac
 
     # export and process within here-doc for expansions
-    export "$_nv_name=$(
+    export -- "$_nv_name=$(
       eval 'cat <<ff483722-a9e5-4438-8b00-28ae9f416136
 '"$_nv_value"'
 ff483722-a9e5-4438-8b00-28ae9f416136'
     )"
   done <&3
 
-envy_shell="${ENVY_SHELL-COLOR|COMMAND_|EDITOR$|ENVY_|HOSTNAME$|HOME$|LANG$|LaunchInstanceID$|LOGNAME$|ITERM_|LC_|OLDPWD$|PATH$|PWD$|SECURITYSESSIONID$|SHELL$|SHLVL$|SSH_|TERM$|TERM_|TMPDIR$|VSCODE_|USER|VISUAL$|XPC_|_$|__${ENVY_SHELL_APPEND:+|$ENVY_SHELL_APPEND}}"
+readonly envy_shell="${ENVY_SHELL-COLOR|COMMAND_|EDITOR$|ENVY_|HOSTNAME$|HOME$|LANG$|LaunchInstanceID$|LOGNAME$|ITERM_|LC_|OLDPWD$|PATH$|PWD$|SECURITYSESSIONID$|SHELL$|SHLVL$|SSH_|TERM$|TERM_|TMPDIR$|VSCODE_|USER|VISUAL$|XPC_|_$|__${ENVY_SHELL_APPEND:+|$ENVY_SHELL_APPEND}}"
 envy_profile="${ENVY_PROFILE-nv}"
 
 if [ -f "$ENVY_HOME/profile/$envy_profile" ]; then

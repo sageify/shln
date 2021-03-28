@@ -22,7 +22,7 @@ nv shell -p
 # COLOR|COMMAND_|EDITOR$|ENVY_|HOSTNAME$|HOME$|LANG$ ...
 ```
 
-Prevents exporting of system variables
+Prevents exporting of shell variables
 
 ```sh
 nv PATH=
@@ -50,8 +50,15 @@ If terminal is closed, variables will be available in next terminal
 Envy allows grepping of environment variables by name:
 
 ```sh
-nv -g S
+nv .S
 # SAY='Hello World!'
+```
+
+To grep a shell variable
+
+```sh
+nv %P
+# PATH=...
 ```
 
 
@@ -60,22 +67,21 @@ nv -g S
 A domain has a name a grep pattern.  A domain is created as follows:
 
 ```sh
-
 # get fresh environment
 nv ca
 nv ua
 
 # create a new working domain named hello for the pattern SAY$
-nv new hello SAY$
+nv new hello SAY$  
 nv SAY='Hello World!'
 nv
 nv save
 
 # see full environemnt
-env
+nv
 
 # managed environment
-nv
+nv ?
 
 # show saved file
 nv cat
@@ -139,6 +145,26 @@ nv open git/john
 nv
 ```
 
+## Grep
+
+```sh
+# grep shell
+%P
+%PATH
+%PATH$
+
+# grep nv
+.GIT
+
+# grep working environment
+?GIT
+
+# grep open domain
+git/?GIT
+
+# grep in a file
+git/john?GIT
+```
 
 ## Install
 
