@@ -12,10 +12,13 @@ nv
 # CUSTOM=Hello World!
 ```
 
-The non-system environment variables excluded are:
+To see just the shell variables:
 
 ```sh
-nv exclude
+nv shell
+# PATH= ..
+
+nv shell -p
 # COLOR|COMMAND_|EDITOR$|ENVY_|HOSTNAME$|HOME$|LANG$ ...
 ```
 
@@ -40,10 +43,21 @@ nv save
 # nv/default
 ```
 
+If terminal is closed, variables will be available in next terminal
 
-## Multiple Environment Management
+## Environment Grep Patterns
 
-A context consists of a context name and a grep pattern.  A context is created as follows:
+Envy allows grepping of environment variables by name:
+
+```sh
+nv -g S
+# SAY='Hello World!'
+```
+
+
+## Multiple Environment Domains
+
+A domain has a name a grep pattern.  A domain is created as follows:
 
 ```sh
 
@@ -51,8 +65,9 @@ A context consists of a context name and a grep pattern.  A context is created a
 nv ca
 nv ua
 
-nv new hello 'SAY$'
-nv export SAY='Hello World!'
+# create a new working domain named hello for the pattern SAY$
+nv new hello SAY$
+nv SAY='Hello World!'
 nv
 nv save
 
@@ -60,7 +75,7 @@ nv save
 env
 
 # managed environment
-nv .
+nv
 
 # show saved file
 nv cat
@@ -71,7 +86,7 @@ nv close
 # nothing to see
 nv
 
-# open context 
+# reopen working domain 
 nv open
 nv
 ```
@@ -84,37 +99,45 @@ Domains are established by creating a context directory.
 
 For example, only one git configuration should be available at one time.
 
-``sh
-nv new nv/hello SAY=
-nv set SAY='Hello World!'
+```sh
+nv new nv/hello SAY
+nv SAY='Hello World!'
 nv save
 
 nv new git/john GIT_
-nv set GIT_COMMITTER_NAME='John Doe'
-nv set GIT_COMMITTER_EMAIL='john@example.com'
-nv set GIT_AUTHOR_NAME='John Doe'
-nv set GIT_AUTHOR_EMAIL='john@example.com'
+nv GIT_COMMITTER_NAME='John Doe'
+nv GIT_COMMITTER_EMAIL='john@example.com'
+nv GIT_AUTHOR_NAME='John Doe'
+nv GIT_AUTHOR_EMAIL='john@example.com'
 nv save
 
+# show both nv and git domains
+nv
+
+# show just current domain
+nv .
+
+# create new environment for jane in git domain (current working domain)
 nv new jane GIT_
-nv set GIT_COMMITTER_NAME='Jane Doe'
-nv set GIT_COMMITTER_EMAIL='jane@example.com'
-nv set GIT_AUTHOR_NAME='Jane Doe'
-nv set GIT_AUTHOR_EMAIL='jane@example.com'
+nv GIT_COMMITTER_NAME='Jane Doe'
+nv GIT_COMMITTER_EMAIL='jane@example.com'
+nv GIT_AUTHOR_NAME='Jane Doe'
+nv GIT_AUTHOR_EMAIL='jane@example.com'
 nv save
 
 nv cd nv
-nv get SAY
+nv SAY
 
-nv new goodbye SAY=
-nv set SAY='Goodbye!'
+nv new goodbye SAY
+nv SAY='Goodbye!'
 nv save
 nv
 
-nv open hello
-nv
+# to replace the GIT domain with john:
 
-``
+nv open git/john
+nv
+```
 
 
 ## Install
@@ -153,6 +176,17 @@ Follow behavior of busybox for return codes and error output.
 
 The export -p command prints export statements in a platform specific format.  Same is true for nv.
 The export -n removes export flag.
+
+
+## Todo
+
+nv shows all
+nv . shows current
+
+all -a is for nv
+
+nv system - show only system
+
 
 ## References
 http://www.etalabs.net/sh_tricks.html

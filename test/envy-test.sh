@@ -5,7 +5,6 @@
 export ENVY_HOME=.config
 . envy
 
-
 nv f-- && assert_fail "empty find"
 nv fa-- && assert_fail "empty find"
 
@@ -19,8 +18,8 @@ two " "$(nv printenv MULTI)"
 assert_equals nv "$(nv profile)"
 assert_equals nv/default "$(nv name)"
 assert_equals . "$(nv pattern)"
-assert_equals 'COLOR|COMMAND_|ENVY_|HOSTNAME$|HOME$|LANG$|LaunchInstanceID$|LOGNAME$|ITERM_|LC_|OLDPWD$|PATH$|PWD$|SECURITYSESSIONID$|SHELL$|SHLVL$|SSH_|TERM$|TERM_|TMPDIR$|VISUAL$|VSCODE_|USER|XPC_|_$|__|APPLICATION_INSIGHTS_|ORIGINAL_XDG_' "$(nv exclude)"
-assert_empty "$(nv ea)"
+assert_equals 'COLOR|COMMAND_|ENVY_|HOSTNAME$|HOME$|LANG$|LaunchInstanceID$|LOGNAME$|ITERM_|LC_|OLDPWD$|PATH$|PWD$|SECURITYSESSIONID$|SHELL$|SHLVL$|SSH_|TERM$|TERM_|TMPDIR$|VISUAL$|VSCODE_|USER|XPC_|_$|__|APPLICATION_INSIGHTS_|ORIGINAL_XDG_' "$(nv pattern -s)"
+assert_empty "$(nv da)"
 
 nv unset -a
 
@@ -67,9 +66,9 @@ assert_equals "John Doe" "$(nv GIT_COMMITTER_NAME)"
 assert_equals "one
 two" "$(nv GIT_A)"
 
-nv cd nv
+nv switch nv
 assert_equals "Hello World!" "$(nv SAY)"
-nv -u SAY
+nv unset SAY
 
 nv new goodbye SAY
 nv x SAY=Goodbye!
