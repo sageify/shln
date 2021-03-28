@@ -1,13 +1,10 @@
 kc kubectl
 
-#
-# Set behavior of native commands
-#
-
 # kubectl has 1 subcommand as standard
 kubectl  <cmd+1
 
-# prevent arguments of native global option  from being treated as commands
+# global settings.  
+# prevent arguments of native global option from being treated as commands
 # without these settings:  kc -n c c  >>>  kc -n create c
 # with settings: kc -n c c  >>>  kc -n c create
 # declare the option and additional arg as native (no expansion)
@@ -19,14 +16,14 @@ kubectl:-v           <native+1
 kubectl:--v          <native+1
 
 # normal behavior when reaching last sub command is no more args are expanded
-# however, for these, allow one arg to expand resource
+# however, for these, allow one arg to expand (a resource)
 # kc get d -> kc get deploy
-kubectl>create      <arg=1
-kubectl>describe    <arg=1
-kubectl>get         <arg=1
+kubectl>create       <arg=1
+kubectl>describe     <arg=1
+kubectl>get          <arg=1
 
 # kubectl set to only one subcommand, enable config explicitly for another
-kubectl>config      <cmd+1
+kubectl>config       <cmd+1
 
 # treated as global even though they are not.
 # this is an invalid command:  kc -all gp > kc --all-namespaces get po  
@@ -75,7 +72,6 @@ kubectl>config>scr  set-credentials
 
 kubectl>config>set-credentials>-p  +--password=
 kubectl>config>set-credentials>-u  +--username=
-kubectl>config>view>
 
 kubectl>create>c  configmap
 kubectl>create>d  deploy
@@ -95,6 +91,14 @@ kubectl>get>c   configmap
 kubectl>get>d   deploy
 kubectl>get>p   po
 kubectl>get>s   svc
+
+
+tf terraform
+
+# terraform has 1 subcommand as standard
+terraform  <cmd+1
+
+terraform>w  workspace
 
 
 #

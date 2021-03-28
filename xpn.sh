@@ -2,8 +2,8 @@
 
 # returns 0 if expanded (word assigned), 1 otherwise (a directive, no entry in .xpn)
 xpn_word() {
-  for param in "$@"; do
-    xpn="$(grep -m 1 -e '^[ /t]*'"$param"'[ /t]' "$dot_xpn" | sed -e 's/^[ /t]*'"$param"'[ /t]*//')"
+  for param; do
+    xpn="$(grep -m 1 -e '^[[:space:]]*'"$param"'[[:space:]]' "$dot_xpn" | sed -e 's/^[[:space:]]*'"$param"'[[:space:]]*//')"
     case $xpn in
     '') continue ;;
     '<'*)
@@ -108,9 +108,9 @@ while [ $param_pos -le $# ]; do
   else
     case $1 in
     *[![:alnum:]_-]*) ;;
-    -? | --*) xpn_word "$cmd$1" "$base:$1" ;;
+    -? | --*) xpn_word "$cmd$1" "$native_first:$1" ;;
     -*)
-      xpn_word "$cmd$1" "$base:$1"
+      xpn_word "$cmd$1" "$native_first:$1"
       if ! [ "$xpn" ]; then
         # -au -> -a -u
         flags=${1#-}
@@ -158,23 +158,23 @@ while [ $param_pos -le $# ]; do
   fi
 
   # have a native parameter
-  lastparam="$1"
+  native_last="$1"
   shift
-  set -- "$@" "$lastparam"
-  [ $param_pos -eq 1 ] && base="$lastparam"
+  set -- "$@" "$native_last"
+  [ $param_pos -eq 1 ] && native_first="$native_last"
   param_pos=$((param_pos + 1))
 done
 
 # shellcheck disable=SC2154
-# if not a dry run, execute underlying command
-! [ "${dr+x}" ] && exec "$@"
+# if not an expansion dry run, execute underlying command
+! [ "${xdr+x}" ] && exec "$@"
 
 # dry run
 xpn_escape "$1"
 shift
-for item in "$@"; do
+for param; do
   printf ' '
-  [ "$dr" = l ] && printf '\\\n'
-  xpn_escape "$item"
+  [ "$xdr" = l ] && printf '\\\n'
+  xpn_escape "$param"
 done
 printf "\n"

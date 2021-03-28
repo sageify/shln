@@ -1,4 +1,6 @@
+## Installation
 
+Create a link to the xpn.sh file.
 
 ## Expansion File Syntax 
 
