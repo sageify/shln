@@ -13,20 +13,20 @@ g() {
     ;;
 
   clone-- | c--)
-    shift && for name in $(grm_resolve "$@"); do
+    shift && [ "${1+.}" ] && grm_resolve "$@" | while read -r name; do
       grm_clone "$name"
     done
     ;;
 
   diff-- | d--)
-    shift && for name in $(grm_resolve "$@"); do
+    shift && grm_resolve "$@" | while read -r name; do
       grm_diff "$(grm_resolve_dir "$name")" "$name/"
-    done
+    done | grep .
     ;;
   diff-a | d-a | da)
     shift && grm_find | while read -r name; do
       grm_diff "$(grm_resolve_dir "$name")" "$name/"
-    done
+    done | grep .
     ;;
 
   edit-- | e--)
@@ -35,8 +35,7 @@ g() {
       echo "edit: $VISUAL: Editor not found" 1>&2 &&
       return 1
 
-    shift
-    for e in $(grm_resolve "$@"); do
+    shift && [ "${1+.}" ] && grm_resolve "$@" | while read -r e; do
       ed=$(grm_resolve_dir "$e")
       [ -d "$ed" ] && $VISUAL "$ed" && continue
       grm_clone "$e" && $VISUAL "$ed" && continue
@@ -45,30 +44,27 @@ g() {
     ;;
 
   init-- | i--)
-    shift
-    for name in $(grm_resolve "$@"); do
+    shift && [ "${1+.}" ] && grm_resolve "$@" | while read -r name; do
       printf '%-35s\t' "$name"
       grm_init "$name"
     done
     ;;
 
   pull-- | p--)
-    shift
-    for name in $(grm_resolve "$@"); do
+    shift && [ "${1+.}" ] && grm_resolve "$@" | while read -r name; do
       printf '%-35s\t' "$name"
       git -C "$(grm_resolve_dir "$name")" pull
     done
     ;;
   pull-a | p-a | pa)
-    shift && grm_find "$@" | while read -r name; do
+    shift && [ "${1+.}" ] && grm_find "$@" | while read -r name; do
       printf '%-35s\t' "$name"
       git -C "$(grm_resolve_dir "$name")" pull
     done
     ;;
 
   rm--)
-    shift
-    for dir in $(grm_resolve_name_dir "$@"); do
+    shift && [ "${1+.}" ] && grm_resolve_name_dir "$@" | while read -r dir; do
       ! diff=$(grm_diff "$dir") && return 1
 
       if [ "$diff" ]; then
@@ -89,8 +85,7 @@ g() {
   resolve-r) shift && grm_resolve_name_repo "$@" ;;
 
   which-- | w--) # which
-    shift
-    for wd in $(grm_resolve_name_dir "$@"); do
+    shift && [ "${1+.}" ] && grm_resolve_name_dir "$@" | while read -r wd; do
       git -C "$wd" rev-parse && printf %s\\n "$wd"
     done
     ;;
@@ -112,13 +107,11 @@ g() {
 
   exec) shift && grm_cd && exec "$@" ;;
 
-  find | f)
-    grm_cd && find . -type f -path "./${2-*}" | cut -c 3-
-    ;;
+  find | f) grm_cd && find . -type f -path "./*$2" | cut -c 3- | grep . ;;
 
   ls)
     if [ "$2" ]; then
-      __="$(grm_resolve_name_dir "$2")" && cd -- "$__" && find . -maxdepth 1 -type f | cut -c 3-
+      __="$(grm_resolve_name_dir "$2")" && cd -- "$__" && find . -maxdepth 1 -type f | cut -c 3- | grep .
     else
       grm_find
     fi
@@ -153,6 +146,12 @@ g() {
 
   h--)
     cat <<EOF
+   ____  ____ ___   ___  ____  
+  / _  |/ ___) _ \ / _ \|    \ 
+ ( (_| | |  | |_| | |_| | | | |
+  \___ |_|   \___/ \___/|_|_|_|
+ (_____|                       
+
 Usage:	$(basename -- "$0") COMMAND
 
 Git repository manager.
@@ -169,7 +168,7 @@ General Commands
 e, edit     Launch editor for repository, cloning if necessary
    env      Show the groom envinroment variables
    exec     Execute any linux command in groom home ($grm_home)
-f, find     Find files in local repositories
+f, find     Find files in local repositories using glob ("README.*")
    home     Show repository home directory ($grm_home)
    ls       List all repos
 m, menu     List menu of repos
@@ -283,7 +282,7 @@ grm_menu() {
 }
 
 grm_resolve() {
-  for _rn in "$@"; do
+  [ "${1+.}" ] && for _rn; do
     # strip traling .git and leading slash
     _rn="${_rn%.git}"
     case $_rn in /*) _rn=${_rn#/} ;; esac
