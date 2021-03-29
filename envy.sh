@@ -9,10 +9,10 @@ nv() {
   # Build external env command
   #
   + | -[!h] | \
-    shell | shell^* | %* | \
-    work | work^* | ^* | \
-    '' | env | env^* | . | .* | \
-    */*)
+    shell | shell.* | %* | \
+    work | work.* | \
+    '' | env | env.* | \
+    . | .* | */*)
 
     case $1 in
     '') set -- '-i' '.' "$@" ;;
@@ -33,27 +33,28 @@ nv() {
       case $param in
       env) param='.' ;;
       shell) param='%' ;;
-      work) param='^' ;;
-      env^*) param=".${param#env^}" ;;
-      shell^*) param="%${param#shell^}" ;;
-      work^*) param="^${param#work^}" ;;
-      [![:alpha:]]* | */*/* | *^*) ;;
-      */ | */[[:alpha:]] | */[[:alpha:]]*[[:alpha:]]) param="$param^" ;;
+      work | /) param='/.' ;;
+      env.*) param=".${param#env.}" ;;
+      shell.*) param="%${param#shell.}" ;;
+      work.*) param="/.${param#work.}" ;;
+     
+      [![:alnum:]_]* | */*/* | *.*) ;;
+      */ | */[[:alnum:]_] | */[[:alnum:]_]*[[:alnum:]_]) param="$param." ;;
       esac
 
       case $param in
       %*)
-        for _nv_name in $(nv gs-- "${param#?}"); do
+        for _nv_name in $(nv gs-- "${param#%}"); do
           set -- "$@" "$_nv_name=$(printenv -- "$_nv_name")"
         done
         ;;
       .*)
-        for _nv_name in $(nv g-- "${param#?}"); do
+        for _nv_name in $(nv g-- "${param#.}"); do
           set -- "$@" "$_nv_name=$(printenv -- "$_nv_name")"
         done
         ;;
-      ^*)
-        for _nv_name in $(nv g-- "${param#?}" | grep -E -e "$(nv p)"); do
+      /.*)
+        for _nv_name in $(nv g-- "${param#/.}" | grep -E -e "$(nv p)"); do
           set -- "$@" "$_nv_name=$(printenv -- "$_nv_name")"
         done
         ;;
@@ -61,17 +62,17 @@ nv() {
       -*) set -- "$@" "$param" ;;
       [![:alpha:]]* | */*/*) set -- "$@" "$param" && unset -v _nv_options ;;
 
-      */^*) # domiain/^GREP
+      */.*) # domiain/.GREP
         ! _nv_ep=$(nv ep-- "${param%%/*}") && echo "nv: $param: domain not open" 1>&2 && nv na 1>&2 &&
           return 1
 
-        for __ in $(nv g-- "${param#*^}" | grep -E -e "$_nv_ep"); do
+        for __ in $(nv g-- "${param#*/.}" | grep -E -e "$_nv_ep"); do
           set -- "$@" "$__=$(printenv -- "$__")"
         done
         ;;
-      */[[:alpha:]]*^*) # domain/name^GREP
-        _nv_grep=${param#*^}
-        exec 3<"$ENVY_HOME/env/${param%%^*}"
+      */[[:alpha:]]*.*) # domain/name.GREP
+        _nv_grep=${param#*.}
+        exec 3<"$ENVY_HOME/env/${param%%.*}"
         while read -r || [ "$REPLY" ]; do
           case $REPLY in
           \#* | '') continue ;;
