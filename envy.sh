@@ -2,10 +2,12 @@
 nv() {
   # shellcheck disable=SC2046
   case $1 in
-  #
-  # Options
-  #
+
   --version | version) echo "envy version 0.7.1" ;;
+
+  #
+  # Build external env command
+  #
   + | -[!h] | \
     shell | shell^* | %* | \
     work | work^* | ^* | \
@@ -112,7 +114,39 @@ nv() {
     ;;
 
   #
-  # Commands and no argument
+  # Build external diff command
+  #
+  diff)
+    shift && ! [ "${1+.}" ] && set -- "$(nv n)" -
+
+    _nv_first=0 _nv_files=0
+    for param; do
+      [ "$_nv_first" ] && set -- && unset -v _nv_first
+      case $param in
+      */*)
+        ! __=$(nv w-- "$param") && return 1
+        set "$@" "$__"
+        _nv_files=$((_nv_files + 1))
+        ;;
+      -) _nv_files=$((_nv_files + 1)) ;;
+      *) set "$@" "$param" ;;
+      esac
+    done
+
+    case $_nv_files in
+    0) set "$@" "$(nv w-- "$(nv n)")" - ;;
+    1) set "$@" - ;;
+    esac
+
+    if [ "${edr+.}" ]; then
+      echo nv export "|" diff "$@"
+    else
+      nv export | diff "$@"
+    fi
+    ;;
+
+  #
+  # Builtin commands and no argument settings
   #
 
   close | c | close-a | ca | \
@@ -296,36 +330,6 @@ nv() {
   #
 
   cat--) shift && cat -- "$ENVY_HOME/env/$(nv rn-- "$1")" ;;
-
-  diff)
-    shift && ! [ "${1+.}" ] && set -- "$(nv n)" -
-
-    _nv_first=0 _nv_files=0
-    for param; do
-      [ "$_nv_first" ] && set -- && unset -v _nv_first
-      case $param in
-      */*)
-        ! __=$(nv w-- "$param") && return 1
-        set "$@" "$__"
-        _nv_files=$((_nv_files + 1))
-        ;;
-      -) _nv_files=$((_nv_files + 1)) ;;
-      *) set "$@" "$param" ;;
-      esac
-    done
-
-    case $_nv_files in
-    0) set "$@" "$(nv w-- "$(nv n)")" - ;;
-    1) set "$@" - ;;
-    esac
-
-    if [ "${edr+.}" ]; then
-      echo nv export "|" diff "$@"
-    else
-      nv export | diff "$@"
-    fi
-
-    ;;
 
   edit--)
     ! [ "$VISUAL" ] && echo "nv: Editor not specified in VISUAL environment variable" 1>&2 && return 1
