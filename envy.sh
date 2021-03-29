@@ -37,7 +37,7 @@ nv() {
       env.*) param=".${param#env.}" ;;
       shell.*) param="%${param#shell.}" ;;
       work.*) param="/.${param#work.}" ;;
-     
+
       [![:alnum:]_]* | */*/* | *.*) ;;
       */ | */[[:alnum:]_] | */[[:alnum:]_]*[[:alnum:]_]) param="$param." ;;
       esac
@@ -126,11 +126,11 @@ nv() {
       case $param in
       */*)
         ! __=$(nv w-- "$param") && return 1
-        set "$@" "$__"
+        set -- "$@" "$__"
         _nv_files=$((_nv_files + 1))
         ;;
-      -) _nv_files=$((_nv_files + 1)) ;;
-      *) set "$@" "$param" ;;
+      -) set -- "$@" - && _nv_files=$((_nv_files + 1)) ;;
+      *) set -- "$@" "$param" ;;
       esac
     done
 
