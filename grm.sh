@@ -57,7 +57,7 @@ g() {
     done
     ;;
   pull-a | p-a | pa)
-    shift && [ "${1+.}" ] && grm_find "$@" | while read -r name; do
+    shift && grm_find | while read -r name; do
       printf '%-35s\t' "$name"
       git -C "$(grm_resolve_dir "$name")" pull
     done
