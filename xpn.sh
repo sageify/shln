@@ -1,20 +1,22 @@
 #!/bin/sh --posix
 
-# returns 0 if expanded (word assigned), 1 otherwise (a directive, no entry in .xpn)
+# returns 0 if expanded (word assigned), 1 otherwise (a directive on a native command, native with no entry in .xpn)
 xpn_word() {
   for param; do
     xpn="$(grep -m 1 -e '^[[:space:]]*'"$param"'[[:space:]]' "$dot_xpn" | sed -e 's/^[[:space:]]*'"$param"'[[:space:]]*//')"
     case $xpn in
     '') continue ;;
     '<'*)
-      for direct in ${xpn#?}; do
-        # case is glob(7).  No way to specify any number of digits. 999 should be enough
+      for direct in ${xpn#<}; do
+        # case is glob(7).  No way to specify number of digits should be unlimited. 999 should be enough
         case $direct in
         'arg='[0-9] | 'arg='[0-9][0-9] | 'arg='[0-9][0-9][0-9])
+          # specify new arg count
           arg_directive=${direct#*=}
           ;;
         'cmd') cmd_count=1 ;;
         'cmd+'[0-9] | 'cmd+'[0-9][0-9] | 'cmd+'[0-9][0-9][0-9])
+          # specify new depth for commands
           cmd_count=$((1 + ${direct#*+}))
           ;;
         'cmd_arg='[0-9] | 'cmd_arg='[0-9][0-9] | 'cmd_arg='[0-9][0-9][0-9])
