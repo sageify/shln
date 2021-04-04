@@ -10,22 +10,24 @@ xpn_word() {
       for direct in ${xpn#<}; do
         # case is glob(7).  No way to specify number of digits should be unlimited. 999 should be enough
         case $direct in
-        'arg='[0-9] | 'arg='[0-9][0-9] | 'arg='[0-9][0-9][0-9])
+        arg=[0-9] | arg=[0-9][0-9] | arg=[0-9][0-9][0-9])
           # specify new arg count
           arg_directive=${direct#*=}
           ;;
-        'cmd') cmd_count=1 ;;
-        'cmd+'[0-9] | 'cmd+'[0-9][0-9] | 'cmd+'[0-9][0-9][0-9])
+        cmd) cmd_count=1 ;;
+        cmd+[0-9] | cmd+[0-9][0-9] | cmd+[0-9][0-9][0-9])
           # specify new depth for commands
           cmd_count=$((1 + ${direct#*+}))
           ;;
-        'cmd_arg='[0-9] | 'cmd_arg='[0-9][0-9] | 'cmd_arg='[0-9][0-9][0-9])
+        cmd_arg=[0-9] | cmd_arg=[0-9][0-9] | cmd_arg=[0-9][0-9][0-9])
           cmd_arg_count=${direct#*=}
           ;;
-        'native+'[0-9] | 'native+'[0-9][0-9] | 'native+'[0-9][0-9][0-9])
+        file=*) dot_xpn=$(dirname -- "$dot_xpn")/${direct#*=} ;;
+        native+[0-9] | native+[0-9][0-9] | native+[0-9][0-9][0-9])
           native_count=$((0 + ${direct#*+}))
           ;;
-        'native') ;;
+        native) ;;
+        word=*) word=${direct#*=} && return 0 ;;
         *) echo "xpn: $xpn: Unknown directive" 1>&2 && exit 1 ;;
         esac
       done
