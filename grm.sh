@@ -263,8 +263,8 @@ grm_find() {
 
 grm_find_pretty() {
   grm_find | while read -r line; do
-    printf "%-16s\t%s\\n" "$(basename -- "$line")" "$(dirname -- "$line")"
-  done
+    printf "%-20.20s   %s\\n" "$(basename -- "$line")" "$(dirname -- "$line")"
+  done | sort
 }
 
 grm_menu() {
