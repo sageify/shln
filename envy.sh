@@ -149,7 +149,7 @@ nv() {
   # Builtin commands and no argument defaults or actions
   close | close-a | \
     domain | d | domain-a | da | \
-    env | e | env-n | env-p | env-u | \
+    env | e | env-a | env-n | env-p | env-u | \
     export | x | exclude | \
     name | n | name-a | na | \
     open | o | \
@@ -184,7 +184,8 @@ nv() {
         done
         ;;
 
-      env | e) nv e-- $(nv da) ;;
+      env | e) nv e-- $(nv d) ;;
+      env-a) nv e-- $(nv da) ;;
 
       export | x)
         echo "ENVY_PATTERN=$(nv p)"
@@ -242,6 +243,10 @@ nv() {
     for __; do
       unset -v envy_env_$(nv rd-- "$__")
     done
+    if ! nv e-- "$envy_domain" >/dev/null; then
+      for __ in $(nv da); do envy_domain=$__ && return 0; done
+      nv work-- nv/default . >/dev/null
+    fi
     ;;
 
   domain-- | d--) nv e-- "$2" && envy_domain=$(nv rd-- "$2") ;;
@@ -303,6 +308,7 @@ e8f533c7-482c-49e9-940f-1764f9e214ed
     # resolve name, valid, and default to working domain.
     nv rt-- "$2" && case $2 in
     */*) echo "$2" ;;
+    '') echo "name: may not be empty" 1>&2 && return 1 ;;
     *) echo "$(nv rd--)/$2" ;;
     esac
     ;;
@@ -329,7 +335,7 @@ e8f533c7-482c-49e9-940f-1764f9e214ed
     esac
     ;;
 
-  work-- | work-q--)
+  work--)
     # set working environment name and pattern
     shift
     if [ $# -ne 2 ] || ! [ "$2" ]; then
@@ -339,17 +345,12 @@ e8f533c7-482c-49e9-940f-1764f9e214ed
     _nv_wrn=$(nv rn-- "$1") &&
       envy_domain=${_nv_wrn%%/*} &&
       eval 'envy_env_'"$envy_domain"'="$_nv_wrn.$2"' &&
-      ! [ "$1" = work-q-- ] && printf '%s\n' "$_nv_wrn.$2"
+      printf '%s\n' "$_nv_wrn.$2"
     ;;
 
   unset-- | u--)
     shift && [ $# -gt 0 ] && for __; do
       nv vnt-- "$__" "$(nv p)" && unset -v -- "$__"
-    done
-    ;;
-  unset-a-- | ua--)
-    shift && [ $# -gt 0 ] && for __; do
-      nv vnt-- "$__" && unset -v -- "$__"
     done
     ;;
 
@@ -392,12 +393,12 @@ e8f533c7-482c-49e9-940f-1764f9e214ed
 
   open-- | o--)
     shift && [ $# -gt 0 ] && for __; do
-      nv work-q-- "$__" . && nv o- <"$ENVY_HOME/$(nv n)"
+      nv work-- "$__" . >/dev/null && nv o- <"$ENVY_HOME/$(nv n)"
     done
     ;;
 
-  # export variables from input stream
   open- | o-)
+    # export variables from input stream
     while read -r || [ "$REPLY" ]; do
       case $REPLY in
       \#* | '') continue ;;
@@ -767,5 +768,5 @@ mkdir -p -- "$ENVY_HOME"
 mkdir -p -- "$ENVY_PROFILE_HOME"
 
 #
-# must source to use nv: . envy.sh
+# must source to use nv: . envy.sh | source envy.sh
 #

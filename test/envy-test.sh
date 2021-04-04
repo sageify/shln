@@ -35,7 +35,7 @@ shert_success 'nv close -a'
 shert_stdout_empty 'nv .'
 
 # unset all environment variables (non shell)
-nv unset -a $(nv grep)
+unset -v $(nv grep)
 
 assert_empty "$(nv .)"
 
