@@ -10,15 +10,22 @@ In it's basic usage, it simply shows non-system environment variables:
 ```sh
 nv
 # CUSTOM=Hello World!
+# OTHER=ONe
+
+nv .CUSTOM
+# CUSTOM=Hello World!
+
+nv .OTH
+# OTHER=Hello World!
 ```
 
 To see just the shell variables:
 
 ```sh
-nv shell
+nv %
 # PATH= ..
 
-nv shell -p
+nv pattern -s
 # COLOR|COMMAND_|EDITOR$|ENVY_|HOSTNAME$|HOME$|LANG$ ...
 ```
 
@@ -26,7 +33,7 @@ Prevents exporting of shell variables
 
 ```sh
 nv PATH=
-# nv: export: 'PATH=': bad variable name
+# nv: export: PATH: bad or excluded variable name
 ```
 
 Add new variables
@@ -68,11 +75,11 @@ A domain has a name a grep pattern.  A domain is created as follows:
 
 ```sh
 # get fresh environment
-nv ca
-nv ua
+nv close -a
+nv unset -a $(nv grep)
 
-# create a new working domain named hello for the pattern SAY$
-nv new hello SAY$  
+# create a new working environment named hello for the pattern SAY$
+nv work hello SAY$  
 nv SAY='Hello World!'
 nv
 nv save
@@ -206,14 +213,24 @@ The export -n removes export flag.
 
 ## Todo
 
-nv shows all
-nv . shows current
+- nv % | nv -
 
-all -a is for nv
+- .       |          |       .GIT | working
+- /       |          |       /GIT | all working
+- %       |          |       %GIT | shell
+- git.    |          |    git.GIT | named working
+- git/n.  |          |  git/n.GIT | file
+- @       |          |       @GIT | file for working
 
-nv system - show only system
+## Advanced
+
+```sh
+# unset all nv variables
+nv unset -a $(nv grep)
+```
 
 
 ## References
 http://www.etalabs.net/sh_tricks.html
 https://man7.org/linux/man-pages/man7/glob.7.html
+
