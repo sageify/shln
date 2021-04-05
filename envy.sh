@@ -383,7 +383,9 @@ e8f533c7-482c-49e9-940f-1764f9e214ed
 
   open-- | o--)
     shift && [ $# -gt 0 ] && for __; do
-      nv work-- "$__" . >/dev/null && nv o- <"$ENVY_HOME/$(nv n)"
+      ! _nv_orn=$(nv rn-- "$__") && return 1
+      nv eu-- "${_nv_orn%%/*}"
+      nv work-- "$_nv_orn" . >/dev/null && nv o- <"$ENVY_HOME/$_nv_orn"
     done
     ;;
 
@@ -393,7 +395,7 @@ e8f533c7-482c-49e9-940f-1764f9e214ed
       case $_nv_line in
       \#* | '') continue ;;
       envy_* | _nv*) echo "nvrc: $_nv_line: Ignoring internal envy environment variable" 1>&2 ;;
-      ENVY_PATTERN=*) nv p-- "${_nv_line#*=}" && nv u-- $(nv g-- "$(nv p)") ;;
+      ENVY_PATTERN=*) nv p-- "${_nv_line#*=}" ;;
       *=*) nv x-- "$_nv_line" ;;
       *\<\<*)
         unset _nv_value
@@ -618,8 +620,7 @@ ___
     cat <<'___'
 usage:  nv open NAME...
 
-Open an environment.  Previous environment variables that match the newly
-opened environment pattern are unset.
+Open an environment into a clean domain.  All the previous domain environment variables are unset.
 ___
     ;;
   help-pattern | help-p | pattern-h | p-h) echo "usage: name -achu" ;;
