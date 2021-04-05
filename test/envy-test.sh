@@ -74,7 +74,9 @@ shert_success 'nv save'
 
 # git/jane
 
-shert_success 'nv name jane'
+shert_success 'nv new jane GIT_'
+shert_stdout_empty 'nv .'
+
 nv GIT_COMMITTER_NAME='Jane Doe'
 nv GIT_COMMITTER_EMAIL='jane@example.com'
 nv GIT_AUTHOR_NAME='Jane Doe'

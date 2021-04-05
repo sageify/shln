@@ -167,6 +167,7 @@ nv() {
     profile-home | profile-open | profile-save | \
     grep | grep-a | grep-s | \
     home | \
+    new | \
     which | w | \
     work)
 
@@ -211,6 +212,8 @@ nv() {
       name | n) nv en-- "$envy_domain" ;;
       name-a | na) nv en-- $(nv da) ;;
 
+      new) nv eu-- "$envy_domain" ;;
+
       pattern | p) nv ep-- "$envy_domain" ;;
       pattern-a | pa) nv ep-- $(nv da) ;;
       pattern-s | ps) printf %s\\n "$envy_shell" ;;
@@ -251,7 +254,7 @@ nv() {
     done
     if ! nv e-- "$envy_domain" >/dev/null; then
       for __ in $(nv da); do envy_domain=$__ && return 0; done
-      nv work-- nv/default . >/dev/null
+      nv work-- nv/default >/dev/null
     fi
     ;;
 
@@ -264,7 +267,7 @@ nv() {
     done | grep .
     ;;
   env-n-- | en--)
-    shift && nv e-- "$@" | while IFS= read -r _nv_line; do
+    shift && nv e-- "$@" | while read -r _nv_line; do
       nv rn-- "${_nv_line%%.*}"
     done | grep .
     ;;
@@ -341,17 +344,14 @@ e8f533c7-482c-49e9-940f-1764f9e214ed
     esac
     ;;
 
-  work--)
-    # set working environment name and pattern
-    shift
-    if [ $# -ne 2 ] || ! [ "$2" ]; then
-      echo "work: " "$@" ": name or pattern missing" 1>&2
-      return 1
+  new-- | work--)
+    # set working environment name and pattern, unset old domain if new--
+    if _nv_wrn=$(nv rn-- "$2"); then
+      envy_domain=${_nv_wrn%%/*}
+      [ "$1" = new-- ] && nv eu-- "$envy_domain"
+      eval 'envy_env_'"$envy_domain"'="$_nv_wrn.${3:-.}"'
+      printf '%s\n' "$_nv_wrn.${3:-.}"
     fi
-    _nv_wrn=$(nv rn-- "$1") &&
-      envy_domain=${_nv_wrn%%/*} &&
-      eval 'envy_env_'"$envy_domain"'="$_nv_wrn.$2"' &&
-      printf '%s\n' "$_nv_wrn.$2"
     ;;
 
   unset-- | u--)
@@ -383,9 +383,8 @@ e8f533c7-482c-49e9-940f-1764f9e214ed
 
   open-- | o--)
     shift && [ $# -gt 0 ] && for __; do
-      ! _nv_orn=$(nv rn-- "$__") && return 1
-      nv eu-- "${_nv_orn%%/*}"
-      nv work-- "$_nv_orn" . >/dev/null && nv o- <"$ENVY_HOME/$_nv_orn"
+      _nv_orn=$(nv rn-- "$__") && nv new-- "$_nv_orn" >/dev/null &&
+        nv o- <"$ENVY_HOME/$_nv_orn"
     done
     ;;
 
@@ -752,7 +751,7 @@ if [ -f "$ENVY_PROFILE_HOME/$envy_profile" ]; then
 elif [ -f "$ENVY_HOME/nv/default" ]; then
   nv o-- nv/default
 else
-  nv work-- nv/default .
+  nv work-- nv/default
 fi
 
 # ensure directories
