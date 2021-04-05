@@ -265,7 +265,7 @@ grm_find() {
 grm_find_pretty() {
   grm_find | while read -r line; do
     printf "%-20.20s   %s\\n" "$(basename -- "$line")" "$(dirname -- "$line")"
-  done | sort
+  done
 }
 
 grm_menu() {
