@@ -144,7 +144,7 @@ which | w)
   done
   ;;
 
-ln | ls | mv | rm) lnkn_exec "$@" ;;
+code | ln | ls | mv | nano | rm) lnkn_exec "$@" ;;
 
 version | --version) echo "$(basename -- "$0") version 0.5.0" ;;
 

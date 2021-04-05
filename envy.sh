@@ -56,7 +56,7 @@ nv() {
       */*.*) # domain/name.PATTERN
         _nv_grep="${param#*.}"
 
-        exec 3<"$ENVY_HOME/${param%%.*}"
+        exec 3<"$envy_home/env/${param%%.*}"
         while IFS= read -r _nv_line || [ "$_nv_line" ]; do
           case $_nv_line in
           \#* | '') continue ;;
@@ -101,7 +101,7 @@ nv() {
     fi
     ;;
 
-  cat | cd | cp | diff | edit | ls | mkdir | mv | nano | rm)
+  cat | cd | code | cp | diff | edit | ls | mkdir | mv | nano | rm | vi | vim)
     # Build generic external command with name expansion
     _nv_first=0 _nv_no_input=0 _nv_no_args=0
     for param; do
@@ -122,7 +122,7 @@ nv() {
       -) set -- "$@" - && unset -v _nv_no_input && continue ;;
       -*) set -- "$@" "$param" && continue ;;
       @) param=$(nv n) ;;
-      @@*) param="$ENVY_HOME${param#@@}" ;;
+      @@*) param="$envy_home/env${param#@@}" ;;
       esac
 
       unset -v _nv_no_args
@@ -130,18 +130,18 @@ nv() {
       /* | */ | [[:digit:]]* | *[![:alnum:]_/]* | */*/*)
         set -- "$@" "$param"
         ;;
-      *) set -- "$@" "$ENVY_HOME/$param" ;;
+      *) set -- "$@" "$envy_home/env/$param" ;;
       esac
     done
 
     [ "$_nv_no_args" ] &&
       case $1 in
-      cat | nano | "$VISUAL") set -- "$@" "$ENVY_HOME/$(nv n)" ;;
+      cat | nano | "$VISUAL") set -- "$@" "$envy_home/env/$(nv n)" ;;
       diff)
         unset -v _nv_no_input
-        set -- "$@" - "$ENVY_HOME/$(nv n)"
+        set -- "$@" - "$envy_home/env/$(nv n)"
         ;;
-      ls | cd) set -- "$@" "$ENVY_HOME/" ;;
+      ls | cd) set -- "$@" "$envy_home/env/" ;;
       esac
 
     if [ "${edr+.}" ]; then
@@ -186,8 +186,8 @@ nv() {
 
       domain | d) nv rd-- "$envy_domain" ;;
       domain-a | da)
-        set | grep -e '^envy_env_' | while IFS='=' read -r key _; do
-          printf %s\\n "${key#envy_env_}"
+        set | grep -e '^envy_domain_' | while IFS='=' read -r key _; do
+          printf %s\\n "${key#envy_domain_}"
         done
         ;;
 
@@ -224,13 +224,13 @@ nv() {
       find-a | fa) nv fa-- "*" ;;
 
       profile-find) nv profile-find-- "*" ;;
-      profile-home) printf %s\\n "$ENVY_PROFILE_HOME" ;;
+      profile-home) printf %s\\n "$envy_home/profile" ;;
       profile-open) nv profile-open-- "$envy_profile" ;;
       profile-save) nv profile-save-- "$envy_profile" ;;
 
       # Other Commands
 
-      home) printf %s\\n "$ENVY_HOME" ;;
+      home) printf %s\\n "$envy_home/env" ;;
 
       which | w) nv w-- "$(nv n)" ;;
 
@@ -250,7 +250,7 @@ nv() {
     shift
     nv eu-- "$@"
     for __; do
-      unset -v envy_env_$(nv rd-- "$__")
+      unset -v envy_domain_$(nv rd-- "$__")
     done
     if ! nv e-- "$envy_domain" >/dev/null; then
       for __ in $(nv da); do envy_domain=$__ && return 0; done
@@ -262,7 +262,7 @@ nv() {
 
   env-- | e--)
     shift && for __; do
-      __="$(eval 'echo $envy_env_'"$(nv rd-- "$__")")" && [ "$__" ] &&
+      __="$(eval 'echo $envy_domain_'"$(nv rd-- "$__")")" && [ "$__" ] &&
         printf %s\\n "$__"
     done | grep .
     ;;
@@ -349,7 +349,7 @@ e8f533c7-482c-49e9-940f-1764f9e214ed
     if _nv_wrn=$(nv rn-- "$2"); then
       envy_domain=${_nv_wrn%%/*}
       [ "$1" = new-- ] && nv eu-- "$envy_domain"
-      eval 'envy_env_'"$envy_domain"'="$_nv_wrn.${3:-.}"'
+      eval 'envy_domain_'"$envy_domain"'="$_nv_wrn.${3:-.}"'
       printf '%s\n' "$_nv_wrn.${3:-.}"
     fi
     ;;
@@ -366,17 +366,17 @@ e8f533c7-482c-49e9-940f-1764f9e214ed
 
   find-- | f--)
     shift && for __; do
-      find "$ENVY_HOME" -mindepth 2 -maxdepth 2 -type f -path "$ENVY_HOME/$(nv d)/$__" |
+      find "$envy_home/env" -mindepth 2 -maxdepth 2 -type f -path "$envy_home/env/$(nv d)/$__" |
         while IFS= read -r _nv_line; do
-          printf %s\\n "${_nv_line#$ENVY_HOME/}"
+          printf %s\\n "${_nv_line#$envy_home/env/}"
         done
     done | grep .
     ;;
   find-a-- | fa--)
     shift && for __; do
-      find "$ENVY_HOME" -mindepth 2 -maxdepth 2 -type f -path "$ENVY_HOME/$__" |
+      find "$envy_home/env" -mindepth 2 -maxdepth 2 -type f -path "$envy_home/env/$__" |
         while IFS= read -r _nv_line; do
-          printf %s\\n "${_nv_line#$ENVY_HOME/}"
+          printf %s\\n "${_nv_line#$envy_home/env/}"
         done
     done | grep .
     ;;
@@ -384,7 +384,7 @@ e8f533c7-482c-49e9-940f-1764f9e214ed
   open-- | o--)
     shift && [ $# -gt 0 ] && for __; do
       _nv_orn=$(nv rn-- "$__") && nv new-- "$_nv_orn" >/dev/null &&
-        nv o- <"$ENVY_HOME/$_nv_orn"
+        nv o- <"$envy_home/env/$_nv_orn"
     done
     ;;
 
@@ -415,14 +415,14 @@ e8f533c7-482c-49e9-940f-1764f9e214ed
     ! _nv_name=$(nv n) && return 1
     case $_nv_name in */) echo "save: $_nv_name: Must provide an environment name" 1>&2 && return 1 ;; esac
 
-    mkdir -p -- "$ENVY_HOME/$(nv d)"
-    nv x >"$ENVY_HOME/$_nv_name"
+    mkdir -p -- "$envy_home/env/$(nv d)"
+    nv x >"$envy_home/env/$_nv_name"
     nv e
     ;;
 
   which-- | w--)
     shift && for __; do
-      __="$ENVY_HOME/$(nv rn-- "$__")" && [ -f "$__" ] && printf %s\\n "$__"
+      __="$envy_home/env/$(nv rn-- "$__")" && [ -f "$__" ] && printf %s\\n "$__"
     done | grep .
     ;;
 
@@ -438,18 +438,18 @@ e8f533c7-482c-49e9-940f-1764f9e214ed
     ;;
   profile-open--)
     shift && [ "$1" ] && nv rt-- "$1" &&
-      nv o-- $(cat -- "$ENVY_PROFILE_HOME/$1") && envy_profile="$1"
+      nv o-- $(cat -- "$envy_home/profile/$1") && envy_profile="$1"
     ;;
   profile-save--)
     shift && [ "$1" ] && nv rt-- "$1" &&
-      nv na >"$ENVY_PROFILE_HOME/$1" && envy_profile="$1" &&
+      nv na >"$envy_home/profile/$1" && envy_profile="$1" &&
       nv na
     ;;
   profile-find--)
     shift && for __; do
-      find "$ENVY_PROFILE_HOME" -type f -path "$ENVY_PROFILE_HOME/$__" | sort |
+      find "$envy_home/profile" -type f -path "$envy_home/profile/$__" | sort |
         while IFS= read -r file; do
-          printf %s\\n "${file#$ENVY_PROFILE_HOME/}"
+          printf %s\\n "${file#$envy_home/profile/}"
         done | grep .
     done
     ;;
@@ -710,53 +710,53 @@ ___
 # Initailize envy
 #
 
-readonly ENVY_HOME="${ENVY_HOME-$HOME/.config/envy/env}"
-[ -f "$ENVY_HOME/.nvrc" ] &&
-  # load extension to shell environment
-  exec 3<"$ENVY_HOME/.nvrc" &&
-  while IFS= read -r _nv_line || [ "$_nv_line" ]; do
-    case $_nv_line in
-    '' | \#*) continue ;;
-    envy_* | _nv*) echo "nvrc: $_nv_line: Ignoring internal envy environment variable" 1>&2 ;;
-    *=*)
-      _nv_name="${_nv_line%%=*}" _nv_value="${_nv_line#*=}"
-      ;;
-    *\<\<*)
-      unset _nv_value
-      _nv_name=${_nv_line%%<<*} _nv_delim=${_nv_line#*<<}
-      while IFS= read -r _nv_line || [ "$_nv_line" ]; do
-        [ "$_nv_line" = "$_nv_delim" ] && break
-        _nv_value="${_nv_value+$_nv_value
+if readonly envy_home="${ENVY_HOME-$HOME/.config/envy}" 2>/dev/null; then
+  [ -f "$envy_home/.nvrc" ] &&
+    # load extension to shell environment
+    exec 3<"$envy_home/.nvrc" &&
+    while IFS= read -r _nv_line || [ "$_nv_line" ]; do
+      case $_nv_line in
+      '' | \#*) continue ;;
+      envy_* | _nv*) echo "nvrc: $_nv_line: Ignoring internal envy environment variable" 1>&2 ;;
+      *=*)
+        _nv_name="${_nv_line%%=*}" _nv_value="${_nv_line#*=}"
+        ;;
+      *\<\<*)
+        unset _nv_value
+        _nv_name=${_nv_line%%<<*} _nv_delim=${_nv_line#*<<}
+        while IFS= read -r _nv_line || [ "$_nv_line" ]; do
+          [ "$_nv_line" = "$_nv_delim" ] && break
+          _nv_value="${_nv_value+$_nv_value
 }$_nv_line"
-      done <&3
-      ;;
-    *) echo "nvrc: $_nv_line: Ignoring invalid nvrc statement" 1>&2 ;;
-    esac
+        done <&3
+        ;;
+      *) echo "nvrc: $_nv_line: Ignoring invalid nvrc statement" 1>&2 ;;
+      esac
 
-    # export and process within here-doc for expansions
-    export -- "$_nv_name=$(
-      eval 'cat <<ff483722-a9e5-4438-8b00-28ae9f416136
+      # export and process within here-doc for expansions
+      export -- "$_nv_name=$(
+        eval 'cat <<ff483722-a9e5-4438-8b00-28ae9f416136
 '"$_nv_value"'
 ff483722-a9e5-4438-8b00-28ae9f416136'
-    )"
-  done <&3
+      )"
+    done <&3
 
-# ENVY_SHELL, ENVY_PROFILE could be set in .nvrc
-readonly envy_shell="${ENVY_SHELL-COLOR|COMMAND_|EDITOR$|ENVY_|HOSTNAME$|HOSTTYPE$|HOME$|LANG$|LaunchInstanceID$|LOGNAME$|ITERM_|LC_|NAME$|OLDPWD$|PATH$|PWD$|SECURITYSESSIONID$|SHELL$|SHLVL$|SSH_|TERM$|TERM_|TMPDIR$|VSCODE_|USER|VISUAL$|WSLENV$|WSL_|XDG_|XPC_|_$|__${ENVY_SHELL_EXTRA:+|$ENVY_SHELL_EXTRA}}"
-envy_profile="${ENVY_PROFILE-nv}"
+  # ENVY_SHELL, ENVY_PROFILE could be set in .nvrc
+  readonly envy_shell="${ENVY_SHELL-COLOR|COMMAND_|EDITOR$|ENVY_|HOSTNAME$|HOSTTYPE$|HOME$|LANG$|LaunchInstanceID$|LC_|LOGNAME$|LS_|ITERM_|NAME$|OLDPWD$|PATH$|PWD$|SECURITYSESSIONID$|SHELL$|SHLVL$|SSH_|TERM$|TERM_|TMPDIR$|VSCODE_|USER|VISUAL$|WSLENV$|WSL_|XDG_|XPC_|_$|__${ENVY_SHELL_EXTRA:+|$ENVY_SHELL_EXTRA}}"
 
-readonly ENVY_PROFILE_HOME="${ENVY_PROFILE_HOME-$HOME/.config/envy/profile}"
-if [ -f "$ENVY_PROFILE_HOME/$envy_profile" ]; then
-  nv profile-open-- "$envy_profile"
-elif [ -f "$ENVY_HOME/nv/default" ]; then
-  nv o-- nv/default
-else
-  nv work-- nv/default
+  envy_profile="${ENVY_PROFILE-nv}"
+  if [ -f "$envy_home/profile/$envy_profile" ]; then
+    nv profile-open-- "$envy_profile"
+  elif [ -f "$envy_home/env/nv/default" ]; then
+    nv o-- nv/default
+  else
+    nv work-- nv/default
+  fi
+
+  # ensure directories
+  mkdir -p -- "$envy_home/env/nv"
+  mkdir -p -- "$envy_home/profile"
 fi
-
-# ensure directories
-mkdir -p -- "$ENVY_HOME/nv"
-mkdir -p -- "$ENVY_PROFILE_HOME"
 
 #
 # must source to use nv: . envy.sh | source envy.sh

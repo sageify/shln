@@ -90,9 +90,9 @@ By default, the files are imported to ~/.shmod directory.  To specific a folder,
 ## Todo
 - pull test/shert.sh into own github
 - modify test scripts and use shmod to pull in the unit testing
-- pull envy into own.
 - pull expansion into own.
 - clone_opts in shmod.sh is hacky
+- shomd -> shmd
 
 ## References
 http://www.etalabs.net/sh_tricks.html

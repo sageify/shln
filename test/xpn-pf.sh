@@ -3,7 +3,7 @@
 . ./shert.sh
 
 
-shert_stdout './pf -b "Hello World"' '[Hello World]'
+shert_equals './pf -b "Hello World"' '[Hello World]'
 assert_equals '[Hello World]' "$(./pf -b -w)"
 assert_equals '[Hello World]' "$(./pf -bw)"
 assert_equals '[Hello][World]' "$(./pf -bs)"

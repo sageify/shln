@@ -11,10 +11,10 @@ shert_fail() {
   printf "assert err: %s: found: 0\n" "$1"
 }
 
-shert_stdout() {
+shert_equals() {
   eval '__="$('"$1"')"'
   [ "$2" = "$__" ] && return 0
-  printf "assert stdout: %s > %s: found: %s\n" "$1" "$2" "$__"
+  printf "assert stdout: %s: %s: found: %s\n" "$1" "$2" "$__"
   return 1
 }
 
@@ -25,14 +25,14 @@ shert_stderr() {
   return 1
 }
 
-shert_stdout_empty() {
+shert_empty() {
   eval '__="$('"$1"')"'
   ! [ "$__" ] && return 0
   printf "assert stdout empty: %s: found: %s\n" "$1" "$__"
   return 1
 }
 
-shert_stdout_not_empty() {
+shert_not_empty() {
   eval '__="$('"$1"')"'
   [ "$__" ] && return 0
   printf "assert stdout not empty: %s: empty\n" "$1"

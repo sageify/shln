@@ -1,44 +1,41 @@
 #!/bin/sh
-set -e
 
-if ! command -v git >/dev/null; then
-  echo "Error: git is required to install shln." 1>&2
-  exit 1
-fi
-
-src="${GRM_HOME:-$HOME/src}/github.com/sageify/shln"
-lnkn="${LNKN_HOME:-$HOME/bin}"
-
-! mkdir -p -- "$src" &&
+! command -v git >/dev/null && echo "Error: git is required." 1>&2 &&
   exit 1
 
-if ! git clone -q --depth 1 https://github.com/sageify/shln.git "$src"; then
-  rm -r -- "$src" 2>/dev/null
+grm_home="${GRM_HOME:-$HOME/src}/github.com/sageify/shln"
+lnkn_home="${LNKN_HOME:-$HOME/bin}"
+
+! [ -d "$grm_home" ] && mkdir -p -- "$grm_home" &&
+  ! git clone -q --depth 1 https://github.com/sageify/shln.git "$grm_home" &&
   exit 1
-fi
 
-! mkdir -p -- "$lnkn" &&
+! mkdir -p -- "$lnkn_home" &&
   exit 1
 
-[ -f "$lnkn/lnkn" ] && rm -- "$lnkn/lnkn"
-ln -s -- "$src/lnkn.sh" "$lnkn/lnkn"
+[ -f "$lnkn_home/lnkn" ] && rm -- "$lnkn_home/lnkn"
+ln -s -- "$grm_home/lnkn.sh" "$lnkn_home/lnkn"
 
-[ -f "$lnkn/shmod" ] && rm -- "$lnkn/shmod"
-ln -s -- "$src/shmod.sh" "$lnkn/shmod"
+[ -f "$lnkn_home/shmod" ] && rm -- "$lnkn_home/shmod"
+ln -s -- "$grm_home/shmod.sh" "$lnkn_home/shmod"
 
-[ -f "$lnkn/grm" ] && rm -- "$lnkn/grm"
-ln -s -- "$src/grm.sh" "$lnkn/grm"
+[ -f "$lnkn_home/grm" ] && rm -- "$lnkn_home/grm"
+ln -s -- "$grm_home/grm.sh" "$lnkn_home/grm"
 
-[ -f "$lnkn/shrm" ] && rm -- "$lnkn/shrm"
-ln -s -- "$src/shrm.sh" "$lnkn/shrm"
+[ -f "$lnkn_home/shrm" ] && rm -- "$lnkn_home/shrm"
+ln -s -- "$grm_home/shrm.sh" "$lnkn_home/shrm"
 
-[ -f "$lnkn/nv" ] && rm -- "$lnkn/nv"
-ln -s -- "$src/nv.sh" "$lnkn/nvrc"
+[ -f "$lnkn_home/envy" ] && rm -- "$lnkn_home/envy"
+ln -s -- "$grm_home/envy.sh" "$lnkn_home/envy"
 
-echo "Linkin (lnkn), Groom (grm), Shmod (shmod), and Shroom (shrm) installed"
-if command -v lnkn >/dev/null; then
+! [ -f "$HOME/.config/envy/.nvrc" ] && mkdir -p -- "$HOME/.config/envy" &&
+  cat >"$HOME/.config/envy/.nvrc" <<'e0d16edb-6a1d-427a-893f-2693fa30e4a2'
+PATH=$HOME/bin:$PATH
+e0d16edb-6a1d-427a-893f-2693fa30e4a2
+
+echo "Linkin (lnkn), Envy (nv), Groom (grm), Shmod (shmd), and Shroom (shrm) installed"
+command -v lnkn >/dev/null &&
   exit 0
-fi
 
 case $SHELL in
 /bin/zsh)
@@ -49,5 +46,5 @@ case $SHELL in
   ;;
 esac
 
-echo "Manually add the link directory to your \$HOME/$shell_profile (or similar):"
-echo "  export PATH=\"$lnkn:\$PATH\""
+echo "Manually add sourcing of envy to your \$HOME/$shell_profile (or similar):"
+echo ". ./bin/envy"

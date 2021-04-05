@@ -10,3 +10,9 @@ For example, upon first creation,
 lnkn grm helloworld.sh
 
 ```
+
+
+## Todo
+
+- Add edit/code for target file
+- lnkn -l by default

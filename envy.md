@@ -11,28 +11,25 @@ In it's basic usage, it simply shows non-system environment variables:
 nv
 # CUSTOM=Hello World!
 # OTHER=One
-
-nv /CUSTOM
-# CUSTOM=Hello World!
-
-nv /OTH
-# OTHER=Hello World!
 ```
 
 To see just the shell variables:
 
 ```sh
 nv %
+# HOST=
 # PATH= ..
 ```
 
-Shell variables are selected by a grep pattern:
+Shell variables are selected by a grep pattern.  The shell pattern may be replaed by
+setting the ENVY_SHELL environment variable or extra patterns added using ENVY_SHELL_EXTRA:
+
 ```sh
 nv pattern -s
 # COLOR|COMMAND_|EDITOR$|ENVY_|HOSTNAME$|HOME$|LANG$ ...
 ```
 
-Add new variables
+Add new exported variables to environment
 
 ```sh
 nv SAY='Hello World!'
@@ -43,10 +40,9 @@ Save variables
 
 ```sh
 nv save
-# nv/default
+# nv/default..
 ```
 
-If terminal is closed, variables will be available in next terminal
 
 ## Environment Grep Patterns
 
@@ -66,50 +62,44 @@ nv %P
 
 ## Multiple Environment
 
-An environment has a name a grep pattern.
+By default, Envy attempts to load the nv/default environment file.  Multiple files may
+exist.
 
 ```sh
-# create a new working environment named hello for the pattern SAY$
-nv work hello SAY$  
-nv SAY='Hi There!'
+# create a new working environment named goodbye
+nv new goodbye
+
+# creates a clean slate
 nv
+
+# add some environment variables
+nv SAY='Goodbye World!'
+nv SAY_ES='Adiós Mundo!'
 nv save
+# nv/goodbye..
 
 # see full environemnt
 nv
+# SAY=Goodbye World!
 
-# managed environment
-nv env
-
-# show saved file
+# show saved environment file
 nv cat
+#
+#
 
-# close
-nv close
-
-# nothing to see
-nv open hello
-nv
-
+# replace with default
 nv open default
 nv
-
 
 ```
 
 ## Domains
 
-Domains provide a way to store mutually exclusive environment contexts.  Only one context may be loaded in the domain at the one same time.
-
-Domains are established by creating a context directory.
+Domains are mutually exclusive environments.  Only one environment file may be opened in a domain at one time.
 
 For example, only one git configuration should be available at one time.
 
 ```sh
-nv new nv/hello SAY
-nv SAY='Hello World!'
-nv save
-
 nv new git/john GIT_
 nv GIT_COMMITTER_NAME='John Doe'
 nv GIT_COMMITTER_EMAIL='john@example.com'
@@ -142,7 +132,7 @@ nv
 # to replace the GIT domain with john:
 
 nv open git/john
-nv
+nv .
 ```
 
 ## Grep
