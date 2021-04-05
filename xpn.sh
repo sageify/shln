@@ -1,4 +1,4 @@
-#!/bin/sh --posix
+#!/bin/sh
 
 # returns 0 if expanded (word assigned), 1 otherwise (a directive on a native command, native with no entry in .xpn)
 xpn_word() {

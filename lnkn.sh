@@ -1,4 +1,4 @@
-#!/bin/sh --posix
+#!/bin/sh
 
 lnkn_install() {
   # if more than one script, don't link

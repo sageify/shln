@@ -10,12 +10,12 @@ In it's basic usage, it simply shows non-system environment variables:
 ```sh
 nv
 # CUSTOM=Hello World!
-# OTHER=ONe
+# OTHER=One
 
-nv .CUSTOM
+nv /CUSTOM
 # CUSTOM=Hello World!
 
-nv .OTH
+nv /OTH
 # OTHER=Hello World!
 ```
 
@@ -24,16 +24,12 @@ To see just the shell variables:
 ```sh
 nv %
 # PATH= ..
-
-nv pattern -s
-# COLOR|COMMAND_|EDITOR$|ENVY_|HOSTNAME$|HOME$|LANG$ ...
 ```
 
-Prevents exporting of shell variables
-
+Shell variables are selected by a grep pattern:
 ```sh
-nv PATH=
-# nv: export: PATH: bad or excluded variable name
+nv pattern -s
+# COLOR|COMMAND_|EDITOR$|ENVY_|HOSTNAME$|HOME$|LANG$ ...
 ```
 
 Add new variables
@@ -57,7 +53,7 @@ If terminal is closed, variables will be available in next terminal
 Envy allows grepping of environment variables by name:
 
 ```sh
-nv .S
+nv /S
 # SAY='Hello World!'
 ```
 
@@ -68,19 +64,14 @@ nv %P
 # PATH=...
 ```
 
+## Multiple Environment
 
-## Multiple Environment Domains
-
-A domain has a name a grep pattern.  A domain is created as follows:
+An environment has a name a grep pattern.
 
 ```sh
-# get fresh environment
-nv close -a
-nv unset -a $(nv grep)
-
 # create a new working environment named hello for the pattern SAY$
 nv work hello SAY$  
-nv SAY='Hello World!'
+nv SAY='Hi There!'
 nv
 nv save
 
@@ -88,7 +79,7 @@ nv save
 nv
 
 # managed environment
-nv ?
+nv env
 
 # show saved file
 nv cat
@@ -97,16 +88,18 @@ nv cat
 nv close
 
 # nothing to see
+nv open hello
 nv
 
-# reopen working domain 
-nv open
+nv open default
 nv
+
+
 ```
 
 ## Domains
 
-Domains provide a way to store mutually exclusive environment contexts.  In other words, only one context may be loaded in the domain at the one same time.
+Domains provide a way to store mutually exclusive environment contexts.  Only one context may be loaded in the domain at the one same time.
 
 Domains are established by creating a context directory.
 
@@ -175,19 +168,29 @@ git/john?GIT
 
 ## Install
 
+Envy is a shell function that should be sourced into the current shell.  To install, adjust .bash_profile, .zshenv, etc.
+
 ```sh
-. ./nv.sh
-typeset -f
+. ./envy.sh
 ```
 
+By default, envy.sh looks in .config/envy for configuration files.  The .config/envy/env/.nvrc file, if exists, will load enviornment variables.
 
-## Todo
+To edit
 
-### 
-- Ability to show all environment variables not being managed by an nv environment.  For example, if git environment only one loaded, show any other unmanaged. 
+```sh
+nv nano @@/.nvrc
+``
 
-### Menu
-- menu for envionrment value changing (menu set) - use nv edit
+Or create
+
+```sh
+cat > $(nv home)/.nvrc <<EOF
+VISUAL=code
+EOF
+```
+
+## Environment Files
 
 ### Multi-Line
 
@@ -200,33 +203,29 @@ to variable
 eof
 ```
 
+
+## Todo
+
+### 
+- Ability to show all environment variables not being managed by an nv environment.  For example, if git environment only one loaded, show any other unmanaged. 
+
+### Menu
+- menu for envionrment value changing (menu set) - use nv edit
+
+### edit
+- nv edit should behave like nv nano.  
+
 ## Developer Notes
 
 Follow behavior of native printenv, env, export, and unset commands.
 Follow behavior of busybox for return codes and error output.
 
-### Export
-
-The export -p command prints export statements in a platform specific format.  Same is true for nv.
-The export -n removes export flag.
-
-
-## Todo
-
-- nv % | nv -
-
-- .       |          |       .GIT | working
-- /       |          |       /GIT | all working
-- %       |          |       %GIT | shell
-- git.    |          |    git.GIT | named working
-- git/n.  |          |  git/n.GIT | file
-- @       |          |       @GIT | file for working
 
 ## Advanced
 
 ```sh
 # unset all nv variables
-nv unset -a $(nv grep)
+unset -v $(nv grep)
 ```
 
 

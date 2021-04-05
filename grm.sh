@@ -1,4 +1,5 @@
-#!/bin/sh --posix
+#!/bin/sh
+
 g() {
   case $1 in
   '') grm_find_pretty ;;

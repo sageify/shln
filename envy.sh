@@ -57,24 +57,24 @@ nv() {
         _nv_grep="${param#*.}"
 
         exec 3<"$ENVY_HOME/${param%%.*}"
-        while read -r || [ "$REPLY" ]; do
-          case $REPLY in
+        while IFS= read -r _nv_line || [ "$_nv_line" ]; do
+          case $_nv_line in
           \#* | '') continue ;;
           *=*)
-            ! nv vnt-- "${REPLY%%=*}" "$_nv_grep" &&
+            ! nv vnt-- "${_nv_line%%=*}" "$_nv_grep" &&
               continue
-            set -- "$@" "$REPLY"
+            set -- "$@" "$_nv_line"
             ;;
           *\<\<*)
-            _nv_name=${REPLY%%<<*}
+            _nv_name=${_nv_line%%<<*}
             ! nv vnt-- "$_nv_name" "$_nv_grep" &&
               continue
-            _nv_delim=${REPLY#*<<}
+            _nv_delim=${_nv_line#*<<}
             unset -v _nv_value
-            while read -r || [ "$REPLY" ]; do
-              [ "$REPLY" = "$_nv_delim" ] && break
+            while IFS= read -r _nv_line || [ "$_nv_line" ]; do
+              [ "$_nv_line" = "$_nv_delim" ] && break
               _nv_value="${_nv_value+$_nv_value
-}$REPLY"
+}$_nv_line"
             done <&3
 
             set -- "$@" "$_nv_name=$_nv_value"
@@ -101,13 +101,20 @@ nv() {
     fi
     ;;
 
-  cat | cd | cp | diff | ls | mkdir | mv | nano | rm)
+  cat | cd | cp | diff | edit | ls | mkdir | mv | nano | rm)
     # Build generic external command with name expansion
     _nv_first=0 _nv_no_input=0 _nv_no_args=0
     for param; do
       if [ "$_nv_first" ]; then
         unset -v _nv_first
-        set -- "$param"
+        if [ "$param" = edit ]; then
+          ! [ "$VISUAL" ] &&
+            echo "nv: Editor not specified in VISUAL environment variable" 1>&2 &&
+            return 1
+          set -- "$VISUAL"
+        else
+          set -- "$param"
+        fi
         continue
       fi
 
@@ -115,7 +122,7 @@ nv() {
       -) set -- "$@" - && unset -v _nv_no_input && continue ;;
       -*) set -- "$@" "$param" && continue ;;
       @) param=$(nv n) ;;
-      @@) param="$ENVY_HOME/" ;;
+      @@*) param="$ENVY_HOME${param#@@}" ;;
       esac
 
       unset -v _nv_no_args
@@ -129,7 +136,7 @@ nv() {
 
     [ "$_nv_no_args" ] &&
       case $1 in
-      cat | nano) set -- "$@" "$ENVY_HOME/$(nv n)" ;;
+      cat | nano | "$VISUAL") set -- "$@" "$ENVY_HOME/$(nv n)" ;;
       diff)
         unset -v _nv_no_input
         set -- "$@" - "$ENVY_HOME/$(nv n)"
@@ -149,14 +156,13 @@ nv() {
   # Builtin commands and no argument defaults or actions
   close | close-a | \
     domain | d | domain-a | da | \
-    env | e | env-a | env-n | env-p | env-u | \
+    env | e | env-a | ea | env-n | env-p | env-u | \
     export | x | exclude | \
     name | n | name-a | na | \
     open | o | \
     pattern | p | pattern-a | pa | pattern-s | ps | \
     unset | unset-a | unset-d | \
     switch | s | \
-    edit | \
     find | f | find-a | fa | \
     profile-home | profile-open | profile-save | \
     grep | grep-a | grep-s | \
@@ -185,7 +191,7 @@ nv() {
         ;;
 
       env | e) nv e-- $(nv d) ;;
-      env-a) nv e-- $(nv da) ;;
+      env-a | ea) nv e-- $(nv da) ;;
 
       export | x)
         echo "ENVY_PATTERN=$(nv p)"
@@ -194,8 +200,8 @@ nv() {
             printf '%s=%s\n' "$_nv_name" "$(printenv -- "$_nv_name")"
           else
             printf "%s<<---.,__,.---\\n" "$_nv_name"
-            printf %s "$(printenv -- "$_nv_name")" | while read -r || [ "$REPLY" ]; do
-              printf '%s\n' "$REPLY"
+            printf %s "$(printenv -- "$_nv_name")" | while IFS= read -r _nv_line || [ "$_nv_line" ]; do
+              printf '%s\n' "$_nv_line"
             done
             printf '%s\n' "---.,__,.---"
           fi
@@ -258,18 +264,18 @@ nv() {
     done | grep .
     ;;
   env-n-- | en--)
-    shift && nv e-- "$@" | while read -r; do
-      nv rn-- "${REPLY%%.*}"
+    shift && nv e-- "$@" | while IFS= read -r _nv_line; do
+      nv rn-- "${_nv_line%%.*}"
     done | grep .
     ;;
   env-p-- | ep--)
-    shift && nv e-- "$@" | while read -r; do
-      printf %s\\n "${REPLY#*.}"
+    shift && nv e-- "$@" | while IFS= read -r _nv_line; do
+      printf %s\\n "${_nv_line#*.}"
     done | grep .
     ;;
   env-u-- | eu--)
-    shift && __=$(nv ep-- "$@") && while read -r; do
-      unset -v -- $(nv g-- "$REPLY")
+    shift && __=$(nv ep-- "$@") && while IFS= read -r _nv_line; do
+      unset -v -- $(nv g-- "$_nv_line")
     done <<e8f533c7-482c-49e9-940f-1764f9e214ed
 $__
 e8f533c7-482c-49e9-940f-1764f9e214ed
@@ -358,35 +364,19 @@ e8f533c7-482c-49e9-940f-1764f9e214ed
   # Environment File Commands
   #
 
-  edit--)
-    ! [ "$VISUAL" ] && echo "nv: Editor not specified in VISUAL environment variable" 1>&2 && return 1
-    ! command -v -- "$VISUAL" >/dev/null &&
-      echo "edit: $VISUAL: Editor not found" 1>&2 &&
-      return 1
-
-    shift
-    if [ "$1" ]; then
-      for __; do
-        "$VISUAL" "$(nv w-- "$__")"
-      done
-    else
-      "$VISUAL" "$ENVY_HOME"
-    fi
-    ;;
-
   find-- | f--)
     shift && for __; do
       find "$ENVY_HOME" -mindepth 2 -maxdepth 2 -type f -path "$ENVY_HOME/$(nv d)/$__" |
-        while read -r; do
-          printf %s\\n "${REPLY#$ENVY_HOME/}"
+        while IFS= read -r _nv_line; do
+          printf %s\\n "${_nv_line#$ENVY_HOME/}"
         done
     done | grep .
     ;;
   find-a-- | fa--)
     shift && for __; do
       find "$ENVY_HOME" -mindepth 2 -maxdepth 2 -type f -path "$ENVY_HOME/$__" |
-        while read -r; do
-          printf %s\\n "${REPLY#$ENVY_HOME/}"
+        while IFS= read -r _nv_line; do
+          printf %s\\n "${_nv_line#$ENVY_HOME/}"
         done
     done | grep .
     ;;
@@ -399,23 +389,23 @@ e8f533c7-482c-49e9-940f-1764f9e214ed
 
   open- | o-)
     # export variables from input stream
-    while read -r || [ "$REPLY" ]; do
-      case $REPLY in
+    while IFS= read -r _nv_line || [ "$_nv_line" ]; do
+      case $_nv_line in
       \#* | '') continue ;;
-      envy_* | _nv*) echo "nvrc: $REPLY: Ignoring internal envy environment variable" 1>&2 ;;
-      ENVY_PATTERN=*) nv p-- "${REPLY#*=}" && nv u-- $(nv g-- "$(nv p)") ;;
-      *=*) nv x-- "$REPLY" ;;
+      envy_* | _nv*) echo "nvrc: $_nv_line: Ignoring internal envy environment variable" 1>&2 ;;
+      ENVY_PATTERN=*) nv p-- "${_nv_line#*=}" && nv u-- $(nv g-- "$(nv p)") ;;
+      *=*) nv x-- "$_nv_line" ;;
       *\<\<*)
         unset _nv_value
-        _nv_name=${REPLY%%<<*} _nv_delim=${REPLY#*<<}
-        while read -r || [ "$REPLY" ]; do
-          [ "$REPLY" = "$_nv_delim" ] && break
+        _nv_name=${_nv_line%%<<*} _nv_delim=${_nv_line#*<<}
+        while IFS= read -r _nv_line || [ "$_nv_line" ]; do
+          [ "$_nv_line" = "$_nv_delim" ] && break
           _nv_value="${_nv_value+$_nv_value
-}$REPLY"
+}$_nv_line"
         done <&0
         nv x-- "$_nv_name=$_nv_value"
         ;;
-      *) echo "nv: open: $REPLY: line ignored" 1>&2 ;;
+      *) echo "nv: open: $_nv_line: line ignored" 1>&2 ;;
       esac
     done <&0
     ;;
@@ -426,6 +416,7 @@ e8f533c7-482c-49e9-940f-1764f9e214ed
 
     mkdir -p -- "$ENVY_HOME/$(nv d)"
     nv x >"$ENVY_HOME/$_nv_name"
+    nv e
     ;;
 
   which-- | w--)
@@ -456,7 +447,7 @@ e8f533c7-482c-49e9-940f-1764f9e214ed
   profile-find--)
     shift && for __; do
       find "$ENVY_PROFILE_HOME" -type f -path "$ENVY_PROFILE_HOME/$__" | sort |
-        while read -r file; do
+        while IFS= read -r file; do
           printf %s\\n "${file#$ENVY_PROFILE_HOME/}"
         done | grep .
     done
@@ -471,8 +462,9 @@ e8f533c7-482c-49e9-940f-1764f9e214ed
   grep-s-- | gs--) shift && nv ga-- "$@" | grep -E -e "^($envy_shell)" ;;
 
   grep-a-- | ga--) shift &&
-    printf '%s\n' "$@" | while read -r; do
-      awk 'BEGIN{for(v in ENVIRON) print v}' | grep -E -e "^($REPLY)"
+    printf '%s\n' "$@" | while read -r _nv_line; do
+      awk 'BEGIN{for(v in ENVIRON) print v}' | grep -vE -e 'AWKLIBPATH$|AWKPATH$' |
+      grep -E -e "^($_nv_line)"
     done | sort | uniq | grep . ;;
 
   version) echo "envy version 0.7.1" ;;
@@ -624,11 +616,10 @@ ___
   help-name | help-n | name-h | n-h) echo "usage: name -afh" ;;
   help-open | open-h)
     cat <<'___'
-usage:  nv open [NAME]...
+usage:  nv open NAME...
 
-Open an environment from a file unsetting any previous environment variables for the name's domain.  
-
-If NAME is omitted, then the working environment is unset and reloaded.
+Open an environment.  Previous environment variables that match the newly
+opened environment pattern are unset.
 ___
     ;;
   help-pattern | help-p | pattern-h | p-h) echo "usage: name -achu" ;;
@@ -723,23 +714,23 @@ readonly ENVY_HOME="${ENVY_HOME-$HOME/.config/envy/env}"
 [ -f "$ENVY_HOME/.nvrc" ] &&
   # load extension to shell environment
   exec 3<"$ENVY_HOME/.nvrc" &&
-  while read -r || [ "$REPLY" ]; do
-    case $REPLY in
+  while IFS= read -r _nv_line || [ "$_nv_line" ]; do
+    case $_nv_line in
     '' | \#*) continue ;;
-    envy_* | _nv*) echo "nvrc: $REPLY: Ignoring internal envy environment variable" 1>&2 ;;
+    envy_* | _nv*) echo "nvrc: $_nv_line: Ignoring internal envy environment variable" 1>&2 ;;
     *=*)
-      _nv_name="${REPLY%%=*}" _nv_value="${REPLY#*=}"
+      _nv_name="${_nv_line%%=*}" _nv_value="${_nv_line#*=}"
       ;;
     *\<\<*)
       unset _nv_value
-      _nv_name=${REPLY%%<<*} _nv_delim=${REPLY#*<<}
-      while read -r || [ "$REPLY" ]; do
-        [ "$REPLY" = "$_nv_delim" ] && break
+      _nv_name=${_nv_line%%<<*} _nv_delim=${_nv_line#*<<}
+      while IFS= read -r _nv_line || [ "$_nv_line" ]; do
+        [ "$_nv_line" = "$_nv_delim" ] && break
         _nv_value="${_nv_value+$_nv_value
-}$REPLY"
+}$_nv_line"
       done <&3
       ;;
-    *) echo "nvrc: $REPLY: Ignoring invalid nvrc statement" 1>&2 ;;
+    *) echo "nvrc: $_nv_line: Ignoring invalid nvrc statement" 1>&2 ;;
     esac
 
     # export and process within here-doc for expansions
@@ -751,7 +742,7 @@ ff483722-a9e5-4438-8b00-28ae9f416136'
   done <&3
 
 # ENVY_SHELL, ENVY_PROFILE could be set in .nvrc
-readonly envy_shell="${ENVY_SHELL-COLOR|COMMAND_|EDITOR$|ENVY_|HOSTNAME$|HOME$|LANG$|LaunchInstanceID$|LOGNAME$|ITERM_|LC_|OLDPWD$|PATH$|PWD$|SECURITYSESSIONID$|SHELL$|SHLVL$|SSH_|TERM$|TERM_|TMPDIR$|VSCODE_|USER|VISUAL$|XPC_|_$|__${ENVY_SHELL_APPEND:+|$ENVY_SHELL_APPEND}}"
+readonly envy_shell="${ENVY_SHELL-COLOR|COMMAND_|EDITOR$|ENVY_|HOSTNAME$|HOSTTYPE$|HOME$|LANG$|LaunchInstanceID$|LOGNAME$|ITERM_|LC_|NAME$|OLDPWD$|PATH$|PWD$|SECURITYSESSIONID$|SHELL$|SHLVL$|SSH_|TERM$|TERM_|TMPDIR$|VSCODE_|USER|VISUAL$|WSLENV$|WSL_|XDG_|XPC_|_$|__${ENVY_SHELL_EXTRA:+|$ENVY_SHELL_EXTRA}}"
 envy_profile="${ENVY_PROFILE-nv}"
 
 readonly ENVY_PROFILE_HOME="${ENVY_PROFILE_HOME-$HOME/.config/envy/profile}"
@@ -764,7 +755,7 @@ else
 fi
 
 # ensure directories
-mkdir -p -- "$ENVY_HOME"
+mkdir -p -- "$ENVY_HOME/nv"
 mkdir -p -- "$ENVY_PROFILE_HOME"
 
 #

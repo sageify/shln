@@ -1,9 +1,9 @@
 #!/bin/sh
 
-. shert.sh
+. ./shert.sh
 
 
-assert_equals '[Hello World]' "$(./pf -b "Hello World")"
+shert_stdout './pf -b "Hello World"' '[Hello World]'
 assert_equals '[Hello World]' "$(./pf -b -w)"
 assert_equals '[Hello World]' "$(./pf -bw)"
 assert_equals '[Hello][World]' "$(./pf -bs)"

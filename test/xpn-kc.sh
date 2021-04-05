@@ -1,9 +1,10 @@
 #!/bin/sh
 
-. shert.sh
+. ./shert.sh
 
 ## cheat sheet - https://kubernetes.io/docs/reference/kubectl/cheatsheet/
-assert_equals "'kubectl' 'config' 'view'" "$(xdr='' ./kc co v)"
+
+shert_stdout 'xdr='' ./kc co v' "'kubectl' 'config' 'view'"
 
 assert_equals "'kubectl' 'config' 'view' '"'-o=jsonpath={.users[?(@.name == "e2e")].user.password}'"'" \
   "$(xdr='' ./kc co v --ojp '{.users[?(@.name == "e2e")].user.password}')"
@@ -59,7 +60,6 @@ assert_equals "'kubectl' 'describe' 'po' 'my-node'" \
 # List Services Sorted by Name
 assert_equals "'kubectl' 'get' 'svc' '--sort-by=.metadata.name' '-o=yaml'" \
   "$(xdr='' ./kc gs -sy)"
-
 
 assert_equals "'kubectl' 'get' 'po' '--field-selector=status.phase=Running'" \
   "$(xdr='' ./kc gp --fs status.phase=Running)"

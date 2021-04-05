@@ -1,10 +1,10 @@
 #!/bin/sh
 
-. shert.sh
+. ./shert.sh
 
 export ENVY_HOME=.config/env
 export ENVY_PROFILE_HOME=.config/profile
-. envy
+. ../envy.sh
 
 shert_stdout 'nv home' .config/env
 shert_stdout 'nv profile-home' .config/profile
@@ -28,7 +28,7 @@ shert_stdout_not_empty 'nv /'
 # save default without any pattern
 shert_success 'nv save'
 
-shert_stdout_not_empty 'nv @HW'
+shert_stdout_not_empty 'nv @HELLO'
 shert_success 'rm .config/env/nv/default'
 
 shert_success 'nv close -a'
@@ -36,6 +36,8 @@ shert_stdout_empty 'nv .'
 
 # unset all environment variables (non shell)
 unset -v $(nv grep)
+
+nv .
 
 assert_empty "$(nv .)"
 
