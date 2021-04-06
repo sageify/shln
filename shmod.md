@@ -7,7 +7,7 @@ Shmod imports (sources) shell scripts into the current script from a git reposit
 ```sh
 #!/bin/sh
 
-. shmod
+. shmd
 import github.com/dockcmd/sh@v0.0.4 docker.sh
 
 ```

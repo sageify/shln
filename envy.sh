@@ -122,7 +122,7 @@ nv() {
       -) set -- "$@" - && unset -v _nv_no_input && continue ;;
       -*) set -- "$@" "$param" && continue ;;
       @) param=$(nv n) ;;
-      @@*) param="$envy_home/env${param#@@}" ;;
+      @@*) param="$envy_home${param#@@}" ;;
       esac
 
       unset -v _nv_no_args
@@ -164,7 +164,7 @@ nv() {
     unset | unset-a | unset-d | \
     switch | s | \
     find | f | find-a | fa | \
-    profile-home | profile-open | profile-save | \
+    profile-open | profile-save | \
     grep | grep-a | grep-s | \
     home | \
     new | \
@@ -224,13 +224,12 @@ nv() {
       find-a | fa) nv fa-- "*" ;;
 
       profile-find) nv profile-find-- "*" ;;
-      profile-home) printf %s\\n "$envy_home/profile" ;;
       profile-open) nv profile-open-- "$envy_profile" ;;
       profile-save) nv profile-save-- "$envy_profile" ;;
 
       # Other Commands
 
-      home) printf %s\\n "$envy_home/env" ;;
+      home) printf %s\\n "$envy_home" ;;
 
       which | w) nv w-- "$(nv n)" ;;
 
@@ -529,7 +528,6 @@ cat | cd | cp | diff | ls | mkdir | mv | rm
 
 Profile File Commands
  profile-find  Find a profile file
- profile-home  Print home directory for profile files
  profile-open  Open profile environments 
  profile-save  Save or replace profile with environment names
 
@@ -643,7 +641,7 @@ eof
     cat <<'___'
 usage:  nv save
 
-Save the working environment.  This is a shortcut for nv export > $(nv home)/$(nv name)
+Save the working environment.  This is a shortcut for nv export > $(nv home)/env/$(nv name)
 ___
     ;;
   help-unset | unset-h)
@@ -670,7 +668,7 @@ ___
     cat <<'___'
 usage:  nv which [NAME...]
 
-Print the envy file location.  This is equivalent to $nv home/NAME.
+Print the envy file location.  This is equivalent to $(nv home)/envy/NAME.
 
 If no NAME provided, the file location of the working environment is provided.
 ___

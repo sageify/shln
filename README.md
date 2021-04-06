@@ -1,11 +1,12 @@
-# Linkin (lnkn)
+# Legss (Linkin, Envy, Groom, Shmod and Shroom)
 
-Linkin is a link manager primarily used with Groom to install git repositories and link to scripts within those repositories.
+Leggs consists of the following:
 
-Why?  
-- Manage links to shell scripts and programs in one place.
-- Links can be easily added or removed.
-- Install git repositories containing scripts and programs.
+- Linkin - Symbolic link manager.
+- Envy - Environment variable manager.
+- Groom - Git repository manager
+- Shmod - Shell script git modules
+- Shroom - Shell script git repository manager.
 
 ## Install
 
@@ -14,6 +15,22 @@ To install on Mac/Linux/WSL2:
 ```sh
 curl -fsSL https://raw.githubusercontent.com/sageify/shln/master/install.sh | sh
 ```
+
+Update shell to source envy.sh
+
+```
+#bashrc
+. ./bin/envy.sh
+```
+
+# Linkin (lnkn)
+
+Linkin is a symbolic link manager primarily used with Groom to install git repositories and create symbolic links to scripts within those repositories.
+
+Why?  
+- Manage links to shell scripts and programs in one place.
+- Links can be easily added or removed.
+- Easily install git repositories containing scripts and programs.
 
 ## Usage
 
@@ -80,7 +97,7 @@ aws --version
 #!/bin/sh
 
 . shmod
-import dockcmd/sh@v0.0.4 docker.sh
+import github.com/dockcmd/sh@v0.0.4 docker.sh
 
 ```
 
@@ -88,11 +105,8 @@ By default, the files are imported to ~/.shmod directory.  To specific a folder,
 
 
 ## Todo
-- pull test/shert.sh into own github
-- modify test scripts and use shmod to pull in the unit testing
 - pull expansion into own.
 - clone_opts in shmod.sh is hacky
-- shomd -> shmd
 
 ## References
 http://www.etalabs.net/sh_tricks.html
