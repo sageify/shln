@@ -33,10 +33,6 @@ ln -s -- "$grm_home/envy.sh" "$lnkn_home/envy"
 PATH=$HOME/bin:$PATH
 e0d16edb-6a1d-427a-893f-2693fa30e4a2
 
-echo "Linkin (lnkn), Envy (nv), Groom (grm), Shmod (shmd), and Shroom (shrm) installed"
-command -v lnkn >/dev/null &&
-  exit 0
-
 case $SHELL in
 /bin/zsh)
   shell_profile=".zshrc"
@@ -46,5 +42,6 @@ case $SHELL in
   ;;
 esac
 
+echo "Linkin (lnkn), Envy (nv), Groom (grm), Shmod (shmd), and Shroom (shrm) installed"
 echo "Manually add sourcing of envy to your \$HOME/$shell_profile (or similar):"
 echo ". ./bin/envy"
