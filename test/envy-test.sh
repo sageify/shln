@@ -1,12 +1,11 @@
 #!/bin/sh
-
-. ./shert.sh
+. shmod
+import github.com/sageify/shert@v0.0.1 shert.sh
 
 export ENVY_HOME=.config/envy
-. ../envy.sh
+. envy
 
-shert_equals 'nv home' .config/envy/env
-shert_equals 'nv profile-home' .config/envy/profile
+shert_equals 'nv home' .config/envy
 
 shert_equals 'nv printenv HELLO' 'literal: ", edge cases: \" \", evaluate: 2, no escape: \n \t, dollar: $, two trailing spaces:  '
 shert_equals 'nv printenv MULTI' 'one 
@@ -28,23 +27,22 @@ shert_not_empty 'nv /'
 shert_success 'nv save'
 
 shert_not_empty 'nv @HELLO'
-shert_success 'rm $(nv home)/nv/default'
+shert_success 'rm -- "$(nv home)/env/nv/default"'
 
 shert_success 'nv close -a'
 shert_empty 'nv .'
 shert_empty 'nv /'
 shert_not_empty 'nv %'
 
-# new hello
+# set working hello.SAY$
 shert_success 'nv work hello SAY$'
-
-assert_equals "nv/hello" "$(nv name)"
-assert_equals "SAY$" "$(nv pattern)"
+shert_equals 'nv name' "nv/hello"
+shert_equals 'nv pattern' "SAY$"
 
 nv export SAY='Hello World!'
-assert_equals 'Hello World!' "$(nv SAY)"
-assert_equals 'Hello World!' "$(printenv SAY)"
-assert_equals '' "$(nv ENVY_HOME)"
+shert_equals 'nv SAY' 'Hello World!'
+shert_equals 'printenv SAY' 'Hello World!'
+shert_empty 'nv ENVY_HOME'
 shert_equals 'nv .' 'SAY=Hello World!'
 shert_success 'nv save'
 
@@ -76,25 +74,25 @@ nv GIT_AUTHOR_EMAIL='jane@example.com'
 nv unset GIT_A
 shert_success 'nv save'
 
-assert_empty "$(nv printenv GIT_A)"
+shert_empty 'nv printenv GIT_A'
 shert_equals ' nv / | printenv SAY' 'Hello World!'
 
 # open john within git domain
 shert_success 'nv open john'
 shert_equals 'nv d' git
-shert_equals ' nv / | printenv SAY' 'Hello World!'
+shert_equals 'nv / | printenv SAY' 'Hello World!'
 
 shert_equals 'nv GIT_COMMITTER_NAME' "John Doe"
-assert_equals "one
-two" "$(nv GIT_A)"
+shert_equals 'nv GIT_A' "one
+two"
 
 shert_success 'nv domain nv'
-assert_equals "Hello World!" "$(nv SAY)"
+shert_equals 'nv SAY' "Hello World!"
 nv unset SAY
 
 shert_success 'nv work goodbye SAY'
 nv x SAY=Goodbye!
-assert_equals "Goodbye!" "$(nv SAY)"
+shert_equals 'nv SAY' "Goodbye!"
 shert_success 'nv save'
 
 shert_fail 'nv f--'

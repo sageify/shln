@@ -1,6 +1,6 @@
 #!/bin/sh
-
-. ./shert.sh
+. shmod
+import github.com/sageify/shert@v0.0.1 shert.sh
 
 ## cheat sheet - https://kubernetes.io/docs/reference/kubectl/cheatsheet/
 

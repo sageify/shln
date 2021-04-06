@@ -1,7 +1,6 @@
 #!/bin/sh
-
-. ./shert.sh
-
+. shmod
+import github.com/sageify/shert@v0.0.1 shert.sh
 
 shert_equals './pf -b "Hello World"' '[Hello World]'
 assert_equals '[Hello World]' "$(./pf -b -w)"
@@ -20,7 +19,7 @@ assert_equals '[edge][case]' "$(./pf -b "--dang")"
 assert_equals '[edge][case][edge][case]' "$(./pf -b --dang edge case)"
 assert_equals '[--dang edge case]' "$(./pf -b "--dang edge case")"
 
-assert_empty "$(./pf -b --dangcase 2>/dev/null)" 
+shert_empty './pf -b --dangcase 2>/dev/null'
 ./pf -b --dangcase 2>/dev/null && assert_fail "Missing argument"
 
 assert_equals '[edge][case=]' "$(./pf -b --dangcase "")"
