@@ -105,8 +105,9 @@ By default, the files are imported to ~/.shmod directory.  To specific a folder,
 
 
 ## Todo
-- pull expansion into own.
+- dockcmd/sh -- environment from nv, maybe nv= option?
 - clone_opts in shmod.sh is hacky
+
 
 ## References
 http://www.etalabs.net/sh_tricks.html
