@@ -7,15 +7,15 @@ export ENVY_HOME=.config/envy
 
 shert_equals 'nv home' .config/envy
 
-shert_equals 'nv printenv HELLO' 'literal: ", edge cases: \" \", evaluate: 2, no escape: \n \t, dollar: $, two trailing spaces:  '
-shert_equals 'nv printenv MULTI' 'one 
+shert_equals 'nv / printenv HELLO' 'literal: ", edge cases: \" \", evaluate: 2, no escape: \n \t, dollar: $, two trailing spaces:  '
+shert_equals 'nv / printenv MULTI' 'one 
 two '
 
 shert_equals 'nv pattern -s' 'COLOR|COMMAND_|ENVY_|HOSTNAME$|HOME$|LANG$|LaunchInstanceID$|LOGNAME$|ITERM_|LC_|OLDPWD$|PATH$|PWD$|SECURITYSESSIONID$|SHELL$|SHLVL$|SSH_|TERM$|TERM_|TMPDIR$|VISUAL$|VSCODE_|USER|XPC_|_$|__|APPLICATION_INSIGHTS_|ORIGINAL_XDG_'
 shert_equals 'nv profile' nv
 
 shert_equals 'nv da' nv
-shert_equals 'nv env' nv/default..
+shert_equals 'nv config' nv/default..
 shert_equals 'nv domain' nv
 shert_equals 'nv name' nv/default
 shert_equals 'nv pattern' .
@@ -51,12 +51,12 @@ shert_success 'nv save'
 shert_success 'nv work git/john GIT_'
 
 shert_equals 'nv name' git/john
-shert_fail 'nv SAY'
-shert_equals ' nv / | printenv SAY' 'Hello World!'
+shert_success 'nv SAY'
+shert_equals 'nv / printenv SAY' 'Hello World!'
 
 nv export GIT_COMMITTER_NAME='John Doe'
 nv x GIT_COMMITTER_EMAIL='john@example.com'
-nv GIT_AUTHOR_NAME='John Doe'
+export GIT_AUTHOR_NAME='John Doe'
 nv GIT_AUTHOR_EMAIL='john@example.com'
 nv GIT_A='one
 two'
@@ -71,16 +71,16 @@ nv GIT_COMMITTER_NAME='Jane Doe'
 nv GIT_COMMITTER_EMAIL='jane@example.com'
 nv GIT_AUTHOR_NAME='Jane Doe'
 nv GIT_AUTHOR_EMAIL='jane@example.com'
-nv unset GIT_A
+unset GIT_A
 shert_success 'nv save'
 
 shert_empty 'nv printenv GIT_A'
-shert_equals ' nv / | printenv SAY' 'Hello World!'
+shert_equals ' nv / printenv SAY' 'Hello World!'
 
 # open john within git domain
 shert_success 'nv open john'
 shert_equals 'nv d' git
-shert_equals 'nv / | printenv SAY' 'Hello World!'
+shert_equals 'nv / printenv SAY' 'Hello World!'
 
 shert_equals 'nv GIT_COMMITTER_NAME' "John Doe"
 shert_equals 'nv GIT_A' "one
@@ -88,7 +88,7 @@ two"
 
 shert_success 'nv domain nv'
 shert_equals 'nv SAY' "Hello World!"
-nv unset SAY
+unset SAY
 
 shert_success 'nv work goodbye SAY'
 nv x SAY=Goodbye!
@@ -99,3 +99,5 @@ shert_fail 'nv f--'
 shert_fail 'nv fa--'
 shert_fail 'nv rt-- 9'
 shert_stderr 'nv rt-- 9' 'name: 9: may not have a leading digit'
+
+shert_fail 'nv domain blah'

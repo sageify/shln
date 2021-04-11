@@ -5,7 +5,7 @@ nv() {
   # shellcheck disable=SC2046,SC2154
   case $1 in
   *=*)
-    # Trigger export before external env -  variable value could match improperly
+    # Trigger export before trigger external env: variable value could match improperly
     nv x-- "$@"
     ;;
 
@@ -56,7 +56,7 @@ nv() {
       */*.*) # domain/name.PATTERN
         _nv_grep="${param#*.}"
 
-        exec 3<"$envy_home/env/${param%%.*}"
+        exec 3<"$ENVY_HOME/env/${param%%.*}"
         while IFS= read -r _nv_line || [ "$_nv_line" ]; do
           case $_nv_line in
           \#* | '') continue ;;
@@ -83,7 +83,7 @@ nv() {
         done <&3
         ;;
       *.*) # domiain.PATTERN
-        ! _nv_ep=$(nv ep-- "${param%%.*}") && echo "nv: $param: domain not open" 1>&2 && nv na 1>&2 &&
+        ! _nv_ep=$(nv cp-- "${param%%.*}") && echo "nv: $param: domain not open" 1>&2 && nv na 1>&2 &&
           return 1
         for __ in $(nv g-- "${param#*.}" | grep -E -e "$_nv_ep"); do
           set -- "$@" "$__=$(printenv -- "$__")"
@@ -122,7 +122,7 @@ nv() {
       -) set -- "$@" - && unset -v _nv_no_input && continue ;;
       -*) set -- "$@" "$param" && continue ;;
       @) param=$(nv n) ;;
-      @@*) param="$envy_home${param#@@}" ;;
+      @@*) param="$ENVY_HOME${param#@@}" ;;
       esac
 
       unset -v _nv_no_args
@@ -130,18 +130,18 @@ nv() {
       /* | */ | [[:digit:]]* | *[![:alnum:]_/]* | */*/*)
         set -- "$@" "$param"
         ;;
-      *) set -- "$@" "$envy_home/env/$param" ;;
+      *) set -- "$@" "$ENVY_HOME/env/$param" ;;
       esac
     done
 
     [ "$_nv_no_args" ] &&
       case $1 in
-      cat | nano | "$VISUAL") set -- "$@" "$envy_home/env/$(nv n)" ;;
+      cat | nano | "$VISUAL") set -- "$@" "$ENVY_HOME/env/$(nv n)" ;;
       diff)
         unset -v _nv_no_input
-        set -- "$@" - "$envy_home/env/$(nv n)"
+        set -- "$@" - "$ENVY_HOME/env/$(nv n)"
         ;;
-      ls | cd) set -- "$@" "$envy_home/env/" ;;
+      ls | cd) set -- "$@" "$ENVY_HOME/env/" ;;
       esac
 
     if [ "${edr+.}" ]; then
@@ -155,15 +155,15 @@ nv() {
 
   # Builtin commands and no argument defaults or actions
   close | close-a | \
+    config | config-a | config-n | config-p | config-r | config-u | \
     domain | d | domain-a | da | \
-    env | e | env-a | ea | env-n | env-p | env-u | \
     export | x | exclude | \
     name | n | name-a | na | \
-    open | o | \
+    open | o | open-t | ot | \
     pattern | p | pattern-a | pa | pattern-s | ps | \
-    unset | unset-a | unset-d | \
+    set | \
     switch | s | \
-    find | f | find-a | fa | \
+    find | f | find-a | fa | find-t | ft | \
     profile-open | profile-save | \
     grep | grep-a | grep-s | \
     home | \
@@ -181,8 +181,11 @@ nv() {
 
       # Working environment
 
-      close | c) nv c-- $(nv d) ;;
-      close-a) nv c-- $(nv da) ;;
+      close) nv close-- $(nv d) ;;
+      close-a) nv close-- $(nv da) ;;
+
+      config) nv c-- $(nv d) ;;
+      config-a) nv c-- $(nv da) ;;
 
       domain | d) nv rd-- "$envy_domain" ;;
       domain-a | da)
@@ -190,9 +193,6 @@ nv() {
           printf %s\\n "${key#envy_domain_}"
         done
         ;;
-
-      env | e) nv e-- $(nv d) ;;
-      env-a | ea) nv e-- $(nv da) ;;
 
       export | x)
         echo "ENVY_PATTERN=$(nv p)"
@@ -209,27 +209,32 @@ nv() {
         done | grep .
         ;;
 
-      name | n) nv en-- "$envy_domain" ;;
-      name-a | na) nv en-- $(nv da) ;;
+      name | n) nv cn-- "$envy_domain" ;;
+      name-a | na) nv cn-- $(nv da) ;;
 
-      new) nv eu-- "$envy_domain" ;;
+      new) nv cu-- "$envy_domain" ;;
 
-      pattern | p) nv ep-- "$envy_domain" ;;
-      pattern-a | pa) nv ep-- $(nv da) ;;
-      pattern-s | ps) printf %s\\n "$envy_shell" ;;
+      pattern | p) nv cp-- "$envy_domain" ;;
+      pattern-a | pa) nv cp-- $(nv da) ;;
+      pattern-s | ps) printf %s\\n "$ENVY_SHELL" ;;
+
+      set) nv set-- $(nv d) ;;
 
       # Environment File
 
+      open) nv o-- $(nv cn-- "$envy_domain") ;;
+
       find | f) nv f-- "*" ;;
       find-a | fa) nv fa-- "*" ;;
+      find-t | ft) nv ft-- "*" ;;
 
       profile-find) nv profile-find-- "*" ;;
-      profile-open) nv profile-open-- "$envy_profile" ;;
-      profile-save) nv profile-save-- "$envy_profile" ;;
+      profile-open) nv profile-open-- "$ENVY_PROFILE" ;;
+      profile-save) nv profile-save-- "$ENVY_PROFILE" ;;
 
       # Other Commands
 
-      home) printf %s\\n "$envy_home" ;;
+      home) printf %s\\n "$ENVY_HOME" ;;
 
       which | w) nv w-- "$(nv n)" ;;
 
@@ -245,47 +250,49 @@ nv() {
   # Working Environment Commands
   #
 
-  close-- | c--)
+  close--)
     shift
-    nv eu-- "$@"
-    for __; do
-      unset -v envy_domain_$(nv rd-- "$__")
-    done
-    if ! nv e-- "$envy_domain" >/dev/null; then
-      for __ in $(nv da); do envy_domain=$__ && return 0; done
-      nv work-- nv/default >/dev/null
-    fi
+    nv cu-- "$@"
+    nv cr-- "$@"
     ;;
 
-  domain-- | d--) nv e-- "$2" && envy_domain=$(nv rd-- "$2") ;;
-
-  env-- | e--)
+  config-- | c--)
     shift && for __; do
       __="$(eval 'echo $envy_domain_'"$(nv rd-- "$__")")" && [ "$__" ] &&
         printf %s\\n "$__"
     done | grep .
     ;;
-  env-n-- | en--)
-    shift && nv e-- "$@" | while read -r _nv_line; do
-      nv rn-- "${_nv_line%%.*}"
+  config-n-- | cn--)
+    shift && nv c-- "$@" | while read -r __; do
+      nv rn-- "${__%%.*}"
     done | grep .
     ;;
-  env-p-- | ep--)
-    shift && nv e-- "$@" | while IFS= read -r _nv_line; do
-      printf %s\\n "${_nv_line#*.}"
+  config-p-- | cp--)
+    shift && nv c-- "$@" | while IFS= read -r __; do
+      printf %s\\n "${__#*.}"
     done | grep .
     ;;
-  env-u-- | eu--)
-    shift && __=$(nv ep-- "$@") && while IFS= read -r _nv_line; do
-      unset -v -- $(nv g-- "$_nv_line")
-    done <<e8f533c7-482c-49e9-940f-1764f9e214ed
-$__
-e8f533c7-482c-49e9-940f-1764f9e214ed
+  config-u-- | cu--)
+    shift && while IFS= read -r __; do
+      [ "$__" ] && while IFS= read -r __; do
+        [ "$__" ] && unset -v -- "$__"
+      done <<_
+$(nv g-- "$__")
+_
+    done <<_
+$(nv cp-- "$@")
+_
+    ;;
+  config-r-- | cr--)
+    shift && for __; do
+      unset -v envy_domain_$(nv rd-- "$__")
+    done
+    nv c-- "$envy_domain" >/dev/null && return 0
+    for __ in $(nv da); do envy_domain=$__ && return 0; done
+    nv work-- nv/default >/dev/null
     ;;
 
-  # variable name test
-  vnt--) printf %s "$2" | grep -E -e "^[_A-Za-z][_A-Za-z0-9]*$" |
-    grep -E -e "^($3)" | grep -qvE -e "^($envy_shell)" ;;
+  domain-- | d--) nv c-- "$2" && envy_domain=$(nv rd-- "$2") ;;
 
   export-- | x--)
     shift && [ $# -gt 0 ] && for __; do
@@ -300,9 +307,19 @@ e8f533c7-482c-49e9-940f-1764f9e214ed
 
   name-- | n--) nv work-- "$2" "$(nv p)" ;;
 
+  new-- | work--)
+    # set working environment name and pattern, unset old domain if new--
+    if _nv_wrn=$(nv rn-- "$2"); then
+      envy_domain=${_nv_wrn%%/*}
+      [ "$1" = new-- ] && nv cu-- "$envy_domain"
+      eval 'envy_domain_'"$envy_domain"'="$_nv_wrn.${3:-.}"'
+      printf '%s\n' "$_nv_wrn.${3:-.}"
+    fi
+    ;;
+
   pattern-- | p--) nv work-- "$(nv n)" "$2" ;;
 
-  printenv | pe) shift && nv . printenv "$@" ;;
+  printenv) nv / "$@" ;;
 
   rd--)
     # resolve domain, default to working or nv
@@ -343,21 +360,20 @@ e8f533c7-482c-49e9-940f-1764f9e214ed
     esac
     ;;
 
-  new-- | work--)
-    # set working environment name and pattern, unset old domain if new--
-    if _nv_wrn=$(nv rn-- "$2"); then
-      envy_domain=${_nv_wrn%%/*}
-      [ "$1" = new-- ] && nv eu-- "$envy_domain"
-      eval 'envy_domain_'"$envy_domain"'="$_nv_wrn.${3:-.}"'
-      printf '%s\n' "$_nv_wrn.${3:-.}"
-    fi
-    ;;
-
-  unset-- | u--)
-    shift && [ $# -gt 0 ] && for __; do
-      nv vnt-- "$__" "$(nv p)" && unset -v -- "$__"
+  set--)
+    shift && for __; do
+      for _nv_key in $(nv g-- "$(nv cp-- "$__")"); do
+        _nv_value="$(printenv -- "$_nv_key")"
+        printf "%s [%s]: " "$_nv_key" "${_nv_value:-NONE}"
+        # shellcheck disable=SC2162
+        read _nv_value && [ "$_nv_value" ] && nv x-- "$_nv_key=$_nv_value"
+      done
     done
     ;;
+
+  # variable name test
+  vnt--) printf %s "$2" | grep -E -e "^[_A-Za-z][_A-Za-z0-9]*$" |
+    grep -E -e "^($3)" | grep -qvE -e "^($ENVY_SHELL)" ;;
 
   #
   # Environment File Commands
@@ -365,17 +381,25 @@ e8f533c7-482c-49e9-940f-1764f9e214ed
 
   find-- | f--)
     shift && for __; do
-      find "$envy_home/env" -mindepth 2 -maxdepth 2 -type f -path "$envy_home/env/$(nv d)/$__" |
+      find "$ENVY_HOME/env" -mindepth 2 -maxdepth 2 -type f -path "$ENVY_HOME/env/$(nv d)/$__" |
         while IFS= read -r _nv_line; do
-          printf %s\\n "${_nv_line#$envy_home/env/}"
+          printf %s\\n "${_nv_line#$ENVY_HOME/env/}"
         done
     done | grep .
     ;;
   find-a-- | fa--)
     shift && for __; do
-      find "$envy_home/env" -mindepth 2 -maxdepth 2 -type f -path "$envy_home/env/$__" |
+      find "$ENVY_HOME/env" -mindepth 2 -maxdepth 2 -type f -path "$ENVY_HOME/env/$__" |
         while IFS= read -r _nv_line; do
-          printf %s\\n "${_nv_line#$envy_home/env/}"
+          printf %s\\n "${_nv_line#$ENVY_HOME/env/}"
+        done
+    done | grep .
+    ;;
+  find-t- | ft--)
+    shift && for __; do
+      find "$ENVY_TEMPLATE_HOME" -mindepth 1 -maxdepth 1 -type f -path "$ENVY_TEMPLATE_HOME/$__" |
+        while IFS= read -r _nv_line; do
+          printf %s\\n "${_nv_line#$ENVY_TEMPLATE_HOME/}"
         done
     done | grep .
     ;;
@@ -383,7 +407,15 @@ e8f533c7-482c-49e9-940f-1764f9e214ed
   open-- | o--)
     shift && [ $# -gt 0 ] && for __; do
       _nv_orn=$(nv rn-- "$__") && nv new-- "$_nv_orn" >/dev/null &&
-        nv o- <"$envy_home/env/$_nv_orn"
+        nv o- <"$ENVY_HOME/env/$_nv_orn"
+    done
+    ;;
+
+  open-t-- | ot--)
+    shift && [ $# -gt 0 ] && for __; do
+      _nv_template=${__%%/*}
+      _nv_orn=$(nv rn-- "$__") && nv new-- "$_nv_orn" >/dev/null &&
+        nv o- <"$ENVY_TEMPLATE_HOME/$_nv_template"
     done
     ;;
 
@@ -411,17 +443,17 @@ e8f533c7-482c-49e9-940f-1764f9e214ed
     ;;
 
   save)
-    ! _nv_name=$(nv n) && return 1
+    _nv_name=$(nv n) || return $?
     case $_nv_name in */) echo "save: $_nv_name: Must provide an environment name" 1>&2 && return 1 ;; esac
 
-    mkdir -p -- "$envy_home/env/$(nv d)"
-    nv x >"$envy_home/env/$_nv_name"
-    nv e
+    mkdir -p -- "$ENVY_HOME/env/$(nv d)"
+    nv x >"$ENVY_HOME/env/$_nv_name"
+    nv config
     ;;
 
   which-- | w--)
     shift && for __; do
-      __="$envy_home/env/$(nv rn-- "$__")" && [ -f "$__" ] && printf %s\\n "$__"
+      __="$ENVY_HOME/env/$(nv rn-- "$__")" && [ -f "$__" ] && printf %s\\n "$__"
     done | grep .
     ;;
 
@@ -431,24 +463,24 @@ e8f533c7-482c-49e9-940f-1764f9e214ed
   profile)
     # handle profile sub commands here, not above, otherwise profile -open would be valid
     shift && case $1 in
-    '') nv rt-- "$envy_profile" && echo "$envy_profile" ;;
+    '') nv rt-- "$ENVY_PROFILE" && echo "$ENVY_PROFILE" ;;
     *) __="$1" && shift && nv "profile-$__" "$@" ;;
     esac
     ;;
   profile-open--)
     shift && [ "$1" ] && nv rt-- "$1" &&
-      nv o-- $(cat -- "$envy_home/profile/$1") && envy_profile="$1"
+      nv o-- $(cat -- "$ENVY_HOME/profile/$1") && ENVY_PROFILE="$1"
     ;;
   profile-save--)
     shift && [ "$1" ] && nv rt-- "$1" &&
-      nv na >"$envy_home/profile/$1" && envy_profile="$1" &&
+      nv na >"$ENVY_HOME/profile/$1" && ENVY_PROFILE="$1" &&
       nv na
     ;;
   profile-find--)
     shift && for __; do
-      find "$envy_home/profile" -type f -path "$envy_home/profile/$__" | sort |
+      find "$ENVY_HOME/profile" -type f -path "$ENVY_HOME/profile/$__" | sort |
         while IFS= read -r file; do
-          printf %s\\n "${file#$envy_home/profile/}"
+          printf %s\\n "${file#$ENVY_HOME/profile/}"
         done | grep .
     done
     ;;
@@ -457,9 +489,9 @@ e8f533c7-482c-49e9-940f-1764f9e214ed
   # Other Commands
   #
 
-  grep-- | g--) shift && nv ga-- "$@" | grep -vE -e "^($envy_shell)" ;;
+  grep-- | g--) shift && nv ga-- "$@" | grep -vE -e "^($ENVY_SHELL)" ;;
 
-  grep-s-- | gs--) shift && nv ga-- "$@" | grep -E -e "^($envy_shell)" ;;
+  grep-s-- | gs--) shift && nv ga-- "$@" | grep -E -e "^($ENVY_SHELL)" ;;
 
   grep-a-- | ga--) shift &&
     printf '%s\n' "$@" | while read -r _nv_line; do
@@ -500,41 +532,40 @@ Options
 /             All open environment variables
 .             Working environment variables
 %             Shell environment variables
-@             Working environment file variables.
+@             Saved working environment variables.
 
 Working Environment Commands
-   close     Close environment
-d, domain    Print the working environment domain name
-e, env       Print the working environment name and grep pattern
-x, export    Set the export attribute for working environment variables
-   na        Print active environment names
-n, name      Print curent domain full name
-p, pattern   Print or set the working environment variable name pattern
-   printenv  Print all or part of the working environment
-s, switch    Switch working environment to a new domain
-   work      Set working environment for a name and pattern
-   unset     Unset a working environment variable
+d, domain    Print the working environment domain name or switch working environments
+x, export    Set the export attribute of a variables
+n, name      Print full name of the working environment
+   new       Set working environment name and pattern and unset previous variables 
+p, pattern   Print or set the working environment variable name pattern 
+   set       Set working environment variable values
+   work      Set working environment name and pattern
 
-Environment File Management Commands
--           Open from stdin
+Working Environment File Management Commands
    edit     Edit an environment file using ${VISUAL-** VISUAL environment variable not set **)}
 f, find     Find all environment files
 o, open     Open a new working environment from file
-   save     Save or replace the working environment
-w, which    Print full file path to saved environment
+   save     Save the working environment
+w, which    Print file path of an environment
+
+Active Environment Commands
+   close     Close an active environment
+   config    Print an active environment name and grep pattern
 
 Enhanced Linux File Managed Commands
 cat | cd | cp | diff | ls | mkdir | mv | rm
 
-Profile File Commands
+Profile Commands
  profile-find  Find a profile file
  profile-open  Open profile environments 
  profile-save  Save or replace profile with environment names
 
 Other Commands
-   grep        Grep all envy variable names
+   grep        Grep environment variable names
    help        Show this help
-   home        Show home directory for envy and profile files
+   home        Show home directory for environment and profile files
    version     Print the version information
 EOF
     ;;
@@ -542,38 +573,40 @@ EOF
     cat <<'___'
 usage:  nv close [DOMAIN]...
 
-Unset all the variables in the domain and close the domain.  If no
-domainn specified, then the working domain is closed. 
+Unset all the variables in the environment and remove from active environments.  If no
+environment is specified, then the working environment is closed. 
 ___
     ;;
 
   help-domain | help-d | domain-h | d-h)
     cat <<'___'
-usage:  nv domain [OPTION] [DOMAIN]...
+usage:  nv domain [-a] [DOMAIN]...
 
 Print the working environment domain name.
 
 Options
--a  Print all open environment domain names
+-a  Print all actie environment domain names
 ___
     ;;
 
-  help-env | help-e | env-h | e-h)
+  help-config | config-h)
     cat <<'___'
-usage:  nv env [OPTION] [DOMAIN]...
+usage:  nv config [-a | -n | -p | -r | -u] [DOMAIN]...
 
 Print the working environment name and grep pattern.
 
 Options
--a  Print all open environment names and grep patterns.
+-a  Print all active environment names and grep patterns.
 -n  Print just the environment name
 -p  Print just the environment pattern
+-r  Remove the active environment configuration preserving environment variables
+-u  Unset active environment variables
 ___
     ;;
 
   help-export | help-x | export-h | x-h)
     cat <<'eof'
-usage:  nv export name[=word]...
+usage:  nv export NAME[=WORD]...
 
 Set the export attribute for a working environment variable
 
@@ -605,11 +638,11 @@ eof
     cat <<'___'
 usage:  nv grep [ -s | -a ] PATTERN
 
-Grep envy environment variable names.
+Grep environment variable names.
 
 Options
 -s  Grep shell environment variable names.
--a  Grep any environment variable names.
+-a  Grep any environment (env) variable names.
 ___
     ;;
   help-name | help-n | name-h | n-h) echo "usage: name -afh" ;;
@@ -617,50 +650,17 @@ ___
     cat <<'___'
 usage:  nv open NAME...
 
-Open an environment into a clean domain.  All the previous domain environment variables are unset.
+Open a new working environment from a file.  To open from stdin, use nv open -
 ___
     ;;
   help-pattern | help-p | pattern-h | p-h) echo "usage: name -achu" ;;
-  help-printenv | printenv-h)
-    cat <<'eof'
-usage:  nv printenv [OPTION] [VARIABLE]...
-
-Print all or part of the working environment
-
-Options
--p  print name and value pairs
--h  help
-
-Description
-
-Print the values of the specified environment VARIABLE(s).  If no
-VARIABLE is specified, print name and value pairs for them all.
-eof
-    ;;
   help-save | save-h)
     cat <<'___'
 usage:  nv save
 
-Save the working environment.  This is a shortcut for nv export > $(nv home)/env/$(nv name)
-___
-    ;;
-  help-unset | unset-h)
-    cat <<'___'
-usage:  nv unset [-a | -h] NAME...
+Save the working environment.  If a different name is desired, use 'nv name NAME' to set the name.  
 
-Unset values and attributes of variables in the working environment.
-
-Options
--a  unset variable in any environment
--h  help
-
-Description
-
-Each variable specified by name shall be unset.
-
-Unsetting a variable or function that was not previously set
-shall not be considered an error and does not cause the shell to
-abort.
+Save is a shortcut for nv export > $(nv home)/env/$(nv name),
 ___
     ;;
 
@@ -677,12 +677,13 @@ ___
   # native file commands with name expansion
   help-cat | help-cd | help-cp | help-diff | help-ls | help-mkdir | help-mv | help-rm)
     cat <<'___'
-usage:  nv cat | cd | cp | diff | ls | mkdir | mv | rm  [FILE]...
+usage:  nv [ cat | cd | cp | diff | ls | mkdir | mv | rm ] [NAME]...
 
-Execute normal linux file based command with environment name expansion to its file
+Execute normal linux file based command with environment name replaced with its file
 location.
 
-For the working environment file, use @ to signify the file.
+For the working environment file, use @ to signify the file.  If the working environment
+should be piped to the command, use -.
 
 If no file is provided, the following defaults are used:
 
@@ -690,13 +691,12 @@ cat @
 cd @@
 diff - @
 ls @@
-
 ___
     ;;
 
   *)
     if printf %s "$1" | grep -qE -e '^([[:upper:]]|_)([[:alpha:]]|_|[[:digit:]])*$'; then
-      nv . printenv "$@"
+      nv / printenv "$@"
     else
       echo "nv: $(printf '%s ' "$@"): Unknown resource or command" 1>&2 && nv help 1>&2 && return 1
     fi
@@ -708,10 +708,12 @@ ___
 # Initailize envy
 #
 
-if readonly envy_home="${ENVY_HOME-$HOME/.config/envy}" 2>/dev/null; then
-  [ -f "$envy_home/.nvrc" ] &&
+if readonly ENVY_HOME="${ENVY_HOME-$HOME/.config/envy}" 2>/dev/null; then
+  export ENVY_HOME
+
+  [ -f "$ENVY_HOME/.nvrc" ] &&
     # load extension to shell environment
-    exec 3<"$envy_home/.nvrc" &&
+    exec 3<"$ENVY_HOME/.nvrc" &&
     while IFS= read -r _nv_line || [ "$_nv_line" ]; do
       case $_nv_line in
       '' | \#*) continue ;;
@@ -740,20 +742,34 @@ ff483722-a9e5-4438-8b00-28ae9f416136'
     done <&3
 
   # ENVY_SHELL, ENVY_PROFILE could be set in .nvrc
-  readonly envy_shell="${ENVY_SHELL-COLOR|COMMAND_|EDITOR$|ENVY_|HOSTNAME$|HOSTTYPE$|HOME$|LANG$|LaunchInstanceID$|LC_|LOGNAME$|LS_|ITERM_|NAME$|OLDPWD$|PATH$|PWD$|SECURITYSESSIONID$|SHELL$|SHLVL$|SSH_|TERM$|TERM_|TMPDIR$|VSCODE_|USER|VISUAL$|WSLENV$|WSL_|XDG_|XPC_|_$|__${ENVY_SHELL_EXTRA:+|$ENVY_SHELL_EXTRA}}"
+  readonly ENVY_SHELL="${ENVY_SHELL-COLOR|COMMAND_|EDITOR$|ENVY_|HOSTNAME$|HOSTTYPE$|HOME$|LANG$|LaunchInstanceID$|LC_|LOGNAME$|LS_|ITERM_|NAME$|OLDPWD$|ORIGINAL_XDG_|PATH$|PWD$|SECURITYSESSIONID$|SHELL$|SHLVL$|SSH_|TERM$|TERM_|TMPDIR$|VSCODE_|USER|VISUAL$|WSLENV$|WSL_|XDG_|XPC_|_$|__${ENVY_SHELL_EXTRA:+|$ENVY_SHELL_EXTRA}}"
+  export ENVY_SHELL
 
-  envy_profile="${ENVY_PROFILE-nv}"
-  if [ -f "$envy_home/profile/$envy_profile" ]; then
-    nv profile-open-- "$envy_profile"
-  elif [ -f "$envy_home/env/nv/default" ]; then
+  ENVY_PROFILE="${ENVY_PROFILE-nv}"
+  export ENVY_PROFILE
+
+  if [ -f "$ENVY_HOME/profile/$ENVY_PROFILE" ]; then
+    nv profile-open-- "$ENVY_PROFILE"
+  elif [ -f "$ENVY_HOME/env/nv/default" ]; then
     nv o-- nv/default
   else
     nv work-- nv/default
   fi
 
+  if [ "${ENVY_TEMPLATE_HOME+.}" ]; then
+    readonly ENVY_TEMPLATE_HOME
+  else
+    if [ -L "$0" ]; then
+      readonly ENVY_TEMPLATE_HOME="$(dirname -- "$(readlink -- "$0")")"/template
+    else
+      readonly ENVY_TEMPLATE_HOME="$(dirname -- "$0")"/template
+    fi
+    export ENVY_TEMPLATE_HOME
+  fi
+
   # ensure directories
-  mkdir -p -- "$envy_home/env/nv"
-  mkdir -p -- "$envy_home/profile"
+  mkdir -p -- "$ENVY_HOME/env/nv"
+  mkdir -p -- "$ENVY_HOME/profile"
 fi
 
 #

@@ -175,9 +175,9 @@ nv nano @@/.nvrc
 Or create
 
 ```sh
-cat > $(nv home)/.nvrc <<EOF
+cat > $(nv home)/.nvrc <<_
 VISUAL=code
-EOF
+_
 ```
 
 ## Environment Files
