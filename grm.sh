@@ -1,6 +1,6 @@
 #!/bin/sh
 
-g() {
+cli() {
   case $1 in
   '') grm_find_pretty ;;
 
@@ -8,8 +8,8 @@ g() {
     # normal style command
     cmd=$1
     shift && case $1 in
-    -*) __="$1" && shift && g "$cmd$__" "$@" ;;
-    *) g "$cmd--" "$@" ;;
+    -*) __="$1" && shift && cli "$cmd$__" "$@" ;;
+    *) cli "$cmd--" "$@" ;;
     esac
     ;;
 
@@ -25,8 +25,13 @@ g() {
     done | grep .
     ;;
   diff-a | d-a | da)
-    shift && grm_find | while read -r name; do
+    shift && grm_find_all | while read -r name; do
       grm_diff "$(grm_resolve_dir "$name")" "$name/"
+    done | grep .
+    ;;
+  diff-n | d-n | dn)
+    shift && grm_find_all | while read -r name; do
+      [ "$(grm_diff "$(grm_resolve_dir "$name")")" ] && printf %s\\n "$name"
     done | grep .
     ;;
 
@@ -38,9 +43,7 @@ g() {
 
     shift && [ "${1+.}" ] && grm_resolve "$@" | while read -r e; do
       ed=$(grm_resolve_dir "$e")
-      [ -d "$ed" ] && $VISUAL "$ed" && continue
-      grm_clone "$e" && $VISUAL "$ed" && continue
-      grm_init "$e" && $VISUAL "$ed" && continue
+      [ -d "$ed" ] || grm_clone "$e" || grm_init "$e" && $VISUAL "$ed"
     done
     ;;
 
@@ -58,27 +61,32 @@ g() {
     done
     ;;
   pull-a | p-a | pa)
-    shift && grm_find | while read -r name; do
+    shift && grm_find_all | while read -r name; do
       printf '%-35s\t' "$name"
       git -C "$(grm_resolve_dir "$name")" pull
     done
     ;;
 
   rm--)
-    shift && [ "${1+.}" ] && grm_resolve_name_dir "$@" | while read -r dir; do
-      ! diff=$(grm_diff "$dir") && return 1
+    if shift && [ "${1+.}" ]; then
+      exec 3<<_
+$(grm_resolve_name_dir "$@")
+_
+      while IFS= read -r dir; do
+        diff=$(grm_diff "$dir") || return $?
 
-      if [ "$diff" ]; then
-        echo "grm: $dir: Deleted, modified, unstaged, staged, or unpushed files exist:" 1>&2
-        echo "$diff" 1>&2
-        return 1
-      fi
+        if [ "$diff" ]; then
+          echo "grm: $dir: Deleted, modified, unstaged, staged, or unpushed files exist:" 1>&2
+          echo "$diff" 1>&2
+          return 1
+        fi
 
-      printf %s "Remove $dir (y/n): " &&
-        read -r yn &&
-        [ "$yn" = "y" ] &&
-        rm -rf -- "$dir"
-    done
+        printf "Remove %s (y/n): " "$dir" &&
+          read -r yn <&1 &&
+          [ "$yn" = "y" ] &&
+          rm -rf -- "$dir"
+      done <&3
+    fi
     ;;
 
   resolve--) shift && grm_resolve "$@" ;;
@@ -98,30 +106,28 @@ g() {
   dirs) grm_dirs ;;
 
   env)
-    echo "GRM_DEFAULT_HOST=$grm_default_host"
+    echo "GRM_DEFAULT_HOST=$GRM_DEFAULT_HOST"
     echo "GRM_DEFAULT_ORG=$GRM_DEFAULT_ORG"
-    echo "GRM_DEFAULT_SCHEME=$grm_default_scheme"
-    echo "GRM_HOME=$grm_home"
+    echo "GRM_DEFAULT_SCHEME=$GRM_DEFAULT_SCHEME"
+    echo "GRM_HOME=$GRM_HOME"
     ;;
 
-  home) printf %s\\n "$grm_home" ;;
+  home) printf %s\\n "$GRM_HOME" ;;
 
-  exec) shift && grm_cd && exec "$@" ;;
+  find-all | f) grm_cd && find . -type f -path "./*$2" | cut -c 3- | grep . ;;
 
-  find | f) grm_cd && find . -type f -path "./*$2" | cut -c 3- | grep . ;;
-
-  ls)
-    if [ "$2" ]; then
-      __="$(grm_resolve_name_dir "$2")" && cd -- "$__" && find . -maxdepth 1 -type f | cut -c 3- | grep .
+  find)
+    shift && if [ "$1" ]; then
+      __="$(grm_resolve_name_dir "$1")" && cd -- "$__" && shift && grm_find "$@"
     else
-      grm_find
+      grm_find_all
     fi
     ;;
 
   menu | m)
     shift && case $1 in
-    '') g m-h 1>&2 && return 1 ;;
-    *) __="$1" && shift && g "menu-$__" "$@" ;;
+    '') cli m-h 1>&2 && return 1 ;;
+    *) __="$1" && shift && cli "menu-$__" "$@" ;;
     esac
     ;;
   menu-diff | md | dm | diff-m | d-m) grm_menu Diff diff-- ;;
@@ -140,8 +146,8 @@ g() {
 
   help | -h | --help)
     shift && case $1 in
-    '') g h-- ;;
-    *) g "help-$1" "$@" ;;
+    '') cli h-- ;;
+    *) cli "help-$1" "$@" ;;
     esac
     ;;
 
@@ -166,16 +172,15 @@ r, rm      Safely remove repository if no differences with remote
 t, tags    Show remote tags
 
 General Commands
-e, edit     Launch editor for repository, cloning if necessary
-   env      Show the groom envinroment variables
-   exec     Execute any linux command in groom home ($grm_home)
-f, find     Find files in local repositories using glob ("README.*")
-   home     Show repository home directory ($grm_home)
-   ls       List all repos
-m, menu     List menu of repos
-   version  Print the version information
-w, which    Print the repository location
-   help     Show this page
+e, edit      Launch editor for repository, cloning if necessary
+   env       Show the groom envinroment variables
+   find      Find files in a local repository
+f, find-all  Find files in local repositories using glob ("README.*")
+   home      Print repository home directory ($GRM_HOME)
+m, menu      List menu of repos
+   version   Print the version information
+w, which     Print the repository location
+   help      Show this page
 EOF
     ;;
   help-diff | help-d | diff-h | dh)
@@ -192,18 +197,27 @@ EOF
 
   -*)
     echo "grm: $1: Option not found" 1>&2
-    g help 1>&2 || return 1
+    cli help 1>&2 && return 1
+    ;;
+
+  */*)
+    if __="$(grm_resolve_name_dir "$1")" && cd -- "$__" 2>/dev/null; then
+      shift
+      grm_find "$@"
+    else
+      cli clone-- "$1"
+    fi
     ;;
   *)
     echo "grm: $1: Command not found" 1>&2
-    g help 1>&2 || return 1
+    cli help 1>&2 && return 1
     ;;
   esac
 }
 
 # must be called with resolved name
 grm_clone() {
-  ! dir="$(grm_resolve_dir "$1")" && return 1
+  dir="$(grm_resolve_dir "$1")" || return $?
 
   if [ -d "$dir" ]; then
     # not currently validating as a real git directory, allows shmod to run faster, development
@@ -248,35 +262,39 @@ grm_init() {
 }
 
 grm_cd() {
-  if ! cd "$grm_home" 2>/dev/null; then
-    echo "$grm_home directory does not exist" 1>&2
+  if ! cd "$GRM_HOME" 2>/dev/null; then
+    echo "$GRM_HOME directory does not exist" 1>&2
     exit 1
   fi
 }
 
 grm_dirs() {
-  find "$grm_home" -type d -name ".git" | rev | cut -c 6- | rev | sort
+  find "$GRM_HOME" -type d -name ".git" | rev | cut -c 6- | rev | sort
 }
 
 grm_find() {
+  find . -not -path '*/\.*' -maxdepth 1 -type f "$@" | cut -c 3- | sort | grep .
+}
+
+grm_find_all() {
   grm_cd && find . -type d -name ".git" | cut -c 3- | rev | cut -c 6- | rev | sort
 }
 
 grm_find_pretty() {
-  grm_find | while read -r line; do
-    printf "%-20.20s   %s\\n" "$(basename -- "$line")" "$(dirname -- "$line")"
+  grm_find_all | while read -r line; do
+    printf "%-25.25s   %s\\n" "$(basename -- "$line")" "$(dirname -- "$line")"
   done
 }
 
 grm_menu() {
   if [ "$2" ] && grm_find_pretty | cat -n &&
-    printf %s "$1 repo number(s): " && read -r _menu_lines; then
+    printf "%s repo number(s): " "$1" && read -r _menu_lines; then
     for _menu_line in $_menu_lines; do
       [ "$_menu_line" -eq "$_menu_line" ] 2>/dev/null &&
-        _menu_repo=$(grm_find | sed "$_menu_line"'!d') &&
+        _menu_repo=$(grm_find_all | sed "$_menu_line"'!d') &&
         [ "$_menu_repo" ] &&
         printf %s\\n "$_menu_repo" &&
-        g "$2" "$_menu_repo"
+        cli "$2" "$_menu_repo"
     done
     return 0
   fi
@@ -299,12 +317,12 @@ grm_resolve() {
       echo "resolve: $_rn: Can not use . in repository name" 1>&2 && return 1
       ;;
     */*/*) printf %s\\n "$_rn" ;;
-    */*) printf %s\\n "$grm_default_host/$_rn" ;;
+    */*) printf %s\\n "$GRM_DEFAULT_HOST/$_rn" ;;
     *)
       ! [ "$GRM_DEFAULT_ORG" ] &&
         echo "resolve: $_rn: GRM_DEFAULT_ORG required to resolve repository name" 1>&2 &&
         return 1
-      printf %s\\n "$grm_default_host/$GRM_DEFAULT_ORG/$_rn"
+      printf %s\\n "$GRM_DEFAULT_HOST/$GRM_DEFAULT_ORG/$_rn"
       ;;
     esac
   done
@@ -327,10 +345,10 @@ grm_resolve_name_repo() {
 # return local directory for repo
 grm_resolve_dir() {
   case $1 in
-  https://*) printf %s\\n "${grm_home:+$grm_home/}${1#https://}" ;;
-  http://*) printf %s\\n "${grm_home:+$grm_home/}${1#http://}" ;;
-  ssh://*) printf %s\\n "${grm_home:+$grm_home/}${1#ssh://}" ;;
-  *) printf %s\\n "${grm_home:+$grm_home/}$1" ;;
+  https://*) printf %s\\n "${GRM_HOME:+$GRM_HOME/}${1#https://}" ;;
+  http://*) printf %s\\n "${GRM_HOME:+$GRM_HOME/}${1#http://}" ;;
+  ssh://*) printf %s\\n "${GRM_HOME:+$GRM_HOME/}${1#ssh://}" ;;
+  *) printf %s\\n "${GRM_HOME:+$GRM_HOME/}$1" ;;
   esac
 }
 
@@ -339,7 +357,7 @@ grm_resolve_dir() {
 grm_resolve_repo() {
   case "${1%@*}.git" in
   *://*) printf %s\\n "${1%@*}.git" ;;
-  *) printf %s\\n "$grm_default_scheme://${1%@*}.git" ;;
+  *) printf %s\\n "$GRM_DEFAULT_SCHEME://${1%@*}.git" ;;
   esac
 }
 
@@ -349,8 +367,8 @@ else
   GRM_SCRIPT_HOME="$(dirname -- "$0")"
 fi
 
-readonly grm_home="${GRM_HOME-$(cd "$GRM_SCRIPT_HOME/../../.." && pwd -P)}"
-readonly grm_default_scheme="${GRM_DEFAULT_SCHEME-https}"
-readonly grm_default_host="${GRM_DEFAULT_HOST-github.com}"
+readonly GRM_HOME="${GRM_HOME-$(cd "$GRM_SCRIPT_HOME/../../.." && pwd -P)}"
+readonly GRM_DEFAULT_SCHEME="${GRM_DEFAULT_SCHEME-https}"
+readonly GRM_DEFAULT_HOST="${GRM_DEFAULT_HOST-github.com}"
 
-g "$@"
+cli "$@"

@@ -17,7 +17,7 @@ grm edit sageify/shln
 grm e sageify/shln
 
 # find a file in all repositories
-grm find "*README.md"
+grm find-all "*README.md"
 
 # show diffs for all cloned repositories (all are equivalent)
 grm diff -a
