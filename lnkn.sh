@@ -84,7 +84,7 @@ case "$1" in
 
 cmd | c)
   shift && [ "$1" = -- ] && shift
-  [ "$2" ] || echo "usage: cmd SOURCE LINK " 1>&2 && exit 1
+  ! [ "$2" ] && echo "usage: cmd SOURCE LINK " 1>&2 && exit 1
 
   link="$LNKN_HOME/$2"
   if [ -f "$link" ]; then
@@ -101,7 +101,7 @@ exec) shift && cd -- "$LNKN_HOME" && exec "$@" ;;
 
 grm | g)
   shift && [ "$1" = -- ] && shift
-  [ "$1" ] || echo "usage: lnkn grm SOURCE [LINK] " 1>&2 && exit 1
+  ! [ "$1" ] && echo "usage: lnkn grm SOURCE [LINK] " 1>&2 && exit 1
 
   base="$(basename -- "$1")" link_name="$LNKN_HOME/${2-${base%.*}}"
   if [ -f "$link_name" ]; then
