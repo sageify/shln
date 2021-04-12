@@ -35,6 +35,13 @@ cli() {
     done | grep .
     ;;
 
+  code)
+    # could use subshell, but this avoids shellcheck errors
+    __="$1"
+    shift
+    VISUAL="$__" cli edit-- "$@"
+    ;;
+
   edit-- | e--)
     ! [ "$VISUAL" ] && echo "nv: Editor not specified in VISUAL environment variable" 1>&2 && return 1
     ! command -v -- "$VISUAL" >/dev/null &&
