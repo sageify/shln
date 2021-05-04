@@ -44,4 +44,4 @@ esac
 
 echo "Linkin (lnkn), Envy (nv), Groom (grm), Shmod (shmd), and Shroom (shrm) installed"
 echo "Manually add sourcing of envy to your \$HOME/$shell_profile (or similar):"
-echo ". ./bin/envy"
+echo ". \"$HOME/bin/envy\""

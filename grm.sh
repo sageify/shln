@@ -284,11 +284,12 @@ grm_find() {
 }
 
 grm_find_all() {
-  grm_cd && find . -type d -name ".git" | cut -c 3- | rev | cut -c 6- | rev | sort
+  grm_cd && find . -type d -name ".git" -mindepth 3 -maxdepth 4 |
+    sed -e 's/^.\///g;s/\/.git$//g' | sort | grep .
 }
 
 grm_find_pretty() {
-  grm_find_all | while read -r line; do
+  grm_find_all | while IFS= read -r line; do
     printf "%-25.25s   %s\\n" "$(basename -- "$line")" "$(dirname -- "$line")"
   done
 }

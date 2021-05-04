@@ -1,25 +1,25 @@
 #!/bin/sh
 
 lnkn_install() {
-  # if more than one script, don't link
   dir=$(grm clone -- "$1") || return $?
 
   printf %s\\n "$dir"
-  grm "$1" -perm +111 | while read -r exe; do
+  grm "$1" -perm +111 | while IFS= read -r exe; do
+    # link/replace links to all executable
     link="$LNKN_HOME/${exe%.*}"
     [ -L "$link" ] && rm -- "$link"
     ln -s "$dir"/"$exe" "$link"
     lnkn_print "$link"
   done
 
-  # reset cache for where executable found in case link covers an existing executable
+  # in case link covers an existing executable in the path
   hash -r
 }
 
 lnkn_uninstall() {
   dir="$(grm which -- "$1")" || return $?
 
-  grm rm -- "$1" && find "$LNKN_HOME" -maxdepth 1 | while read -r link; do
+  grm rm -- "$1" && find "$LNKN_HOME" -maxdepth 1 | while IFS= read -r link; do
     # any link that references the git directory is removed
     [ "$dir" = "$(dirname -- "$(readlink -- "$link")")" ] &&
       rm -- "$link"

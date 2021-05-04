@@ -164,7 +164,7 @@ Envy is a shell function that should be sourced into the current shell.  To inst
 . ./envy.sh
 ```
 
-By default, envy.sh looks in .config/envy for configuration files.  The .config/envy/env/.nvrc file, if exists, will load enviornment variables.
+By default, envy.sh looks in .config/envy for configuration files.  The .config/envy/.nvrc file, if exists, will load enviornment variables.
 
 To edit
 

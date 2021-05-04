@@ -20,7 +20,7 @@ Update shell to source envy.sh
 
 ```
 #bashrc
-. ./bin/envy.sh
+. "$HOME/bin/envy.sh"
 ```
 
 # Linkin (lnkn)
@@ -105,6 +105,8 @@ By default, the files are imported to ~/.shmod directory.  To specific a folder,
 
 
 ## Todo
+- grm - listing - don't verify it's a valid github repo, just make sure has .git directory
+- npm - correct env vars
 - dockcmd/sh -- environment from nv, maybe nv= option?
 - clone_opts in shmod.sh is hacky
 
