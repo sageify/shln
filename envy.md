@@ -25,6 +25,7 @@ Shell variables are selected by a grep pattern.  The shell pattern may be replae
 setting the ENVY_SHELL environment variable or extra patterns added using ENVY_SHELL_EXTRA:
 
 ```sh
+# pattern for system environment variables
 nv pattern -s
 # COLOR|COMMAND_|EDITOR$|ENVY_|HOSTNAME$|HOME$|LANG$ ...
 ```
@@ -49,11 +50,11 @@ nv save
 Envy allows grepping of environment variables by name:
 
 ```sh
-nv /S
+nv .S
 # SAY='Hello World!'
 ```
 
-To grep a shell variable
+To grep a shell variable (automatically left anchored?)
 
 ```sh
 nv %P

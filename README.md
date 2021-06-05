@@ -1,6 +1,6 @@
 # Legss (Linkin, Envy, Groom, Shmod and Shroom)
 
-Leggs consists of the following:
+Legss consists of the following:
 
 - Linkin - Symbolic link manager.
 - Envy - Environment variable manager.
@@ -16,7 +16,7 @@ To install on Mac/Linux/WSL2:
 curl -fsSL https://raw.githubusercontent.com/sageify/shln/master/install.sh | sh
 ```
 
-Update shell to source envy.sh
+Update current shell to source envy.sh
 
 ```
 #bashrc

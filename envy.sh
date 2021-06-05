@@ -164,7 +164,7 @@ nv() {
     set | \
     switch | s | \
     find | f | find-a | fa | find-t | ft | \
-    profile-open | profile-save | \
+    profile-open | profile-find | profile-save | \
     grep | grep-a | grep-s | \
     home | \
     new | \
@@ -558,9 +558,9 @@ Enhanced Linux File Managed Commands
 cat | cd | cp | diff | ls | mkdir | mv | rm
 
 Profile Commands
- profile-find  Find a profile file
- profile-open  Open profile environments 
- profile-save  Save or replace profile with environment names
+   profile-find  Find a profile file
+   profile-open  Open profile environments 
+   profile-save  Save or replace profile with environment names
 
 Other Commands
    grep        Grep environment variable names
